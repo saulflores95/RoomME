@@ -1,13 +1,14 @@
 import type { MetadataRoute } from "next";
 
-import { env } from "~/env";
-import { routing } from "~/i18n/routing";
+import { eq } from "@acme/db";
+import { db } from "@acme/db/client";
+import { Room } from "@acme/db/schema";
 
-export default function sitemap(): MetadataRoute.Sitemap {
-  const base =
-    env.VERCEL_PROJECT_PRODUCTION_URL != null
-      ? `https://${env.VERCEL_PROJECT_PRODUCTION_URL}`
-      : "http://localhost:3000";
+import { routing } from "~/i18n/routing";
+import { getSiteUrl } from "~/lib/site-url";
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const base = getSiteUrl();
 
   const paths = [
     "",
@@ -18,7 +19,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/rooms-for-rent-queretaro",
   ];
 
-  return routing.locales.flatMap((locale) =>
+  const staticEntries = routing.locales.flatMap((locale) =>
     paths.map((path) => ({
       url: `${base}/${locale}${path}`,
       lastModified: new Date(),
@@ -29,4 +30,30 @@ export default function sitemap(): MetadataRoute.Sitemap {
       },
     })),
   );
+
+  const listedRooms = await db
+    .select({
+      id: Room.id,
+      updatedAt: Room.updatedAt,
+      createdAt: Room.createdAt,
+    })
+    .from(Room)
+    .where(eq(Room.status, "listed"));
+
+  const roomEntries = routing.locales.flatMap((locale) =>
+    listedRooms.map((room) => {
+      const path = `/rooms/${room.id}`;
+      return {
+        url: `${base}/${locale}${path}`,
+        lastModified: room.updatedAt ?? room.createdAt,
+        alternates: {
+          languages: Object.fromEntries(
+            routing.locales.map((item) => [item, `${base}/${item}${path}`]),
+          ),
+        },
+      };
+    }),
+  );
+
+  return [...staticEntries, ...roomEntries];
 }

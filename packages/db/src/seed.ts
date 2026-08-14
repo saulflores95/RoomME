@@ -145,7 +145,6 @@ async function seed(): Promise<void> {
   const [roma] = await db
     .insert(Complex)
     .values({
-      hostId: "seed-host-cdmx",
       title: "Casa Roma Norte",
       description:
         "Departamento luminoso a dos cuadras de Álvaro Obregón. Áreas comunes con cocina completa, rooftop y lavandería. Ideal para roomies que trabajan en la Roma o Condesa.",
@@ -164,7 +163,6 @@ async function seed(): Promise<void> {
   const [condesa] = await db
     .insert(Complex)
     .values({
-      hostId: "seed-host-cdmx",
       title: "Loft Condesa",
       description:
         "Loft con techos altos cerca de Parque México. Seguridad 24/7 y terraza compartida. Perfecto para expats y nómadas en CDMX.",
@@ -183,7 +181,6 @@ async function seed(): Promise<void> {
   const [centroSur] = await db
     .insert(Complex)
     .values({
-      hostId: "seed-host-qro",
       title: "Casa Centro Sur",
       description:
         "Casa compartida en Querétaro Centro Sur, cerca de plazas y transporte. Patio interior y estacionamiento.",
@@ -202,7 +199,6 @@ async function seed(): Promise<void> {
   const [juriquilla] = await db
     .insert(Complex)
     .values({
-      hostId: "seed-host-qro",
       title: "Residencial Juriquilla",
       description:
         "Habitación en residencial cerrado de Juriquilla, Querétaro. Alberca, gimnasio y áreas verdes.",

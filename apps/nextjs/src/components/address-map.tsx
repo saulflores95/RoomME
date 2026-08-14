@@ -19,7 +19,7 @@ export interface MapPin {
   longitude: number;
 }
 
-const CITY_CENTER: Record<City, [number, number]> = {
+export const CITY_CENTER: Record<City, [number, number]> = {
   cdmx: [19.4326, -99.1332],
   queretaro: [20.5888, -100.3899],
 };

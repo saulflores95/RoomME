@@ -6,9 +6,11 @@ import { useTranslations } from "next-intl";
 import { useFormContext, useWatch } from "react-hook-form";
 
 import type { ListingFormValues } from "@acme/validators";
+import { canManageComplexes } from "@acme/auth/roles";
 import { FieldError, FieldGroup } from "@acme/ui/field";
 import { NONE_COMPLEX_ID } from "@acme/validators";
 
+import { authClient } from "~/auth/client";
 import { AddressPicker } from "~/components/address-picker";
 import { Link } from "~/i18n/navigation";
 import {
@@ -16,6 +18,7 @@ import {
   FormSelectField,
   FormTextField,
 } from "./form-controls";
+import { ListingSectionCard } from "./section-card";
 
 interface ComplexOption {
   id: string;
@@ -33,6 +36,8 @@ export function LocationFields({
   complexes: ComplexOption[];
 }): JSX.Element {
   const t = useTranslations("list");
+  const { data: session } = authClient.useSession();
+  const canCreateComplex = canManageComplexes(session?.user.role);
   const { control, setValue, formState } = useFormContext<ListingFormValues>();
   const isComplex = useWatch({ control, name: "isComplex" });
   const complexId = useWatch({ control, name: "complexId" });
@@ -75,108 +80,120 @@ export function LocationFields({
   }, [complexId, isComplex, selectedComplex, setValue]);
 
   return (
-    <FieldGroup>
-      <h2 className="text-xl font-semibold">{t("complex")}</h2>
-      <FormCheckboxField
-        control={control}
-        name="isComplex"
-        label={t("isComplex")}
-      />
-      {isComplex ? (
-        <>
-          <FormSelectField
-            control={control}
-            name="complexId"
-            label={t("selectComplex")}
-            options={[
-              { value: NONE_COMPLEX_ID, label: t("complexNone") },
-              ...complexes.map((complex) => ({
-                value: complex.id,
-                label: `${complex.title} · ${complex.neighborhood}`,
-              })),
-            ]}
-          />
-          {complexes.length === 0 ? (
-            <p className="text-muted-foreground text-sm">
-              {t("noComplexes")}{" "}
-              <Link href="/list-a-complex" className="underline">
-                {t("createComplexLink")}
-              </Link>
-            </p>
-          ) : null}
-        </>
-      ) : null}
-      {selectedComplex ? null : (
-        <>
-          <FormTextField
-            control={control}
-            name="addressLine1"
-            label={t("address")}
-          />
-          <FormSelectField
-            control={control}
-            name="city"
-            label={t("city")}
-            options={[
-              { value: "cdmx", label: "CDMX" },
-              { value: "queretaro", label: "Querétaro" },
-            ]}
-          />
-          <FormTextField
-            control={control}
-            name="neighborhood"
-            label={t("neighborhood")}
-          />
-        </>
-      )}
-      <AddressPicker
-        city={selectedComplex?.city ?? city}
-        pin={
-          selectedComplex?.latitude != null &&
-          selectedComplex.longitude != null
-            ? {
-                latitude: selectedComplex.latitude,
-                longitude: selectedComplex.longitude,
-              }
-            : pin
-        }
-        locked={mapLocked}
-        searchPlaceholder={t("searchAddress")}
-        clickHint={t("mapHint")}
-        lockedHint={t("mapLocked")}
-        noResults={t("noAddressResults")}
-        onLocationChange={(hit) => {
-          setValue(
-            "addressLine1",
-            hit.addressLine1.length > 0
-              ? hit.addressLine1
-              : (selectedComplex?.addressLine1 ?? ""),
-            { shouldDirty: true, shouldValidate: true },
-          );
-          setValue("city", hit.city, {
-            shouldDirty: true,
-            shouldValidate: true,
-          });
-          setValue(
-            "neighborhood",
-            hit.neighborhood.length > 0
-              ? hit.neighborhood
-              : (selectedComplex?.neighborhood ?? ""),
-            { shouldDirty: true, shouldValidate: true },
-          );
-          setValue("latitude", hit.latitude, {
-            shouldDirty: true,
-            shouldValidate: true,
-          });
-          setValue("longitude", hit.longitude, {
-            shouldDirty: true,
-            shouldValidate: true,
-          });
-        }}
-      />
-      {formState.errors.latitude ? (
-        <FieldError errors={[formState.errors.latitude]} />
-      ) : null}
-    </FieldGroup>
+    <ListingSectionCard
+      step={5}
+      title={t("complex")}
+      description={t("complexHint")}
+    >
+      <FieldGroup>
+        <FormCheckboxField
+          control={control}
+          name="isComplex"
+          label={t("isComplex")}
+        />
+        {isComplex ? (
+          <>
+            <FormSelectField
+              control={control}
+              name="complexId"
+              label={t("selectComplex")}
+              options={[
+                { value: NONE_COMPLEX_ID, label: t("complexNone") },
+                ...complexes.map((complex) => ({
+                  value: complex.id,
+                  label: `${complex.title} · ${complex.neighborhood}`,
+                })),
+              ]}
+            />
+            {complexes.length === 0 ? (
+              <p className="text-muted-foreground text-sm">
+                {t("noComplexes")}{" "}
+                <Link href="/list-a-complex" className="underline">
+                  {t("createComplexLink")}
+                </Link>
+              </p>
+            ) : (
+              <p className="text-muted-foreground text-sm">
+                {t("addComplexHint")}{" "}
+                <Link href="/list-a-complex" className="underline">
+                  {t("createComplexLink")}
+                </Link>
+              </p>
+            )}
+          </>
+        ) : null}
+        {selectedComplex ? null : (
+          <>
+            <FormTextField
+              control={control}
+              name="addressLine1"
+              label={t("address")}
+            />
+            <FormSelectField
+              control={control}
+              name="city"
+              label={t("city")}
+              options={[
+                { value: "cdmx", label: "CDMX" },
+                { value: "queretaro", label: "Querétaro" },
+              ]}
+            />
+            <FormTextField
+              control={control}
+              name="neighborhood"
+              label={t("neighborhood")}
+            />
+          </>
+        )}
+        <AddressPicker
+          city={selectedComplex?.city ?? city}
+          pin={
+            selectedComplex?.latitude != null &&
+            selectedComplex.longitude != null
+              ? {
+                  latitude: selectedComplex.latitude,
+                  longitude: selectedComplex.longitude,
+                }
+              : pin
+          }
+          locked={mapLocked}
+          searchPlaceholder={t("searchAddress")}
+          clickHint={t("mapHint")}
+          lockedHint={t("mapLocked")}
+          noResults={t("noAddressResults")}
+          onLocationChange={(hit) => {
+            setValue(
+              "addressLine1",
+              hit.addressLine1.length > 0
+                ? hit.addressLine1
+                : (selectedComplex?.addressLine1 ?? ""),
+              { shouldDirty: true, shouldValidate: true },
+            );
+            setValue("city", hit.city, {
+              shouldDirty: true,
+              shouldValidate: true,
+            });
+            setValue(
+              "neighborhood",
+              hit.neighborhood.length > 0
+                ? hit.neighborhood
+                : (selectedComplex?.neighborhood ?? ""),
+              { shouldDirty: true, shouldValidate: true },
+            );
+            setValue("latitude", hit.latitude, {
+              shouldDirty: true,
+              shouldValidate: true,
+            });
+            setValue("longitude", hit.longitude, {
+              shouldDirty: true,
+              shouldValidate: true,
+            });
+          }}
+        />
+        {formState.errors.latitude ? (
+          <FieldError errors={[formState.errors.latitude]} />
+        ) : null}
+      </FieldGroup>
+    </ListingSectionCard>
   );
 }

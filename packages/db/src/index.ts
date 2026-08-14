@@ -9,5 +9,6 @@ export {
   gte,
   lte,
   isNull,
+  inArray,
   arrayContains,
 } from "drizzle-orm";

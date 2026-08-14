@@ -3,11 +3,11 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod/v4";
 
 import type { SQL } from "@acme/db";
+import type { db } from "@acme/db/client";
 import type {
   BathroomType,
   City,
   Cleanliness,
-  ComplexAmenity,
   CreateListingInput,
   Furnished,
   HouseholdGender,
@@ -15,7 +15,7 @@ import type {
   OvernightGuests,
   SmokingPolicy,
 } from "@acme/validators";
-import { hasAnyRole, hasRole, withRole } from "@acme/auth/roles";
+import { canManageComplexes, hasRole, withRole } from "@acme/auth/roles";
 import {
   and,
   arrayContains,
@@ -23,24 +23,26 @@ import {
   desc,
   eq,
   gte,
+  inArray,
   isNull,
   lte,
   or,
 } from "@acme/db";
 import { Complex, ComplexImage, Room, RoomImage, user } from "@acme/db/schema";
 import {
-  COMPLEX_AMENITIES,
   CreateComplexSchema,
   CreateListingSchema,
   LISTING_INCLUDES,
   ListListingsSchema,
+  MAX_AMENITY_LENGTH,
   UpdateComplexSchema,
   UpdateListingSchema,
 } from "@acme/validators";
 
 import type { GeocodeHit } from "../geocode";
+import { deleteBlobUrls } from "../blob";
 import { reverseGeocode, searchAddresses } from "../geocode";
-import { protectedProcedure, publicProcedure } from "../trpc";
+import { agentProcedure, protectedProcedure, publicProcedure } from "../trpc";
 
 export type { GeocodeHit };
 
@@ -87,6 +89,9 @@ export interface ListingSummary extends ListingRoomAttributes {
   rentPriceCents: number;
   currency: string;
   coverUrl: string | null;
+  addressLine1: string | null;
+  latitude: number | null;
+  longitude: number | null;
   complex: ListingComplexSummary;
   host: ListingHost | null;
 }
@@ -95,6 +100,20 @@ export interface ListingImage {
   id: string;
   url: string;
   alt: string | null;
+}
+
+export interface ListingDetailComplex {
+  id: string;
+  title: string;
+  description: string;
+  addressLine1: string;
+  city: City;
+  neighborhood: string;
+  latitude: number | null;
+  longitude: number | null;
+  petFriendly: boolean;
+  amenities: string[];
+  images: ListingImage[];
 }
 
 export interface ListingDetail extends ListingRoomAttributes {
@@ -106,9 +125,11 @@ export interface ListingDetail extends ListingRoomAttributes {
   addressLine1: string | null;
   city: City | null;
   neighborhood: string | null;
+  latitude: number | null;
+  longitude: number | null;
   coverUrl: string | null;
   images: ListingImage[];
-  complex: ListingComplexSummary | null;
+  complex: ListingDetailComplex | null;
   host: ListingHost | null;
 }
 
@@ -161,7 +182,7 @@ export interface RoomForEdit extends ListingRoomAttributes {
   latitude: number | null;
   longitude: number | null;
   rentPriceMxn: number;
-  roomImageUrl: string | null;
+  images: string[];
 }
 
 export interface ComplexForEdit {
@@ -174,8 +195,8 @@ export interface ComplexForEdit {
   latitude: number | null;
   longitude: number | null;
   petFriendly: boolean;
-  amenities: ComplexAmenity[];
-  imageUrl: string | null;
+  amenities: string[];
+  images: string[];
 }
 
 interface ListingRoomRow extends ListingRoomAttributes {
@@ -187,18 +208,22 @@ interface ListingRoomRow extends ListingRoomAttributes {
   addressLine1: string | null;
   city: City | null;
   neighborhood: string | null;
+  latitude: number | null;
+  longitude: number | null;
   images: ListingImage[];
   host: ListingHost | null | undefined;
   complex: {
     id: string;
     title: string;
+    description: string;
     city: City;
     neighborhood: string;
     petFriendly: boolean;
     amenities: string[];
     addressLine1: string;
-    images: { url: string }[];
-    host: ListingHost | null | undefined;
+    latitude: number | null;
+    longitude: number | null;
+    images: { id: string; url: string; alt: string | null }[];
   } | null;
 }
 
@@ -244,10 +269,27 @@ const toListingIncludes = (values: string[]): ListingInclude[] =>
     (LISTING_INCLUDES as readonly string[]).includes(item),
   );
 
-const toComplexAmenities = (values: string[]): ComplexAmenity[] =>
-  values.filter((item): item is ComplexAmenity =>
-    (COMPLEX_AMENITIES as readonly string[]).includes(item),
-  );
+const toComplexAmenities = (values: string[]): string[] => {
+  const seen = new Set<string>();
+  const amenities: string[] = [];
+
+  for (const value of values) {
+    const trimmed = value.trim();
+    if (trimmed.length === 0 || trimmed.length > MAX_AMENITY_LENGTH) {
+      continue;
+    }
+
+    const key = trimmed.toLowerCase();
+    if (seen.has(key)) {
+      continue;
+    }
+
+    seen.add(key);
+    amenities.push(trimmed);
+  }
+
+  return amenities;
+};
 
 const assertCanManage = (
   actor: { id: string; role?: string | null },
@@ -264,12 +306,46 @@ const assertCanManage = (
   throw new TRPCError({ code: "FORBIDDEN" });
 };
 
-const optionalImageUrl = (value: string | undefined): string | null => {
-  if (!value || value.length === 0) {
-    return null;
+const insertRoomImages = async (
+  database: typeof db,
+  roomId: string,
+  urls: readonly string[],
+  alt: string,
+): Promise<void> => {
+  if (urls.length === 0) {
+    return;
   }
 
-  return value;
+  await database.insert(RoomImage).values(
+    urls.map((url, index) => ({
+      roomId,
+      url,
+      alt,
+      kind: "room" as const,
+      sortOrder: index,
+    })),
+  );
+};
+
+const insertComplexImages = async (
+  database: typeof db,
+  complexId: string,
+  urls: readonly string[],
+  alt: string,
+): Promise<void> => {
+  if (urls.length === 0) {
+    return;
+  }
+
+  await database.insert(ComplexImage).values(
+    urls.map((url, index) => ({
+      complexId,
+      url,
+      alt,
+      kind: "exterior" as const,
+      sortOrder: index,
+    })),
+  );
 };
 
 interface RoomWriteValues {
@@ -364,6 +440,9 @@ const toListingSummary = (room: ListingRoomRow): ListingSummary | null => {
     rentPriceCents: room.rentPriceCents,
     currency: room.currency,
     coverUrl: room.images[0]?.url ?? room.complex?.images[0]?.url ?? null,
+    addressLine1: room.addressLine1 ?? room.complex?.addressLine1 ?? null,
+    latitude: room.latitude ?? room.complex?.latitude ?? null,
+    longitude: room.longitude ?? room.complex?.longitude ?? null,
     complex: {
       id: room.complex?.id ?? null,
       title: room.complex?.title ?? null,
@@ -372,7 +451,7 @@ const toListingSummary = (room: ListingRoomRow): ListingSummary | null => {
       petFriendly: room.complex?.petFriendly ?? room.acceptsPets,
       amenities: room.complex?.amenities ?? [],
     },
-    host: toListingHost(room.host ?? room.complex?.host),
+    host: toListingHost(room.host),
     ...toRoomAttributes(room),
   };
 };
@@ -383,7 +462,6 @@ const listingRelations = {
   complex: {
     with: {
       images: true,
-      host: true,
     },
   },
 } as const;
@@ -396,7 +474,22 @@ export const listingRouter = {
       const conditions: (SQL | undefined)[] = [eq(Room.status, "listed")];
 
       if (input?.city) {
-        conditions.push(eq(Room.city, input.city));
+        // Effective city matches listing cards: room.city ?? complex.city
+        conditions.push(
+          or(
+            eq(Room.city, input.city),
+            and(
+              isNull(Room.city),
+              inArray(
+                Room.complexId,
+                ctx.db
+                  .select({ id: Complex.id })
+                  .from(Complex)
+                  .where(eq(Complex.city, input.city)),
+              ),
+            ),
+          ),
+        );
       }
       if (input?.minRentMxn !== undefined) {
         conditions.push(
@@ -474,7 +567,7 @@ export const listingRouter = {
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }): Promise<ListingDetail | null> => {
       const room = await ctx.db.query.Room.findFirst({
-        where: eq(Room.id, input.id),
+        where: and(eq(Room.id, input.id), eq(Room.status, "listed")),
         with: listingRelations,
       });
 
@@ -485,7 +578,22 @@ export const listingRouter = {
       const city = room.city ?? room.complex?.city ?? null;
       const neighborhood =
         room.neighborhood ?? room.complex?.neighborhood ?? null;
-      const cover = room.images[0]?.url ?? room.complex?.images[0]?.url ?? null;
+      const roomImages = [...room.images]
+        .sort((a, b) => a.sortOrder - b.sortOrder)
+        .map((image) => ({
+          id: image.id,
+          url: image.url,
+          alt: image.alt,
+        }));
+      const complexImages = [...(room.complex?.images ?? [])]
+        .sort((a, b) => a.sortOrder - b.sortOrder)
+        .map((image) => ({
+          id: image.id,
+          url: image.url,
+          alt: image.alt,
+        }));
+      const images = roomImages.length > 0 ? roomImages : complexImages;
+      const cover = images[0]?.url ?? null;
 
       return {
         id: room.id,
@@ -496,32 +604,32 @@ export const listingRouter = {
         addressLine1: room.addressLine1 ?? room.complex?.addressLine1 ?? null,
         city,
         neighborhood,
+        latitude: room.latitude ?? room.complex?.latitude ?? null,
+        longitude: room.longitude ?? room.complex?.longitude ?? null,
         coverUrl: cover,
-        images: room.images.map((image) => ({
-          id: image.id,
-          url: image.url,
-          alt: image.alt,
-        })),
-        complex:
-          city && neighborhood
-            ? {
-                id: room.complex?.id ?? null,
-                title: room.complex?.title ?? null,
-                city,
-                neighborhood,
-                petFriendly: room.complex?.petFriendly ?? room.acceptsPets,
-                amenities: room.complex?.amenities ?? [],
-              }
-            : null,
-        host: toListingHost(room.host ?? room.complex?.host),
+        images,
+        complex: room.complex
+          ? {
+              id: room.complex.id,
+              title: room.complex.title,
+              description: room.complex.description,
+              addressLine1: room.complex.addressLine1,
+              city: room.complex.city,
+              neighborhood: room.complex.neighborhood,
+              latitude: room.complex.latitude,
+              longitude: room.complex.longitude,
+              petFriendly: room.complex.petFriendly,
+              amenities: room.complex.amenities,
+              images: complexImages,
+            }
+          : null,
+        host: toListingHost(room.host),
         ...toRoomAttributes(room),
       };
     }),
 
   complexes: protectedProcedure.query(
     async ({ ctx }): Promise<ComplexOption[]> => {
-      const showAll = hasAnyRole(ctx.session.user.role, ["admin", "agent"]);
-
       return ctx.db
         .select({
           id: Complex.id,
@@ -535,7 +643,6 @@ export const listingRouter = {
           amenities: Complex.amenities,
         })
         .from(Complex)
-        .where(showAll ? undefined : eq(Complex.hostId, ctx.session.user.id))
         .orderBy(asc(Complex.title));
     },
   ),
@@ -546,8 +653,10 @@ export const listingRouter = {
     }): Promise<{
       rooms: HostRoomSummary[];
       complexes: HostComplexSummary[];
+      canManageComplexes: boolean;
     }> => {
       const hostId = ctx.session.user.id;
+      const canManage = canManageComplexes(ctx.session.user.role);
 
       const rooms = await ctx.db.query.Room.findMany({
         where: eq(Room.hostId, hostId),
@@ -560,11 +669,12 @@ export const listingRouter = {
         orderBy: [desc(Room.createdAt)],
       });
 
-      const complexes = await ctx.db.query.Complex.findMany({
-        where: eq(Complex.hostId, hostId),
-        with: { images: true },
-        orderBy: [desc(Complex.createdAt)],
-      });
+      const complexes = canManage
+        ? await ctx.db.query.Complex.findMany({
+            with: { images: true },
+            orderBy: [desc(Complex.createdAt)],
+          })
+        : [];
 
       return {
         rooms: rooms.map((room) => ({
@@ -582,6 +692,7 @@ export const listingRouter = {
           city: complex.city,
           coverUrl: complex.images[0]?.url ?? null,
         })),
+        canManageComplexes: canManage,
       };
     },
   ),
@@ -627,7 +738,9 @@ export const listingRouter = {
         latitude: room.latitude ?? room.complex?.latitude ?? null,
         longitude: room.longitude ?? room.complex?.longitude ?? null,
         rentPriceMxn: room.rentPriceCents / 100,
-        roomImageUrl: room.images[0]?.url ?? null,
+        images: [...room.images]
+          .sort((a, b) => a.sortOrder - b.sortOrder)
+          .map((image) => image.url),
         ...toRoomAttributes({
           ...room,
           includes: toListingIncludes(room.includes),
@@ -635,7 +748,7 @@ export const listingRouter = {
       };
     }),
 
-  complexForEdit: protectedProcedure
+  complexForEdit: agentProcedure
     .input(z.object({ id: z.uuid() }))
     .query(async ({ ctx, input }): Promise<ComplexForEdit> => {
       const complex = await ctx.db.query.Complex.findFirst({
@@ -646,8 +759,6 @@ export const listingRouter = {
       if (!complex) {
         throw new TRPCError({ code: "NOT_FOUND" });
       }
-
-      assertCanManage(ctx.session.user, complex.hostId);
 
       return {
         id: complex.id,
@@ -660,7 +771,9 @@ export const listingRouter = {
         longitude: complex.longitude,
         petFriendly: complex.petFriendly,
         amenities: toComplexAmenities(complex.amenities),
-        imageUrl: complex.images[0]?.url ?? null,
+        images: [...complex.images]
+          .sort((a, b) => a.sortOrder - b.sortOrder)
+          .map((image) => image.url),
       };
     }),
 
@@ -690,16 +803,7 @@ export const listingRouter = {
         });
       }
 
-      const imageUrl = optionalImageUrl(input.roomImageUrl);
-      if (imageUrl) {
-        await ctx.db.insert(RoomImage).values({
-          roomId: room.id,
-          url: imageUrl,
-          alt: input.roomTitle,
-          kind: "room",
-          sortOrder: 0,
-        });
-      }
+      await insertRoomImages(ctx.db, room.id, input.images, input.roomTitle);
 
       await ctx.db
         .update(user)
@@ -716,6 +820,7 @@ export const listingRouter = {
     .mutation(async ({ ctx, input }): Promise<CreateListingResult> => {
       const existing = await ctx.db.query.Room.findFirst({
         where: eq(Room.id, input.id),
+        with: { images: true },
       });
 
       if (!existing) {
@@ -750,30 +855,23 @@ export const listingRouter = {
         });
       }
 
-      const imageUrl = optionalImageUrl(input.roomImageUrl);
-      if (imageUrl) {
-        await ctx.db.delete(RoomImage).where(eq(RoomImage.roomId, room.id));
-        await ctx.db.insert(RoomImage).values({
-          roomId: room.id,
-          url: imageUrl,
-          alt: input.roomTitle,
-          kind: "room",
-          sortOrder: 0,
-        });
-      }
+      const previousUrls = existing.images.map((image) => image.url);
+      const nextUrls = new Set(input.images);
+      const removedUrls = previousUrls.filter((url) => !nextUrls.has(url));
+
+      await ctx.db.delete(RoomImage).where(eq(RoomImage.roomId, room.id));
+      await insertRoomImages(ctx.db, room.id, input.images, input.roomTitle);
+      await deleteBlobUrls(removedUrls);
 
       return { complexId: room.complexId, roomId: room.id };
     }),
 
-  createComplex: protectedProcedure
+  createComplex: agentProcedure
     .input(CreateComplexSchema)
     .mutation(async ({ ctx, input }): Promise<CreateComplexResult> => {
-      const hostId = ctx.session.user.id;
-
       const [complex] = await ctx.db
         .insert(Complex)
         .values({
-          hostId,
           title: input.title,
           description: input.description,
           addressLine1: input.addressLine1,
@@ -782,7 +880,7 @@ export const listingRouter = {
           country: "MX",
           latitude: input.latitude ?? null,
           longitude: input.longitude ?? null,
-          amenities: input.amenities,
+          amenities: toComplexAmenities(input.amenities),
           petFriendly: input.petFriendly,
         })
         .returning();
@@ -794,39 +892,22 @@ export const listingRouter = {
         });
       }
 
-      const imageUrl = optionalImageUrl(input.imageUrl);
-      if (imageUrl) {
-        await ctx.db.insert(ComplexImage).values({
-          complexId: complex.id,
-          url: imageUrl,
-          alt: input.title,
-          kind: "exterior",
-          sortOrder: 0,
-        });
-      }
-
-      await ctx.db
-        .update(user)
-        .set({
-          role: withRole(ctx.session.user.role, "host"),
-        })
-        .where(eq(user.id, hostId));
+      await insertComplexImages(ctx.db, complex.id, input.images, input.title);
 
       return { complexId: complex.id };
     }),
 
-  updateComplex: protectedProcedure
+  updateComplex: agentProcedure
     .input(UpdateComplexSchema)
     .mutation(async ({ ctx, input }): Promise<CreateComplexResult> => {
       const existing = await ctx.db.query.Complex.findFirst({
         where: eq(Complex.id, input.id),
+        with: { images: true },
       });
 
       if (!existing) {
         throw new TRPCError({ code: "NOT_FOUND" });
       }
-
-      assertCanManage(ctx.session.user, existing.hostId);
 
       const [complex] = await ctx.db
         .update(Complex)
@@ -838,7 +919,7 @@ export const listingRouter = {
           neighborhood: input.neighborhood,
           latitude: input.latitude ?? null,
           longitude: input.longitude ?? null,
-          amenities: input.amenities,
+          amenities: toComplexAmenities(input.amenities),
           petFriendly: input.petFriendly,
         })
         .where(eq(Complex.id, input.id))
@@ -851,19 +932,15 @@ export const listingRouter = {
         });
       }
 
-      const imageUrl = optionalImageUrl(input.imageUrl);
-      if (imageUrl) {
-        await ctx.db
-          .delete(ComplexImage)
-          .where(eq(ComplexImage.complexId, complex.id));
-        await ctx.db.insert(ComplexImage).values({
-          complexId: complex.id,
-          url: imageUrl,
-          alt: input.title,
-          kind: "exterior",
-          sortOrder: 0,
-        });
-      }
+      const previousUrls = existing.images.map((image) => image.url);
+      const nextUrls = new Set(input.images);
+      const removedUrls = previousUrls.filter((url) => !nextUrls.has(url));
+
+      await ctx.db
+        .delete(ComplexImage)
+        .where(eq(ComplexImage.complexId, complex.id));
+      await insertComplexImages(ctx.db, complex.id, input.images, input.title);
+      await deleteBlobUrls(removedUrls);
 
       return { complexId: complex.id };
     }),

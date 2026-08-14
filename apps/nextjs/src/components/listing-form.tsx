@@ -86,7 +86,7 @@ export function ListingForm({
   return (
     <FormProvider {...form}>
       <form
-        className="mx-auto max-w-xl space-y-8"
+        className="mx-auto max-w-2xl space-y-6"
         noValidate
         onSubmit={form.handleSubmit(onSubmit)}
       >

@@ -22,6 +22,7 @@ export function HostListings(): JSX.Element {
   const query = useQuery(trpc.listing.mine.queryOptions());
   const rooms = query.data?.rooms ?? [];
   const complexes = query.data?.complexes ?? [];
+  const canManageComplexes = query.data?.canManageComplexes ?? false;
 
   if (query.isPending) {
     return <p className="text-muted-foreground">{t("loading")}</p>;
@@ -33,9 +34,11 @@ export function HostListings(): JSX.Element {
         <Button asChild>
           <Link href="/list-a-room">{t("createRoom")}</Link>
         </Button>
-        <Button variant="outline" asChild>
-          <Link href="/list-a-complex">{t("createComplex")}</Link>
-        </Button>
+        {canManageComplexes ? (
+          <Button variant="outline" asChild>
+            <Link href="/list-a-complex">{t("createComplex")}</Link>
+          </Button>
+        ) : null}
       </div>
 
       <section className="space-y-4">
@@ -66,32 +69,41 @@ export function HostListings(): JSX.Element {
         )}
       </section>
 
-      <section className="space-y-4">
-        <h2 className="text-xl font-semibold">{t("complexes")}</h2>
-        {complexes.length === 0 ? (
-          <p className="text-muted-foreground text-sm">{t("emptyComplexes")}</p>
-        ) : (
-          <div className="grid gap-4 sm:grid-cols-2">
-            {complexes.map((complex) => (
-              <Card key={complex.id}>
-                <CardHeader>
-                  <CardTitle>{complex.title}</CardTitle>
-                  <CardDescription>
-                    {complex.neighborhood} · {complex.city}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button variant="outline" size="sm" asChild>
-                    <Link href={`/host/complexes/${complex.id}/edit`}>
-                      {t("edit")}
-                    </Link>
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
+      {canManageComplexes ? (
+        <section className="space-y-4">
+          <div>
+            <h2 className="text-xl font-semibold">{t("complexes")}</h2>
+            <p className="text-muted-foreground text-sm">
+              {t("complexesHint")}
+            </p>
           </div>
-        )}
-      </section>
+          {complexes.length === 0 ? (
+            <p className="text-muted-foreground text-sm">
+              {t("emptyComplexes")}
+            </p>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2">
+              {complexes.map((complex) => (
+                <Card key={complex.id}>
+                  <CardHeader>
+                    <CardTitle>{complex.title}</CardTitle>
+                    <CardDescription>
+                      {complex.neighborhood} · {complex.city}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Button variant="outline" size="sm" asChild>
+                      <Link href={`/host/complexes/${complex.id}/edit`}>
+                        {t("edit")}
+                      </Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </section>
+      ) : null}
     </div>
   );
 }

@@ -27,6 +27,9 @@ interface FormFieldBase<T extends FieldValues> {
   label: string;
 }
 
+export const checkboxRowClassName =
+  "rounded-lg border border-input bg-muted/30 px-3 py-2.5";
+
 export function FormTextField<T extends FieldValues>({
   control,
   name,
@@ -192,7 +195,11 @@ export function FormCheckboxField<T extends FieldValues>({
       control={control}
       name={name}
       render={({ field, fieldState }) => (
-        <Field orientation="horizontal" data-invalid={fieldState.invalid}>
+        <Field
+          orientation="horizontal"
+          data-invalid={fieldState.invalid}
+          className={checkboxRowClassName}
+        >
           <Checkbox
             id={field.name}
             name={field.name}

@@ -51,11 +51,6 @@ export const cleanlinessEnum = pgEnum("cleanliness", [
 
 export const Complex = pgTable("complex", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
-  hostId: t
-    .text()
-    .notNull()
-    .references(() => user.id, { onDelete: "cascade" }),
-  agentId: t.text().references(() => user.id, { onDelete: "set null" }),
   title: t.varchar({ length: 256 }).notNull(),
   description: t.text().notNull(),
   addressLine1: t.varchar({ length: 256 }).notNull(),
@@ -188,17 +183,7 @@ export const RoommeRating = pgTable(
   ],
 );
 
-export const complexRelations = relations(Complex, ({ one, many }) => ({
-  host: one(user, {
-    fields: [Complex.hostId],
-    references: [user.id],
-    relationName: "complexHost",
-  }),
-  agent: one(user, {
-    fields: [Complex.agentId],
-    references: [user.id],
-    relationName: "complexAgent",
-  }),
+export const complexRelations = relations(Complex, ({ many }) => ({
   images: many(ComplexImage),
   rooms: many(Room),
 }));
@@ -244,8 +229,6 @@ export const stayRelations = relations(Stay, ({ one, many }) => ({
 }));
 
 export const userRelations = relations(user, ({ many }) => ({
-  hostedComplexes: many(Complex, { relationName: "complexHost" }),
-  agentComplexes: many(Complex, { relationName: "complexAgent" }),
   hostedRooms: many(Room, { relationName: "roomHost" }),
   stays: many(Stay),
   ratingsGiven: many(RoommeRating, { relationName: "ratingRater" }),
@@ -277,8 +260,6 @@ export const CreateComplexSchema = createInsertSchema(Complex, {
   city: z.enum(["queretaro", "cdmx"]),
 }).omit({
   id: true,
-  hostId: true,
-  agentId: true,
   createdAt: true,
   updatedAt: true,
 });

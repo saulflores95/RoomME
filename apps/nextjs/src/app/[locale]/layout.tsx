@@ -14,6 +14,7 @@ import { Toaster } from "@acme/ui/toast";
 
 import { SiteHeader } from "~/components/site-header";
 import { routing } from "~/i18n/routing";
+import { getSiteUrl } from "~/lib/site-url";
 import { TRPCReactProvider } from "~/trpc/react";
 
 import "../styles.css";
@@ -52,6 +53,7 @@ export async function generateMetadata({
   );
 
   return {
+    metadataBase: new URL(getSiteUrl()),
     title: t("title"),
     description: t("description"),
     alternates: {

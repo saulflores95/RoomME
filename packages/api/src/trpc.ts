@@ -10,7 +10,8 @@ import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { z, ZodError } from "zod/v4";
 
-import { hasAnyRole } from "@acme/auth/roles";
+import type { Role } from "@acme/auth/roles";
+import { COMPLEX_MANAGER_ROLES, hasAnyRole } from "@acme/auth/roles";
 import { db } from "@acme/db/client";
 
 export interface AppUser {
@@ -140,7 +141,7 @@ export const protectedProcedure = t.procedure
     });
   });
 
-const requireRoles = (roles: readonly ("host" | "agent" | "admin")[]) =>
+const requireRoles = (roles: readonly Role[]) =>
   t.procedure.use(timingMiddleware).use(({ ctx, next }) => {
     if (!ctx.session?.user) {
       throw new TRPCError({ code: "UNAUTHORIZED" });
@@ -158,4 +159,5 @@ const requireRoles = (roles: readonly ("host" | "agent" | "admin")[]) =>
   });
 
 export const hostProcedure = requireRoles(["host", "agent", "admin"]);
+export const agentProcedure = requireRoles(COMPLEX_MANAGER_ROLES);
 export const adminProcedure = requireRoles(["admin"]);

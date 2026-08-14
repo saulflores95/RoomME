@@ -7,7 +7,7 @@ export function NativeSelect({
   return (
     <select
       className={cn(
-        "border-input h-9 w-full rounded-md border bg-transparent px-3 text-sm",
+        "border-input text-foreground bg-muted/40 h-9 w-full rounded-md border px-3 text-sm",
         className,
       )}
       {...props}

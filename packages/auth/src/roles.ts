@@ -26,6 +26,11 @@ export const hasAnyRole = (
   return wanted.some((value) => current.includes(value));
 };
 
+export const COMPLEX_MANAGER_ROLES = ["agent", "admin"] as const;
+
+export const canManageComplexes = (role: string | null | undefined): boolean =>
+  hasAnyRole(role, COMPLEX_MANAGER_ROLES);
+
 export const withRole = (
   role: string | null | undefined,
   extra: Role,

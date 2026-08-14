@@ -1,92 +1,132 @@
-import type { ReactNode } from "react";
+"use client";
 
-import { NativeSelect } from "~/components/listing/native-select";
+import type { JSX, ReactNode } from "react";
 
-export const parseOptionalBoolean = (value: string): boolean | undefined => {
-  if (value === "true") {
+import { cn } from "@acme/ui";
+import { Label } from "@acme/ui/label";
+import { RadioGroup, RadioGroupItem } from "@acme/ui/radio-group";
+import { Separator } from "@acme/ui/separator";
+
+export const RENT_MIN = 0;
+export const RENT_MAX = 50_000;
+export const RENT_STEP = 500;
+export const AGE_MIN = 18;
+export const AGE_MAX = 99;
+
+export const countActiveFilters = (value: Record<string, unknown>): number =>
+  Object.values(value).filter((item) => {
+    if (item === undefined || item === null) {
+      return false;
+    }
+    if (Array.isArray(item)) {
+      return item.length > 0;
+    }
     return true;
-  }
-  if (value === "false") {
-    return false;
-  }
-  return undefined;
-};
+  }).length;
 
-export const parseOptionalNumber = (value: string): number | undefined => {
-  if (value.trim().length === 0) {
-    return undefined;
-  }
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : undefined;
-};
-
-export function FilterField({
-  label,
+export function FilterSection({
+  title,
+  trailing,
   children,
 }: {
-  label: string;
+  title: string;
+  trailing?: ReactNode;
   children: ReactNode;
-}) {
+}): JSX.Element {
   return (
-    <label className="space-y-1 text-sm">
-      <span>{label}</span>
+    <section className="space-y-3 py-5">
+      <div className="flex items-center justify-between gap-3">
+        <h3 className="text-base font-semibold">{title}</h3>
+        {trailing}
+      </div>
       {children}
-    </label>
+    </section>
   );
 }
 
-export function OptionalBooleanSelect({
-  value,
-  onChange,
-  anyLabel,
-  yesLabel,
-  noLabel,
+export function FilterDivider(): JSX.Element {
+  return <Separator />;
+}
+
+export function FilterPill({
+  selected,
+  children,
+  onClick,
 }: {
-  value: boolean | undefined;
-  onChange: (next: boolean | undefined) => void;
-  anyLabel: string;
-  yesLabel: string;
-  noLabel: string;
-}) {
+  selected: boolean;
+  children: ReactNode;
+  onClick: () => void;
+}): JSX.Element {
   return (
-    <NativeSelect
-      value={value === undefined ? "" : value ? "true" : "false"}
-      onChange={(event) => {
-        onChange(parseOptionalBoolean(event.target.value));
-      }}
+    <button
+      type="button"
+      aria-pressed={selected}
+      className={cn(
+        "inline-flex min-h-10 items-center justify-center rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
+        selected
+          ? "border-primary bg-primary text-primary-foreground"
+          : "border-input bg-background text-foreground hover:bg-muted/60",
+      )}
+      onClick={onClick}
     >
-      <option value="">{anyLabel}</option>
-      <option value="true">{yesLabel}</option>
-      <option value="false">{noLabel}</option>
-    </NativeSelect>
+      {children}
+    </button>
   );
 }
 
-export function OptionalEnumSelect<T extends string>({
+export function FilterPillGrid({
+  children,
+}: {
+  children: ReactNode;
+}): JSX.Element {
+  return (
+    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">{children}</div>
+  );
+}
+
+export function FilterRadioOption({
+  value,
+  label,
+  id,
+}: {
+  value: string;
+  label: string;
+  id: string;
+}): JSX.Element {
+  return (
+    <Label
+      htmlFor={id}
+      className="border-input hover:bg-muted/40 flex cursor-pointer items-center gap-3 rounded-lg border px-3 py-3 font-normal"
+    >
+      <RadioGroupItem value={value} id={id} />
+      <span>{label}</span>
+    </Label>
+  );
+}
+
+export function FilterRadioGrid({
   value,
   onChange,
-  anyLabel,
   options,
 }: {
-  value: T | undefined;
-  onChange: (next: T | undefined) => void;
-  anyLabel: string;
-  options: { value: T; label: string }[];
-}) {
+  value: string;
+  onChange: (next: string) => void;
+  options: { value: string; label: string }[];
+}): JSX.Element {
   return (
-    <NativeSelect
-      value={value ?? ""}
-      onChange={(event) => {
-        const next = event.target.value;
-        onChange(next.length > 0 ? (next as T) : undefined);
-      }}
+    <RadioGroup
+      value={value}
+      onValueChange={onChange}
+      className="grid grid-cols-2 gap-2"
     >
-      <option value="">{anyLabel}</option>
       {options.map((option) => (
-        <option key={option.value} value={option.value}>
-          {option.label}
-        </option>
+        <FilterRadioOption
+          key={option.value}
+          id={`filter-radio-${option.value}`}
+          value={option.value}
+          label={option.label}
+        />
       ))}
-    </NativeSelect>
+    </RadioGroup>
   );
 }

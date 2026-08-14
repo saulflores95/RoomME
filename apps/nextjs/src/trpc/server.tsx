@@ -52,3 +52,11 @@ export function prefetch<T extends ReturnType<TRPCQueryOptions<any>>>(
     void queryClient.prefetchQuery(queryOptions);
   }
 }
+
+export function fetchQuery<TData>(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  queryOptions: ReturnType<TRPCQueryOptions<any>>,
+): Promise<TData> {
+  const queryClient = getQueryClient();
+  return queryClient.fetchQuery(queryOptions) as Promise<TData>;
+}

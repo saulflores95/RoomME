@@ -18,12 +18,14 @@ export default async function RoomsPage({
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("rooms");
-  prefetch(trpc.listing.list.queryOptions({ limit: 24 }));
+  prefetch(trpc.listing.list.queryOptions({ limit: 48 }));
 
   return (
     <HydrateClient>
-      <main className="mx-auto max-w-6xl px-4 py-12">
-        <h1 className="mb-8 text-4xl font-bold">{t("title")}</h1>
+      <main className="mx-auto w-full max-w-[1400px] px-4 py-6 sm:py-8">
+        <h1 className="mb-4 text-3xl font-bold sm:mb-6 sm:text-4xl">
+          {t("title")}
+        </h1>
         <Suspense>
           <RoomsBrowser />
         </Suspense>

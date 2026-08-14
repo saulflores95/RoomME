@@ -17,6 +17,12 @@ export const env = createEnv({
    */
   server: {
     POSTGRES_URL: z.url(),
+    BLOB_READ_WRITE_TOKEN: z
+      .string()
+      .optional()
+      .transform((value) =>
+        value !== undefined && value.length > 0 ? value : undefined,
+      ),
   },
 
   /**

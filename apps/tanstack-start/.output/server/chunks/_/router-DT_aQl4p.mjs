@@ -1,45 +1,71 @@
-import { jsx, jsxs } from "react/jsx-runtime";
-import { QueryClient } from "@tanstack/react-query";
-import { createRouter, createRootRouteWithContext, createFileRoute, lazyRouteComponent, Outlet, HeadContent, Scripts } from "@tanstack/react-router";
-import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
-import { createTRPCOptionsProxy, createTRPCContext as createTRPCContext$1 } from "@trpc/tanstack-react-query";
-import SuperJSON from "superjson";
-import { createTRPCClient, unstable_localLink } from "@trpc/client";
-import { initTRPC, TRPCError } from "@trpc/server";
-import * as z from "zod/v4";
-import { z as z$1, ZodError } from "zod/v4";
-import os from "os";
+import crypto$1 from "crypto";
 import fs from "fs";
 import net from "net";
-import require$$4 from "tls";
-import crypto$1 from "crypto";
-import require$$0$2 from "stream";
+import os from "os";
 import { performance } from "perf_hooks";
-import { reactStartCookies } from "better-auth/react-start";
-import { createAuthEndpoint, createAuthMiddleware, APIError } from "better-auth/api";
-import { z as z$2 } from "zod";
+import require$$0$2 from "stream";
+import require$$4 from "tls";
+import * as React from "react";
+import React__default, {
+  createElement,
+  forwardRef,
+  useLayoutEffect,
+  useState,
+} from "react";
+import { jsx, jsxs } from "react/jsx-runtime";
+import { createEnv } from "@t3-oss/env-core";
+import { vercel } from "@t3-oss/env-core/presets-zod";
+import { QueryClient } from "@tanstack/react-query";
+import {
+  createFileRoute,
+  createRootRouteWithContext,
+  createRouter,
+  HeadContent,
+  lazyRouteComponent,
+  Outlet,
+  Scripts,
+} from "@tanstack/react-router";
+import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
+import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
+import { createTRPCClient, unstable_localLink } from "@trpc/client";
+import { initTRPC, TRPCError } from "@trpc/server";
+import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
+import {
+  createTRPCContext as createTRPCContext$1,
+  createTRPCOptionsProxy,
+} from "@trpc/tanstack-react-query";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import {
+  APIError,
+  createAuthEndpoint,
+  createAuthMiddleware,
+} from "better-auth/api";
 import { admin as admin$1 } from "better-auth/plugins";
 import { createAccessControl } from "better-auth/plugins/access";
 import { adminAc, defaultStatements } from "better-auth/plugins/admin/access";
-import { createEnv } from "@t3-oss/env-core";
-import { vercel } from "@t3-oss/env-core/presets-zod";
-import { g as getRequestHeaders } from "./server.mjs";
-import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
-import * as React from "react";
-import React__default, { forwardRef, createElement, useLayoutEffect, useState } from "react";
+import { reactStartCookies } from "better-auth/react-start";
 import * as ReactDOM from "react-dom";
 import ReactDOM__default from "react-dom";
-import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
+import SuperJSON from "superjson";
+import { z as z$2 } from "zod";
+import * as z from "zod/v4";
+import { z as z$1, ZodError } from "zod/v4";
+
+import { g as getRequestHeaders } from "./server.mjs";
+
 import "node:async_hooks";
 import "@tanstack/react-router/ssr/server";
+
 const ROLES = ["roomie", "host", "agent", "admin"];
 const parseRoles = (role) => {
   if (!role) {
     return [];
   }
-  return role.split(",").map((value) => value.trim()).filter((value) => ROLES.includes(value));
+  return role
+    .split(",")
+    .map((value) => value.trim())
+    .filter((value) => ROLES.includes(value));
 };
 const hasRole = (role, wanted) => parseRoles(role).includes(wanted);
 const hasAnyRole = (role, wanted) => {
@@ -56,7 +82,9 @@ const withRole = (role, extra) => {
   }
   return [...current, extra].join(",");
 };
-const originCache = /* @__PURE__ */ new Map(), originStackCache = /* @__PURE__ */ new Map(), originError = Symbol("OriginError");
+const originCache = /* @__PURE__ */ new Map(),
+  originStackCache = /* @__PURE__ */ new Map(),
+  originError = Symbol("OriginError");
 const CLOSE = {};
 class Query extends Promise {
   constructor(strings, args, handler2, canceller, options = {}) {
@@ -73,22 +101,32 @@ class Query extends Promise {
     this.options = options;
     this.state = null;
     this.statement = null;
-    this.resolve = (x) => (this.active = false, resolve(x));
-    this.reject = (x) => (this.active = false, reject(x));
+    this.resolve = (x) => ((this.active = false), resolve(x));
+    this.reject = (x) => ((this.active = false), reject(x));
     this.active = false;
     this.cancelled = null;
     this.executed = false;
     this.signature = "";
-    this[originError] = this.handler.debug ? new Error() : this.tagged && cachedError(this.strings);
+    this[originError] = this.handler.debug
+      ? new Error()
+      : this.tagged && cachedError(this.strings);
   }
   get origin() {
-    return (this.handler.debug ? this[originError].stack : this.tagged && originStackCache.has(this.strings) ? originStackCache.get(this.strings) : originStackCache.set(this.strings, this[originError].stack).get(this.strings)) || "";
+    return (
+      (this.handler.debug
+        ? this[originError].stack
+        : this.tagged && originStackCache.has(this.strings)
+          ? originStackCache.get(this.strings)
+          : originStackCache
+              .set(this.strings, this[originError].stack)
+              .get(this.strings)) || ""
+    );
   }
   static get [Symbol.species]() {
     return Promise;
   }
   cancel() {
-    return this.canceller && (this.canceller(this), this.canceller = null);
+    return this.canceller && (this.canceller(this), (this.canceller = null));
   }
   simple() {
     this.options.simple = true;
@@ -112,22 +150,23 @@ class Query extends Promise {
       rows = 1;
     }
     this.cursorRows = rows;
-    if (typeof fn === "function")
-      return this.cursorFn = fn, this;
+    if (typeof fn === "function") return ((this.cursorFn = fn), this);
     let prev;
     return {
       [Symbol.asyncIterator]: () => ({
         next: () => {
-          if (this.executed && !this.active)
-            return { done: true };
+          if (this.executed && !this.active) return { done: true };
           prev && prev();
           const promise = new Promise((resolve, reject) => {
             this.cursorFn = (value) => {
               resolve({ value, done: false });
-              return new Promise((r2) => prev = r2);
+              return new Promise((r2) => (prev = r2));
             };
-            this.resolve = () => (this.active = false, resolve({ done: true }));
-            this.reject = (x) => (this.active = false, reject(x));
+            this.resolve = () => (
+              (this.active = false),
+              resolve({ done: true })
+            );
+            this.reject = (x) => ((this.active = false), reject(x));
           });
           this.execute();
           return promise;
@@ -135,8 +174,8 @@ class Query extends Promise {
         return() {
           prev && prev(CLOSE);
           return { done: true };
-        }
-      })
+        },
+      }),
     };
   }
   describe() {
@@ -161,7 +200,7 @@ class Query extends Promise {
     return this;
   }
   async handle() {
-    !this.executed && (this.executed = true) && await 1 && this.handler(this);
+    !this.executed && (this.executed = true) && (await 1) && this.handler(this);
   }
   execute() {
     this.handle();
@@ -181,8 +220,7 @@ class Query extends Promise {
   }
 }
 function cachedError(xs) {
-  if (originCache.has(xs))
-    return originCache.get(xs);
+  if (originCache.has(xs)) return originCache.get(xs);
   const x = Error.stackTraceLimit;
   Error.stackTraceLimit = 4;
   originCache.set(xs, new Error());
@@ -200,7 +238,7 @@ const Errors = {
   connection,
   postgres,
   generic,
-  notSupported
+  notSupported,
 };
 function connection(x, options, socket) {
   const { host: host2, port } = socket || options;
@@ -209,9 +247,9 @@ function connection(x, options, socket) {
     {
       code: x,
       errno: x,
-      address: options.path || host2
+      address: options.path || host2,
     },
-    options.path ? {} : { port }
+    options.path ? {} : { port },
   );
   Error.captureStackTrace(error, connection);
   return error;
@@ -227,13 +265,10 @@ function generic(code, message) {
   return error;
 }
 function notSupported(x) {
-  const error = Object.assign(
-    new Error(x + " (B) is not supported"),
-    {
-      code: "MESSAGE_NOT_SUPPORTED",
-      name: x
-    }
-  );
+  const error = Object.assign(new Error(x + " (B) is not supported"), {
+    code: "MESSAGE_NOT_SUPPORTED",
+    name: x,
+  });
   Error.captureStackTrace(error, notSupported);
   return error;
 }
@@ -242,38 +277,38 @@ const types = {
     to: 25,
     from: null,
     // defaults to string
-    serialize: (x) => "" + x
+    serialize: (x) => "" + x,
   },
   number: {
     to: 0,
     from: [21, 23, 26, 700, 701],
     serialize: (x) => "" + x,
-    parse: (x) => +x
+    parse: (x) => +x,
   },
   json: {
     to: 114,
     from: [114, 3802],
     serialize: (x) => JSON.stringify(x),
-    parse: (x) => JSON.parse(x)
+    parse: (x) => JSON.parse(x),
   },
   boolean: {
     to: 16,
     from: 16,
-    serialize: (x) => x === true ? "t" : "f",
-    parse: (x) => x === "t"
+    serialize: (x) => (x === true ? "t" : "f"),
+    parse: (x) => x === "t",
   },
   date: {
     to: 1184,
     from: [1082, 1114, 1184],
     serialize: (x) => (x instanceof Date ? x : new Date(x)).toISOString(),
-    parse: (x) => new Date(x)
+    parse: (x) => new Date(x),
   },
   bytea: {
     to: 17,
     from: 17,
     serialize: (x) => "\\x" + Buffer.from(x).toString("hex"),
-    parse: (x) => Buffer.from(x.slice(2), "hex")
-  }
+    parse: (x) => Buffer.from(x.slice(2), "hex"),
+  },
 };
 class NotTagged {
   then() {
@@ -307,58 +342,116 @@ class Builder extends NotTagged {
     this.rest = rest;
   }
   build(before, parameters, types2, options) {
-    const keyword = builders.map(([x, fn]) => ({ fn, i: before.search(x) })).sort((a, b2) => a.i - b2.i).pop();
-    return keyword.i === -1 ? escapeIdentifiers(this.first, options) : keyword.fn(this.first, this.rest, parameters, types2, options);
+    const keyword = builders
+      .map(([x, fn]) => ({ fn, i: before.search(x) }))
+      .sort((a, b2) => a.i - b2.i)
+      .pop();
+    return keyword.i === -1
+      ? escapeIdentifiers(this.first, options)
+      : keyword.fn(this.first, this.rest, parameters, types2, options);
   }
 }
 function handleValue(x, parameters, types2, options) {
   let value = x instanceof Parameter ? x.value : x;
   if (value === void 0) {
-    x instanceof Parameter ? x.value = options.transform.undefined : value = x = options.transform.undefined;
+    x instanceof Parameter
+      ? (x.value = options.transform.undefined)
+      : (value = x = options.transform.undefined);
     if (value === void 0)
-      throw Errors.generic("UNDEFINED_VALUE", "Undefined values are not allowed");
+      throw Errors.generic(
+        "UNDEFINED_VALUE",
+        "Undefined values are not allowed",
+      );
   }
-  return "$" + types2.push(
-    x instanceof Parameter ? (parameters.push(x.value), x.array ? x.array[x.type || inferType(x.value)] || x.type || firstIsString(x.value) : x.type) : (parameters.push(x), inferType(x))
+  return (
+    "$" +
+    types2.push(
+      x instanceof Parameter
+        ? (parameters.push(x.value),
+          x.array
+            ? x.array[x.type || inferType(x.value)] ||
+              x.type ||
+              firstIsString(x.value)
+            : x.type)
+        : (parameters.push(x), inferType(x)),
+    )
   );
 }
 const defaultHandlers = typeHandlers(types);
 function stringify(q, string, value, parameters, types2, options) {
   for (let i = 1; i < q.strings.length; i++) {
-    string += stringifyValue(string, value, parameters, types2, options) + q.strings[i];
+    string +=
+      stringifyValue(string, value, parameters, types2, options) + q.strings[i];
     value = q.args[i];
   }
   return string;
 }
 function stringifyValue(string, value, parameters, types2, o) {
-  return value instanceof Builder ? value.build(string, parameters, types2, o) : value instanceof Query ? fragment(value, parameters, types2, o) : value instanceof Identifier ? value.value : value && value[0] instanceof Query ? value.reduce((acc, x) => acc + " " + fragment(x, parameters, types2, o), "") : handleValue(value, parameters, types2, o);
+  return value instanceof Builder
+    ? value.build(string, parameters, types2, o)
+    : value instanceof Query
+      ? fragment(value, parameters, types2, o)
+      : value instanceof Identifier
+        ? value.value
+        : value && value[0] instanceof Query
+          ? value.reduce(
+              (acc, x) => acc + " " + fragment(x, parameters, types2, o),
+              "",
+            )
+          : handleValue(value, parameters, types2, o);
 }
 function fragment(q, parameters, types2, options) {
   q.fragment = true;
   return stringify(q, q.strings[0], q.args[0], parameters, types2, options);
 }
 function valuesBuilder(first, parameters, types2, columns, options) {
-  return first.map(
-    (row) => "(" + columns.map(
-      (column) => stringifyValue("values", row[column], parameters, types2, options)
-    ).join(",") + ")"
-  ).join(",");
+  return first
+    .map(
+      (row) =>
+        "(" +
+        columns
+          .map((column) =>
+            stringifyValue("values", row[column], parameters, types2, options),
+          )
+          .join(",") +
+        ")",
+    )
+    .join(",");
 }
 function values(first, rest, parameters, types2, options) {
   const multi = Array.isArray(first[0]);
-  const columns = rest.length ? rest.flat() : Object.keys(multi ? first[0] : first);
-  return valuesBuilder(multi ? first : [first], parameters, types2, columns, options);
+  const columns = rest.length
+    ? rest.flat()
+    : Object.keys(multi ? first[0] : first);
+  return valuesBuilder(
+    multi ? first : [first],
+    parameters,
+    types2,
+    columns,
+    options,
+  );
 }
 function select(first, rest, parameters, types2, options) {
   typeof first === "string" && (first = [first].concat(rest));
-  if (Array.isArray(first))
-    return escapeIdentifiers(first, options);
+  if (Array.isArray(first)) return escapeIdentifiers(first, options);
   let value;
   const columns = rest.length ? rest.flat() : Object.keys(first);
-  return columns.map((x) => {
-    value = first[x];
-    return (value instanceof Query ? fragment(value, parameters, types2, options) : value instanceof Identifier ? value.value : handleValue(value, parameters, types2, options)) + " as " + escapeIdentifier(options.transform.column.to ? options.transform.column.to(x) : x);
-  }).join(",");
+  return columns
+    .map((x) => {
+      value = first[x];
+      return (
+        (value instanceof Query
+          ? fragment(value, parameters, types2, options)
+          : value instanceof Identifier
+            ? value.value
+            : handleValue(value, parameters, types2, options)) +
+        " as " +
+        escapeIdentifier(
+          options.transform.column.to ? options.transform.column.to(x) : x,
+        )
+      );
+    })
+    .join(",");
 }
 const builders = Object.entries({
   values,
@@ -372,79 +465,149 @@ const builders = Object.entries({
   "\\(": select,
   update(first, rest, parameters, types2, options) {
     return (rest.length ? rest.flat() : Object.keys(first)).map(
-      (x) => escapeIdentifier(options.transform.column.to ? options.transform.column.to(x) : x) + "=" + stringifyValue("values", first[x], parameters, types2, options)
+      (x) =>
+        escapeIdentifier(
+          options.transform.column.to ? options.transform.column.to(x) : x,
+        ) +
+        "=" +
+        stringifyValue("values", first[x], parameters, types2, options),
     );
   },
   insert(first, rest, parameters, types2, options) {
-    const columns = rest.length ? rest.flat() : Object.keys(Array.isArray(first) ? first[0] : first);
-    return "(" + escapeIdentifiers(columns, options) + ")values" + valuesBuilder(Array.isArray(first) ? first : [first], parameters, types2, columns, options);
-  }
-}).map(([x, fn]) => [new RegExp("((?:^|[\\s(])" + x + "(?:$|[\\s(]))(?![\\s\\S]*\\1)", "i"), fn]);
+    const columns = rest.length
+      ? rest.flat()
+      : Object.keys(Array.isArray(first) ? first[0] : first);
+    return (
+      "(" +
+      escapeIdentifiers(columns, options) +
+      ")values" +
+      valuesBuilder(
+        Array.isArray(first) ? first : [first],
+        parameters,
+        types2,
+        columns,
+        options,
+      )
+    );
+  },
+}).map(([x, fn]) => [
+  new RegExp("((?:^|[\\s(])" + x + "(?:$|[\\s(]))(?![\\s\\S]*\\1)", "i"),
+  fn,
+]);
 function notTagged() {
-  throw Errors.generic("NOT_TAGGED_CALL", "Query not called as a tagged template literal");
+  throw Errors.generic(
+    "NOT_TAGGED_CALL",
+    "Query not called as a tagged template literal",
+  );
 }
 const serializers = defaultHandlers.serializers;
 const parsers = defaultHandlers.parsers;
 function firstIsString(x) {
-  if (Array.isArray(x))
-    return firstIsString(x[0]);
+  if (Array.isArray(x)) return firstIsString(x[0]);
   return typeof x === "string" ? 1009 : 0;
 }
-const mergeUserTypes = function(types2) {
+const mergeUserTypes = function (types2) {
   const user2 = typeHandlers(types2 || {});
   return {
     serializers: Object.assign({}, serializers, user2.serializers),
-    parsers: Object.assign({}, parsers, user2.parsers)
+    parsers: Object.assign({}, parsers, user2.parsers),
   };
 };
 function typeHandlers(types2) {
-  return Object.keys(types2).reduce((acc, k) => {
-    types2[k].from && [].concat(types2[k].from).forEach((x) => acc.parsers[x] = types2[k].parse);
-    if (types2[k].serialize) {
-      acc.serializers[types2[k].to] = types2[k].serialize;
-      types2[k].from && [].concat(types2[k].from).forEach((x) => acc.serializers[x] = types2[k].serialize);
-    }
-    return acc;
-  }, { parsers: {}, serializers: {} });
+  return Object.keys(types2).reduce(
+    (acc, k) => {
+      types2[k].from &&
+        []
+          .concat(types2[k].from)
+          .forEach((x) => (acc.parsers[x] = types2[k].parse));
+      if (types2[k].serialize) {
+        acc.serializers[types2[k].to] = types2[k].serialize;
+        types2[k].from &&
+          []
+            .concat(types2[k].from)
+            .forEach((x) => (acc.serializers[x] = types2[k].serialize));
+      }
+      return acc;
+    },
+    { parsers: {}, serializers: {} },
+  );
 }
 function escapeIdentifiers(xs, { transform: { column } }) {
-  return xs.map((x) => escapeIdentifier(column.to ? column.to(x) : x)).join(",");
+  return xs
+    .map((x) => escapeIdentifier(column.to ? column.to(x) : x))
+    .join(",");
 }
 const escapeIdentifier = function escape(str) {
   return '"' + str.replace(/"/g, '""').replace(/\./g, '"."') + '"';
 };
 const inferType = function inferType2(x) {
-  return x instanceof Parameter ? x.type : x instanceof Date ? 1184 : x instanceof Uint8Array ? 17 : x === true || x === false ? 16 : typeof x === "bigint" ? 20 : Array.isArray(x) ? inferType2(x[0]) : 0;
+  return x instanceof Parameter
+    ? x.type
+    : x instanceof Date
+      ? 1184
+      : x instanceof Uint8Array
+        ? 17
+        : x === true || x === false
+          ? 16
+          : typeof x === "bigint"
+            ? 20
+            : Array.isArray(x)
+              ? inferType2(x[0])
+              : 0;
 };
 const escapeBackslash = /\\/g;
 const escapeQuote = /"/g;
 function arrayEscape(x) {
   return x.replace(escapeBackslash, "\\\\").replace(escapeQuote, '\\"');
 }
-const arraySerializer = function arraySerializer2(xs, serializer, options, typarray) {
-  if (Array.isArray(xs) === false)
-    return xs;
-  if (!xs.length)
-    return "{}";
+const arraySerializer = function arraySerializer2(
+  xs,
+  serializer,
+  options,
+  typarray,
+) {
+  if (Array.isArray(xs) === false) return xs;
+  if (!xs.length) return "{}";
   const first = xs[0];
   const delimiter = typarray === 1020 ? ";" : ",";
   if (Array.isArray(first) && !first.type)
-    return "{" + xs.map((x) => arraySerializer2(x, serializer, options, typarray)).join(delimiter) + "}";
-  return "{" + xs.map((x) => {
-    if (x === void 0) {
-      x = options.transform.undefined;
-      if (x === void 0)
-        throw Errors.generic("UNDEFINED_VALUE", "Undefined values are not allowed");
-    }
-    return x === null ? "null" : '"' + arrayEscape(serializer ? serializer(x.type ? x.value : x) : "" + x) + '"';
-  }).join(delimiter) + "}";
+    return (
+      "{" +
+      xs
+        .map((x) => arraySerializer2(x, serializer, options, typarray))
+        .join(delimiter) +
+      "}"
+    );
+  return (
+    "{" +
+    xs
+      .map((x) => {
+        if (x === void 0) {
+          x = options.transform.undefined;
+          if (x === void 0)
+            throw Errors.generic(
+              "UNDEFINED_VALUE",
+              "Undefined values are not allowed",
+            );
+        }
+        return x === null
+          ? "null"
+          : '"' +
+              arrayEscape(
+                serializer ? serializer(x.type ? x.value : x) : "" + x,
+              ) +
+              '"';
+      })
+      .join(delimiter) +
+    "}"
+  );
 };
 const arrayParserState = {
   i: 0,
   char: null,
   str: "",
   quoted: false,
-  last: 0
+  last: 0,
 };
 const arrayParser = function arrayParser2(x, parser, typarray) {
   arrayParserState.i = arrayParserState.last = 0;
@@ -473,7 +636,8 @@ function arrayParserLoop(s, x, parser, typarray) {
       xs.push(arrayParserLoop(s, x, parser, typarray));
     } else if (s.char === "}") {
       s.quoted = false;
-      s.last < s.i && xs.push(parser ? parser(x.slice(s.last, s.i)) : x.slice(s.last, s.i));
+      s.last < s.i &&
+        xs.push(parser ? parser(x.slice(s.last, s.i)) : x.slice(s.last, s.i));
       s.last = s.i + 1;
       break;
     } else if (s.char === delimiter && s.p !== "}" && s.p !== '"') {
@@ -482,7 +646,10 @@ function arrayParserLoop(s, x, parser, typarray) {
     }
     s.p = s.char;
   }
-  s.last < s.i && xs.push(parser ? parser(x.slice(s.last, s.i + 1)) : x.slice(s.last, s.i + 1));
+  s.last < s.i &&
+    xs.push(
+      parser ? parser(x.slice(s.last, s.i + 1)) : x.slice(s.last, s.i + 1),
+    );
   return xs;
 }
 const toCamel = (x) => {
@@ -499,11 +666,22 @@ const toPascal = (x) => {
 };
 const toKebab = (x) => x.replace(/_/g, "-");
 const fromCamel = (x) => x.replace(/([A-Z])/g, "_$1").toLowerCase();
-const fromPascal = (x) => (x.slice(0, 1) + x.slice(1).replace(/([A-Z])/g, "_$1")).toLowerCase();
+const fromPascal = (x) =>
+  (x.slice(0, 1) + x.slice(1).replace(/([A-Z])/g, "_$1")).toLowerCase();
 const fromKebab = (x) => x.replace(/-/g, "_");
 function createJsonTransform(fn) {
   return function jsonTransform(x, column) {
-    return typeof x === "object" && x !== null && (column.type === 114 || column.type === 3802) ? Array.isArray(x) ? x.map((x2) => jsonTransform(x2, column)) : Object.entries(x).reduce((acc, [k, v]) => Object.assign(acc, { [fn(k)]: jsonTransform(v, column) }), {}) : x;
+    return typeof x === "object" &&
+      x !== null &&
+      (column.type === 114 || column.type === 3802)
+      ? Array.isArray(x)
+        ? x.map((x2) => jsonTransform(x2, column))
+        : Object.entries(x).reduce(
+            (acc, [k, v]) =>
+              Object.assign(acc, { [fn(k)]: jsonTransform(v, column) }),
+            {},
+          )
+      : x;
   };
 }
 toCamel.column = { from: toCamel };
@@ -529,7 +707,7 @@ class Result extends Array {
       state: { value: null, writable: true },
       command: { value: null, writable: true },
       columns: { value: null, writable: true },
-      statement: { value: null, writable: true }
+      statement: { value: null, writable: true },
     });
   }
   static get [Symbol.species]() {
@@ -557,7 +735,7 @@ function Queue(initial = []) {
         xs[index2 - 1] = void 0;
       }
       return out;
-    }
+    },
   };
 }
 const size$3 = 256;
@@ -617,11 +795,12 @@ const b = Object.assign(reset, messages, {
     b.i = 0;
     buffer = Buffer.allocUnsafe(size$3);
     return out;
-  }
+  },
 });
 function fit(x) {
   if (buffer.length - b.i < x) {
-    const prev = buffer, length = prev.length;
+    const prev = buffer,
+      length = prev.length;
     buffer = Buffer.allocUnsafe(length + (length >> 1) + x);
     prev.copy(buffer);
   }
@@ -631,12 +810,16 @@ function reset() {
   return b;
 }
 let uid = 1;
-const Sync = b().S().end(), Flush = b().H().end(), SSLRequest = b().i32(8).i32(80877103).end(8), ExecuteUnnamed = Buffer.concat([b().E().str(b.N).i32(0).end(), Sync]), DescribeUnnamed = b().D().str("S").str(b.N).end(), noop$2 = () => {
-};
+const Sync = b().S().end(),
+  Flush = b().H().end(),
+  SSLRequest = b().i32(8).i32(80877103).end(8),
+  ExecuteUnnamed = Buffer.concat([b().E().str(b.N).i32(0).end(), Sync]),
+  DescribeUnnamed = b().D().str("S").str(b.N).end(),
+  noop$2 = () => {};
 const retryRoutines = /* @__PURE__ */ new Set([
   "FetchPreparedStatement",
   "RevalidateCachedQuery",
-  "transformAssignedExpr"
+  "transformAssignedExpr",
 ]);
 const errorFields = {
   83: "severity_local",
@@ -673,10 +856,14 @@ const errorFields = {
   // F
   76: "line",
   // L
-  82: "routine"
+  82: "routine",
   // R
 };
-function Connection(options, queues = {}, { onopen = noop$2, onend = noop$2, onclose = noop$2 } = {}) {
+function Connection(
+  options,
+  queues = {},
+  { onopen = noop$2, onend = noop$2, onclose = noop$2 } = {},
+) {
   const {
     sslnegotiation,
     ssl,
@@ -693,10 +880,44 @@ function Connection(options, queues = {}, { onopen = noop$2, onend = noop$2, onc
     max_pipeline,
     keep_alive,
     backoff: backoff2,
-    target_session_attrs
+    target_session_attrs,
   } = options;
-  const sent = Queue(), id = uid++, backend = { pid: null, secret: null }, idleTimer = timer(end, options.idle_timeout), lifeTimer = timer(end, options.max_lifetime), connectTimer = timer(connectTimedOut, options.connect_timeout);
-  let socket = null, cancelMessage, errorResponse = null, result = new Result(), incoming = Buffer.alloc(0), needsTypes = options.fetch_types, backendParameters = {}, statements = {}, statementId = Math.random().toString(36).slice(2), statementCount = 1, closedTime = 0, remaining = 0, hostIndex = 0, retries = 0, length = 0, delay = 0, rows = 0, serverSignature = null, nextWriteTimer = null, terminated = false, incomings = null, results = null, initial = null, ending = null, stream = null, chunk = null, ended = null, nonce = null, query = null, final = null;
+  const sent = Queue(),
+    id = uid++,
+    backend = { pid: null, secret: null },
+    idleTimer = timer(end, options.idle_timeout),
+    lifeTimer = timer(end, options.max_lifetime),
+    connectTimer = timer(connectTimedOut, options.connect_timeout);
+  let socket = null,
+    cancelMessage,
+    errorResponse = null,
+    result = new Result(),
+    incoming = Buffer.alloc(0),
+    needsTypes = options.fetch_types,
+    backendParameters = {},
+    statements = {},
+    statementId = Math.random().toString(36).slice(2),
+    statementCount = 1,
+    closedTime = 0,
+    remaining = 0,
+    hostIndex = 0,
+    retries = 0,
+    length = 0,
+    delay = 0,
+    rows = 0,
+    serverSignature = null,
+    nextWriteTimer = null,
+    terminated = false,
+    incomings = null,
+    results = null,
+    initial = null,
+    ending = null,
+    stream = null,
+    chunk = null,
+    ended = null,
+    nonce = null,
+    query = null,
+    final = null;
   const connection2 = {
     queue: queues.closed,
     idleTimer,
@@ -709,14 +930,16 @@ function Connection(options, queues = {}, { onopen = noop$2, onend = noop$2, onc
     cancel,
     end,
     count: 0,
-    id
+    id,
   };
   queues.closed && queues.closed.push(connection2);
   return connection2;
   async function createSocket() {
     let x;
     try {
-      x = options.socket ? await Promise.resolve(options.socket(options)) : new net.Socket();
+      x = options.socket
+        ? await Promise.resolve(options.socket(options))
+        : new net.Socket();
     } catch (e) {
       error(e);
       return;
@@ -740,14 +963,25 @@ function Connection(options, queues = {}, { onopen = noop$2, onend = noop$2, onc
     if (terminated)
       return queryError(q, Errors.connection("CONNECTION_DESTROYED", options));
     if (stream)
-      return queryError(q, Errors.generic("COPY_IN_PROGRESS", "You cannot execute queries during copy"));
-    if (q.cancelled)
-      return;
+      return queryError(
+        q,
+        Errors.generic(
+          "COPY_IN_PROGRESS",
+          "You cannot execute queries during copy",
+        ),
+      );
+    if (q.cancelled) return;
     try {
       q.state = backend;
-      query ? sent.push(q) : (query = q, query.active = true);
+      query ? sent.push(q) : ((query = q), (query.active = true));
       build(q);
-      return write(toBuffer(q)) && !q.describeFirst && !q.cursorFn && sent.length < max_pipeline && (!q.options.onexecute || q.options.onexecute(connection2));
+      return (
+        write(toBuffer(q)) &&
+        !q.describeFirst &&
+        !q.cursorFn &&
+        sent.length < max_pipeline &&
+        (!q.options.onexecute || q.options.onexecute(connection2))
+      );
     } catch (error2) {
       sent.length === 0 && write(Sync);
       errored(error2);
@@ -756,46 +990,81 @@ function Connection(options, queues = {}, { onopen = noop$2, onend = noop$2, onc
   }
   function toBuffer(q) {
     if (q.parameters.length >= 65534)
-      throw Errors.generic("MAX_PARAMETERS_EXCEEDED", "Max number of parameters (65534) exceeded");
-    return q.options.simple ? b().Q().str(q.statement.string + b.N).end() : q.describeFirst ? Buffer.concat([describe(q), Flush]) : q.prepare ? q.prepared ? prepared(q) : Buffer.concat([describe(q), prepared(q)]) : unnamed(q);
+      throw Errors.generic(
+        "MAX_PARAMETERS_EXCEEDED",
+        "Max number of parameters (65534) exceeded",
+      );
+    return q.options.simple
+      ? b()
+          .Q()
+          .str(q.statement.string + b.N)
+          .end()
+      : q.describeFirst
+        ? Buffer.concat([describe(q), Flush])
+        : q.prepare
+          ? q.prepared
+            ? prepared(q)
+            : Buffer.concat([describe(q), prepared(q)])
+          : unnamed(q);
   }
   function describe(q) {
     return Buffer.concat([
-      Parse(q.statement.string, q.parameters, q.statement.types, q.statement.name),
-      Describe("S", q.statement.name)
+      Parse(
+        q.statement.string,
+        q.parameters,
+        q.statement.types,
+        q.statement.name,
+      ),
+      Describe("S", q.statement.name),
     ]);
   }
   function prepared(q) {
     return Buffer.concat([
       Bind(q.parameters, q.statement.types, q.statement.name, q.cursorName),
-      q.cursorFn ? Execute("", q.cursorRows) : ExecuteUnnamed
+      q.cursorFn ? Execute("", q.cursorRows) : ExecuteUnnamed,
     ]);
   }
   function unnamed(q) {
     return Buffer.concat([
       Parse(q.statement.string, q.parameters, q.statement.types),
       DescribeUnnamed,
-      prepared(q)
+      prepared(q),
     ]);
   }
   function build(q) {
-    const parameters = [], types2 = [];
-    const string = stringify(q, q.strings[0], q.args[0], parameters, types2, options);
-    !q.tagged && q.args.forEach((x) => handleValue(x, parameters, types2, options));
-    q.prepare = options.prepare && ("prepare" in q.options ? q.options.prepare : true);
+    const parameters = [],
+      types2 = [];
+    const string = stringify(
+      q,
+      q.strings[0],
+      q.args[0],
+      parameters,
+      types2,
+      options,
+    );
+    !q.tagged &&
+      q.args.forEach((x) => handleValue(x, parameters, types2, options));
+    q.prepare =
+      options.prepare && ("prepare" in q.options ? q.options.prepare : true);
     q.string = string;
     q.signature = q.prepare && types2 + string;
     q.onlyDescribe && delete statements[q.signature];
     q.parameters = q.parameters || parameters;
     q.prepared = q.prepare && q.signature in statements;
-    q.describeFirst = q.onlyDescribe || parameters.length && !q.prepared;
-    q.statement = q.prepared ? statements[q.signature] : { string, types: types2, name: q.prepare ? statementId + statementCount++ : "" };
-    typeof options.debug === "function" && options.debug(id, string, parameters, types2);
+    q.describeFirst = q.onlyDescribe || (parameters.length && !q.prepared);
+    q.statement = q.prepared
+      ? statements[q.signature]
+      : {
+          string,
+          types: types2,
+          name: q.prepare ? statementId + statementCount++ : "",
+        };
+    typeof options.debug === "function" &&
+      options.debug(id, string, parameters, types2);
   }
   function write(x, fn) {
     chunk = chunk ? Buffer.concat([chunk, x]) : Buffer.from(x);
-    if (chunk.length >= 1024)
-      return nextWrite(fn);
+    if (chunk.length >= 1024) return nextWrite(fn);
     nextWriteTimer === null && (nextWriteTimer = setImmediate(nextWrite));
     return true;
   }
@@ -812,20 +1081,19 @@ function Connection(options, queues = {}, { onopen = noop$2, onend = noop$2, onc
   async function secure() {
     if (sslnegotiation !== "direct") {
       write(SSLRequest);
-      const canSSL = await new Promise((r2) => socket.once("data", (x) => r2(x[0] === 83)));
-      if (!canSSL && ssl === "prefer")
-        return connected();
+      const canSSL = await new Promise((r2) =>
+        socket.once("data", (x) => r2(x[0] === 83)),
+      );
+      if (!canSSL && ssl === "prefer") return connected();
     }
     const options2 = {
       socket,
-      servername: net.isIP(socket.host) ? void 0 : socket.host
+      servername: net.isIP(socket.host) ? void 0 : socket.host,
     };
-    if (sslnegotiation === "direct")
-      options2.ALPNProtocols = ["postgresql"];
+    if (sslnegotiation === "direct") options2.ALPNProtocols = ["postgresql"];
     if (ssl === "require" || ssl === "allow" || ssl === "prefer")
       options2.rejectUnauthorized = false;
-    else if (typeof ssl === "object")
-      Object.assign(options2, ssl);
+    else if (typeof ssl === "object") Object.assign(options2, ssl);
     socket.removeAllListeners();
     socket = require$$4.connect(options2);
     socket.on("secureConnect", connected);
@@ -840,10 +1108,13 @@ function Connection(options, queues = {}, { onopen = noop$2, onend = noop$2, onc
     if (incomings) {
       incomings.push(x);
       remaining -= x.length;
-      if (remaining > 0)
-        return;
+      if (remaining > 0) return;
     }
-    incoming = incomings ? Buffer.concat(incomings, length - remaining) : incoming.length === 0 ? x : Buffer.concat([incoming, x], incoming.length + x.length);
+    incoming = incomings
+      ? Buffer.concat(incomings, length - remaining)
+      : incoming.length === 0
+        ? x
+        : Buffer.concat([incoming, x], incoming.length + x.length);
     while (incoming.length > 4) {
       length = incoming.readUInt32BE(1);
       if (length >= incoming.length) {
@@ -866,14 +1137,11 @@ function Connection(options, queues = {}, { onopen = noop$2, onend = noop$2, onc
     terminated = false;
     backendParameters = {};
     socket || (socket = await createSocket());
-    if (!socket)
-      return;
+    if (!socket) return;
     connectTimer.start();
-    if (options.socket)
-      return ssl ? secure() : connected();
+    if (options.socket) return ssl ? secure() : connected();
     socket.on("connect", ssl ? secure : connected);
-    if (options.path)
-      return socket.connect(options.path);
+    if (options.path) return socket.connect(options.path);
     socket.ssl = ssl;
     socket.connect(port[hostIndex], host2[hostIndex]);
     socket.host = host2[hostIndex];
@@ -881,7 +1149,10 @@ function Connection(options, queues = {}, { onopen = noop$2, onend = noop$2, onc
     hostIndex = (hostIndex + 1) % port.length;
   }
   function reconnect() {
-    setTimeout(connect, closedTime ? Math.max(0, closedTime + delay - performance.now()) : 0);
+    setTimeout(
+      connect,
+      closedTime ? Math.max(0, closedTime + delay - performance.now()) : 0,
+    );
   }
   function connected() {
     try {
@@ -891,7 +1162,9 @@ function Connection(options, queues = {}, { onopen = noop$2, onend = noop$2, onc
       statementCount = 1;
       lifeTimer.start();
       socket.on("data", data);
-      keep_alive && socket.setKeepAlive && socket.setKeepAlive(true, 1e3 * keep_alive);
+      keep_alive &&
+        socket.setKeepAlive &&
+        socket.setKeepAlive(true, 1e3 * keep_alive);
       const s = StartupMessage();
       write(s);
     } catch (err) {
@@ -902,30 +1175,46 @@ function Connection(options, queues = {}, { onopen = noop$2, onend = noop$2, onc
     if (connection2.queue === queues.connecting && options.host[retries + 1])
       return;
     errored(err);
-    while (sent.length)
-      queryError(sent.shift(), err);
+    while (sent.length) queryError(sent.shift(), err);
   }
   function errored(err) {
-    stream && (stream.destroy(err), stream = null);
+    stream && (stream.destroy(err), (stream = null));
     query && queryError(query, err);
-    initial && (queryError(initial, err), initial = null);
+    initial && (queryError(initial, err), (initial = null));
   }
   function queryError(query2, err) {
-    if (query2.reserve)
-      return query2.reject(err);
-    if (!err || typeof err !== "object")
-      err = new Error(err);
-    "query" in err || "parameters" in err || Object.defineProperties(err, {
-      stack: { value: err.stack + query2.origin.replace(/.*\n/, "\n"), enumerable: options.debug },
-      query: { value: query2.string, enumerable: options.debug },
-      parameters: { value: query2.parameters, enumerable: options.debug },
-      args: { value: query2.args, enumerable: options.debug },
-      types: { value: query2.statement && query2.statement.types, enumerable: options.debug }
-    });
+    if (query2.reserve) return query2.reject(err);
+    if (!err || typeof err !== "object") err = new Error(err);
+    "query" in err ||
+      "parameters" in err ||
+      Object.defineProperties(err, {
+        stack: {
+          value: err.stack + query2.origin.replace(/.*\n/, "\n"),
+          enumerable: options.debug,
+        },
+        query: { value: query2.string, enumerable: options.debug },
+        parameters: { value: query2.parameters, enumerable: options.debug },
+        args: { value: query2.args, enumerable: options.debug },
+        types: {
+          value: query2.statement && query2.statement.types,
+          enumerable: options.debug,
+        },
+      });
     query2.reject(err);
   }
   function end() {
-    return ending || (!connection2.reserved && onend(connection2), !connection2.reserved && !initial && !query && sent.length === 0 ? (terminate(), new Promise((r2) => socket && socket.readyState !== "closed" ? socket.once("close", r2) : r2())) : ending = new Promise((r2) => ended = r2));
+    return (
+      ending ||
+      (!connection2.reserved && onend(connection2),
+      !connection2.reserved && !initial && !query && sent.length === 0
+        ? (terminate(),
+          new Promise((r2) =>
+            socket && socket.readyState !== "closed"
+              ? socket.once("close", r2)
+              : r2(),
+          ))
+        : (ending = new Promise((r2) => (ended = r2))))
+    );
   }
   function terminate() {
     terminated = true;
@@ -937,7 +1226,7 @@ function Connection(options, queues = {}, { onopen = noop$2, onend = noop$2, onc
       socket.removeListener("connect", connected);
       socket.readyState === "open" && socket.end(b().X().end());
     }
-    ended && (ended(), ending = ended = null);
+    ended && (ended(), (ending = ended = null));
   }
   async function closed(hadError) {
     incoming = Buffer.alloc(0);
@@ -951,89 +1240,96 @@ function Connection(options, queues = {}, { onopen = noop$2, onend = noop$2, onc
     connectTimer.cancel();
     socket.removeAllListeners();
     socket = null;
-    if (initial)
-      return reconnect();
-    !hadError && (query || sent.length) && error(Errors.connection("CONNECTION_CLOSED", options, socket));
+    if (initial) return reconnect();
+    !hadError &&
+      (query || sent.length) &&
+      error(Errors.connection("CONNECTION_CLOSED", options, socket));
     closedTime = performance.now();
     hadError && options.shared.retries++;
-    delay = (typeof backoff2 === "function" ? backoff2(options.shared.retries) : backoff2) * 1e3;
-    onclose(connection2, Errors.connection("CONNECTION_CLOSED", options, socket));
+    delay =
+      (typeof backoff2 === "function"
+        ? backoff2(options.shared.retries)
+        : backoff2) * 1e3;
+    onclose(
+      connection2,
+      Errors.connection("CONNECTION_CLOSED", options, socket),
+    );
   }
   function handle(xs, x = xs[0]) {
-    (x === 68 ? DataRow : (
-      // D
-      x === 100 ? CopyData : (
-        // d
-        x === 65 ? NotificationResponse : (
-          // A
-          x === 83 ? ParameterStatus : (
-            // S
-            x === 90 ? ReadyForQuery : (
-              // Z
-              x === 67 ? CommandComplete : (
-                // C
-                x === 50 ? BindComplete : (
-                  // 2
-                  x === 49 ? ParseComplete : (
-                    // 1
-                    x === 116 ? ParameterDescription : (
-                      // t
-                      x === 84 ? RowDescription : (
-                        // T
-                        x === 82 ? Authentication : (
-                          // R
-                          x === 110 ? NoData : (
-                            // n
-                            x === 75 ? BackendKeyData : (
-                              // K
-                              x === 69 ? ErrorResponse : (
-                                // E
-                                x === 115 ? PortalSuspended : (
-                                  // s
-                                  x === 51 ? CloseComplete : (
-                                    // 3
-                                    x === 71 ? CopyInResponse : (
-                                      // G
-                                      x === 78 ? NoticeResponse : (
-                                        // N
-                                        x === 72 ? CopyOutResponse : (
-                                          // H
-                                          x === 99 ? CopyDone : (
-                                            // c
-                                            x === 73 ? EmptyQueryResponse : (
-                                              // I
-                                              x === 86 ? FunctionCallResponse : (
-                                                // V
-                                                x === 118 ? NegotiateProtocolVersion : (
-                                                  // v
-                                                  x === 87 ? CopyBothResponse : (
-                                                    // W
-                                                    /* c8 ignore next */
-                                                    UnknownMessage
-                                                  )
-                                                )
-                                              )
-                                            )
-                                          )
-                                        )
-                                      )
-                                    )
-                                  )
-                                )
-                              )
-                            )
-                          )
-                        )
-                      )
-                    )
-                  )
-                )
-              )
-            )
-          )
-        )
-      )
-    ))(xs);
+    (x === 68
+      ? DataRow
+      : // D
+        x === 100
+        ? CopyData
+        : // d
+          x === 65
+          ? NotificationResponse
+          : // A
+            x === 83
+            ? ParameterStatus
+            : // S
+              x === 90
+              ? ReadyForQuery
+              : // Z
+                x === 67
+                ? CommandComplete
+                : // C
+                  x === 50
+                  ? BindComplete
+                  : // 2
+                    x === 49
+                    ? ParseComplete
+                    : // 1
+                      x === 116
+                      ? ParameterDescription
+                      : // t
+                        x === 84
+                        ? RowDescription
+                        : // T
+                          x === 82
+                          ? Authentication
+                          : // R
+                            x === 110
+                            ? NoData
+                            : // n
+                              x === 75
+                              ? BackendKeyData
+                              : // K
+                                x === 69
+                                ? ErrorResponse
+                                : // E
+                                  x === 115
+                                  ? PortalSuspended
+                                  : // s
+                                    x === 51
+                                    ? CloseComplete
+                                    : // 3
+                                      x === 71
+                                      ? CopyInResponse
+                                      : // G
+                                        x === 78
+                                        ? NoticeResponse
+                                        : // N
+                                          x === 72
+                                          ? CopyOutResponse
+                                          : // H
+                                            x === 99
+                                            ? CopyDone
+                                            : // c
+                                              x === 73
+                                              ? EmptyQueryResponse
+                                              : // I
+                                                x === 86
+                                                ? FunctionCallResponse
+                                                : // V
+                                                  x === 118
+                                                  ? NegotiateProtocolVersion
+                                                  : // v
+                                                    x === 87
+                                                    ? CopyBothResponse
+                                                    : // W
+                                                      /* c8 ignore next */
+                                                      UnknownMessage)(xs);
   }
   function DataRow(x) {
     let index2 = 7;
@@ -1045,10 +1341,37 @@ function Connection(options, queues = {}, { onopen = noop$2, onend = noop$2, onc
       column = query.statement.columns[i];
       length2 = x.readInt32BE(index2);
       index2 += 4;
-      value = length2 === -1 ? null : query.isRaw === true ? x.subarray(index2, index2 += length2) : column.parser === void 0 ? x.toString("utf8", index2, index2 += length2) : column.parser.array === true ? column.parser(x.toString("utf8", index2 + 1, index2 += length2)) : column.parser(x.toString("utf8", index2, index2 += length2));
-      query.isRaw ? row[i] = query.isRaw === true ? value : transform.value.from ? transform.value.from(value, column) : value : row[column.name] = transform.value.from ? transform.value.from(value, column) : value;
+      value =
+        length2 === -1
+          ? null
+          : query.isRaw === true
+            ? x.subarray(index2, (index2 += length2))
+            : column.parser === void 0
+              ? x.toString("utf8", index2, (index2 += length2))
+              : column.parser.array === true
+                ? column.parser(
+                    x.toString("utf8", index2 + 1, (index2 += length2)),
+                  )
+                : column.parser(
+                    x.toString("utf8", index2, (index2 += length2)),
+                  );
+      query.isRaw
+        ? (row[i] =
+            query.isRaw === true
+              ? value
+              : transform.value.from
+                ? transform.value.from(value, column)
+                : value)
+        : (row[column.name] = transform.value.from
+            ? transform.value.from(value, column)
+            : value);
     }
-    query.forEachFn ? query.forEachFn(transform.row.from ? transform.row.from(row) : row, result) : result[rows++] = transform.row.from ? transform.row.from(row) : row;
+    query.forEachFn
+      ? query.forEachFn(
+          transform.row.from ? transform.row.from(row) : row,
+          result,
+        )
+      : (result[rows++] = transform.row.from ? transform.row.from(row) : row);
   }
   function ParameterStatus(x) {
     const [k, v] = x.toString("utf8", 5, x.length - 1).split(b.N);
@@ -1061,7 +1384,11 @@ function Connection(options, queues = {}, { onopen = noop$2, onend = noop$2, onc
   function ReadyForQuery(x) {
     if (query) {
       if (errorResponse) {
-        query.retried ? errored(query.retried) : query.prepared && retryRoutines.has(errorResponse.routine) ? retry(query, errorResponse) : errored(errorResponse);
+        query.retried
+          ? errored(query.retried)
+          : query.prepared && retryRoutines.has(errorResponse.routine)
+            ? retry(query, errorResponse)
+            : errored(errorResponse);
       } else {
         query.resolve(results || result);
       }
@@ -1073,7 +1400,10 @@ function Connection(options, queues = {}, { onopen = noop$2, onend = noop$2, onc
     connectTimer.cancel();
     if (initial) {
       if (target_session_attrs) {
-        if (!backendParameters.in_hot_standby || !backendParameters.default_transaction_read_only)
+        if (
+          !backendParameters.in_hot_standby ||
+          !backendParameters.default_transaction_read_only
+        )
           return fetchState();
         else if (tryNext(target_session_attrs, backendParameters))
           return terminate();
@@ -1087,11 +1417,26 @@ function Connection(options, queues = {}, { onopen = noop$2, onend = noop$2, onc
       initial = null;
       return;
     }
-    while (sent.length && (query = sent.shift()) && (query.active = true, query.cancelled))
-      Connection(options).cancel(query.state, query.cancelled.resolve, query.cancelled.reject);
-    if (query)
-      return;
-    connection2.reserved ? !connection2.reserved.release && x[5] === 73 ? ending ? terminate() : (connection2.reserved = null, onopen(connection2)) : connection2.reserved() : ending ? terminate() : onopen(connection2);
+    while (
+      sent.length &&
+      (query = sent.shift()) &&
+      ((query.active = true), query.cancelled)
+    )
+      Connection(options).cancel(
+        query.state,
+        query.cancelled.resolve,
+        query.cancelled.reject,
+      );
+    if (query) return;
+    connection2.reserved
+      ? !connection2.reserved.release && x[5] === 73
+        ? ending
+          ? terminate()
+          : ((connection2.reserved = null), onopen(connection2))
+        : connection2.reserved()
+      : ending
+        ? terminate()
+        : onopen(connection2);
   }
   function CommandComplete(x) {
     rows = 0;
@@ -1104,11 +1449,15 @@ function Connection(options, queues = {}, { onopen = noop$2, onend = noop$2, onc
         break;
       }
     }
-    final && (final(), final = null);
+    final && (final(), (final = null));
     if (result.command === "BEGIN" && max2 !== 1 && !connection2.reserved)
-      return errored(Errors.generic("UNSAFE_TRANSACTION", "Only use sql.begin, sql.reserved or max: 1"));
-    if (query.options.simple)
-      return BindComplete();
+      return errored(
+        Errors.generic(
+          "UNSAFE_TRANSACTION",
+          "Only use sql.begin, sql.reserved or max: 1",
+        ),
+      );
+    if (query.options.simple) return BindComplete();
     if (query.cursorFn) {
       result.count && query.cursorFn(result);
       write(Sync);
@@ -1124,14 +1473,17 @@ function Connection(options, queues = {}, { onopen = noop$2, onend = noop$2, onc
   function ParameterDescription(x) {
     const length2 = x.readUInt16BE(5);
     for (let i = 0; i < length2; ++i)
-      !query.statement.types[i] && (query.statement.types[i] = x.readUInt32BE(7 + i * 4));
+      !query.statement.types[i] &&
+        (query.statement.types[i] = x.readUInt32BE(7 + i * 4));
     query.prepare && (statements[query.signature] = query.statement);
-    query.describeFirst && !query.onlyDescribe && (write(prepared(query)), query.describeFirst = false);
+    query.describeFirst &&
+      !query.onlyDescribe &&
+      (write(prepared(query)), (query.describeFirst = false));
   }
   function RowDescription(x) {
     if (result.command) {
       results = results || [result];
-      results.push(result = new Result());
+      results.push((result = new Result()));
       result.count = null;
       query.statement.columns = null;
     }
@@ -1141,85 +1493,127 @@ function Connection(options, queues = {}, { onopen = noop$2, onend = noop$2, onc
     query.statement.columns = Array(length2);
     for (let i = 0; i < length2; ++i) {
       start = index2;
-      while (x[index2++] !== 0) ;
+      while (x[index2++] !== 0);
       const table = x.readUInt32BE(index2);
       const number = x.readUInt16BE(index2 + 4);
       const type = x.readUInt32BE(index2 + 6);
       query.statement.columns[i] = {
-        name: transform.column.from ? transform.column.from(x.toString("utf8", start, index2 - 1)) : x.toString("utf8", start, index2 - 1),
+        name: transform.column.from
+          ? transform.column.from(x.toString("utf8", start, index2 - 1))
+          : x.toString("utf8", start, index2 - 1),
         parser: parsers2[type],
         table,
         number,
-        type
+        type,
       };
       index2 += 18;
     }
     result.statement = query.statement;
     if (query.onlyDescribe)
-      return query.resolve(query.statement), write(Sync);
+      return (query.resolve(query.statement), write(Sync));
   }
   async function Authentication(x, type = x.readUInt32BE(5)) {
-    (type === 3 ? AuthenticationCleartextPassword : type === 5 ? AuthenticationMD5Password : type === 10 ? SASL : type === 11 ? SASLContinue : type === 12 ? SASLFinal : type !== 0 ? UnknownAuth : noop$2)(x, type);
+    (type === 3
+      ? AuthenticationCleartextPassword
+      : type === 5
+        ? AuthenticationMD5Password
+        : type === 10
+          ? SASL
+          : type === 11
+            ? SASLContinue
+            : type === 12
+              ? SASLFinal
+              : type !== 0
+                ? UnknownAuth
+                : noop$2)(x, type);
   }
   async function AuthenticationCleartextPassword() {
     const payload = await Pass();
-    write(
-      b().p().str(payload).z(1).end()
-    );
+    write(b().p().str(payload).z(1).end());
   }
   async function AuthenticationMD5Password(x) {
-    const payload = "md5" + await md5(
-      Buffer.concat([
-        Buffer.from(await md5(await Pass() + user2)),
-        x.subarray(9)
-      ])
-    );
-    write(
-      b().p().str(payload).z(1).end()
-    );
+    const payload =
+      "md5" +
+      (await md5(
+        Buffer.concat([
+          Buffer.from(await md5((await Pass()) + user2)),
+          x.subarray(9),
+        ]),
+      ));
+    write(b().p().str(payload).z(1).end());
   }
   async function SASL() {
     nonce = (await crypto$1.randomBytes(18)).toString("base64");
-    b().p().str("SCRAM-SHA-256" + b.N);
+    b()
+      .p()
+      .str("SCRAM-SHA-256" + b.N);
     const i = b.i;
-    write(b.inc(4).str("n,,n=*,r=" + nonce).i32(b.i - i - 4, i).end());
+    write(
+      b
+        .inc(4)
+        .str("n,,n=*,r=" + nonce)
+        .i32(b.i - i - 4, i)
+        .end(),
+    );
   }
   async function SASLContinue(x) {
-    const res = x.toString("utf8", 9).split(",").reduce((acc, x2) => (acc[x2[0]] = x2.slice(2), acc), {});
+    const res = x
+      .toString("utf8", 9)
+      .split(",")
+      .reduce((acc, x2) => ((acc[x2[0]] = x2.slice(2)), acc), {});
     const saltedPassword = await crypto$1.pbkdf2Sync(
       await Pass(),
       Buffer.from(res.s, "base64"),
       parseInt(res.i),
       32,
-      "sha256"
+      "sha256",
     );
     const clientKey = await hmac(saltedPassword, "Client Key");
-    const auth2 = "n=*,r=" + nonce + ",r=" + res.r + ",s=" + res.s + ",i=" + res.i + ",c=biws,r=" + res.r;
-    serverSignature = (await hmac(await hmac(saltedPassword, "Server Key"), auth2)).toString("base64");
-    const payload = "c=biws,r=" + res.r + ",p=" + xor(
-      clientKey,
-      Buffer.from(await hmac(await sha256(clientKey), auth2))
+    const auth2 =
+      "n=*,r=" +
+      nonce +
+      ",r=" +
+      res.r +
+      ",s=" +
+      res.s +
+      ",i=" +
+      res.i +
+      ",c=biws,r=" +
+      res.r;
+    serverSignature = (
+      await hmac(await hmac(saltedPassword, "Server Key"), auth2)
     ).toString("base64");
-    write(
-      b().p().str(payload).end()
-    );
+    const payload =
+      "c=biws,r=" +
+      res.r +
+      ",p=" +
+      xor(
+        clientKey,
+        Buffer.from(await hmac(await sha256(clientKey), auth2)),
+      ).toString("base64");
+    write(b().p().str(payload).end());
   }
   function SASLFinal(x) {
     if (x.toString("utf8", 9).split(b.N, 1)[0].slice(2) === serverSignature)
       return;
-    errored(Errors.generic("SASL_SIGNATURE_MISMATCH", "The server did not return the correct signature"));
+    errored(
+      Errors.generic(
+        "SASL_SIGNATURE_MISMATCH",
+        "The server did not return the correct signature",
+      ),
+    );
     socket.destroy();
   }
   function Pass() {
     return Promise.resolve(
-      typeof options.pass === "function" ? options.pass() : options.pass
+      typeof options.pass === "function" ? options.pass() : options.pass,
     );
   }
   function NoData() {
     result.statement = query.statement;
     result.statement.columns = [];
     if (query.onlyDescribe)
-      return query.resolve(query.statement), write(Sync);
+      return (query.resolve(query.statement), write(Sync));
   }
   function BackendKeyData(x) {
     backend.pid = x.readUInt32BE(5);
@@ -1227,14 +1621,20 @@ function Connection(options, queues = {}, { onopen = noop$2, onend = noop$2, onc
   }
   async function fetchArrayTypes() {
     needsTypes = false;
-    const types2 = await new Query([`
+    const types2 = await new Query(
+      [
+        `
       select b.oid, b.typarray
       from pg_catalog.pg_type a
       left join pg_catalog.pg_type b on b.oid = a.typelem
       where a.typcategory = 'A'
       group by b.oid, b.typarray
       order by b.oid
-    `], [], execute);
+    `,
+      ],
+      [],
+      execute,
+    );
     types2.forEach(({ oid, typarray }) => addArrayType(oid, typarray));
   }
   function addArrayType(oid, typarray) {
@@ -1243,16 +1643,33 @@ function Connection(options, queues = {}, { onopen = noop$2, onend = noop$2, onc
     options.shared.typeArrayMap[oid] = typarray;
     options.parsers[typarray] = (xs) => arrayParser(xs, parser, typarray);
     options.parsers[typarray].array = true;
-    options.serializers[typarray] = (xs) => arraySerializer(xs, options.serializers[oid], options, typarray);
+    options.serializers[typarray] = (xs) =>
+      arraySerializer(xs, options.serializers[oid], options, typarray);
   }
   function tryNext(x, xs) {
-    return x === "read-write" && xs.default_transaction_read_only === "on" || x === "read-only" && xs.default_transaction_read_only === "off" || x === "primary" && xs.in_hot_standby === "on" || x === "standby" && xs.in_hot_standby === "off" || x === "prefer-standby" && xs.in_hot_standby === "off" && options.host[retries];
+    return (
+      (x === "read-write" && xs.default_transaction_read_only === "on") ||
+      (x === "read-only" && xs.default_transaction_read_only === "off") ||
+      (x === "primary" && xs.in_hot_standby === "on") ||
+      (x === "standby" && xs.in_hot_standby === "off") ||
+      (x === "prefer-standby" &&
+        xs.in_hot_standby === "off" &&
+        options.host[retries])
+    );
   }
   function fetchState() {
-    const query2 = new Query([`
+    const query2 = new Query(
+      [
+        `
       show transaction_read_only;
       select pg_catalog.pg_is_in_recovery()
-    `], [], execute, null, { simple: true });
+    `,
+      ],
+      [],
+      execute,
+      null,
+      { simple: true },
+    );
     query2.resolve = ([[a], [b2]]) => {
       backendParameters.default_transaction_read_only = a.transaction_read_only;
       backendParameters.in_hot_standby = b2.pg_is_in_recovery ? "on" : "off";
@@ -1273,20 +1690,21 @@ function Connection(options, queues = {}, { onopen = noop$2, onend = noop$2, onc
     execute(q);
   }
   function NotificationResponse(x) {
-    if (!onnotify)
-      return;
+    if (!onnotify) return;
     let index2 = 9;
-    while (x[index2++] !== 0) ;
+    while (x[index2++] !== 0);
     onnotify(
       x.toString("utf8", 9, index2 - 1),
-      x.toString("utf8", index2, x.length - 1)
+      x.toString("utf8", index2, x.length - 1),
     );
   }
   async function PortalSuspended() {
     try {
       const x = await Promise.resolve(query.cursorFn(result));
       rows = 0;
-      x === CLOSE ? write(Close(query.portal)) : (result = new Result(), write(Execute("", query.cursorRows)));
+      x === CLOSE
+        ? write(Close(query.portal))
+        : ((result = new Result()), write(Execute("", query.cursorRows)));
     } catch (err) {
       write(Sync);
       query.reject(err);
@@ -1304,14 +1722,19 @@ function Connection(options, queues = {}, { onopen = noop$2, onend = noop$2, onc
       },
       destroy(error2, callback) {
         callback(error2);
-        socket.write(b().f().str(error2 + b.N).end());
+        socket.write(
+          b()
+            .f()
+            .str(error2 + b.N)
+            .end(),
+        );
         stream = null;
       },
       final(callback) {
         socket.write(b().c().end());
         final = callback;
         stream = null;
-      }
+      },
     });
     query.resolve(stream);
   }
@@ -1319,7 +1742,7 @@ function Connection(options, queues = {}, { onopen = noop$2, onend = noop$2, onc
     stream = new require$$0$2.Readable({
       read() {
         socket.resume();
-      }
+      },
     });
     query.resolve(stream);
   }
@@ -1335,13 +1758,18 @@ function Connection(options, queues = {}, { onopen = noop$2, onend = noop$2, onc
       },
       destroy(error2, callback) {
         callback(error2);
-        socket.write(b().f().str(error2 + b.N).end());
+        socket.write(
+          b()
+            .f()
+            .str(error2 + b.N)
+            .end(),
+        );
         stream = null;
       },
       final(callback) {
         socket.write(b().c().end());
         final = callback;
-      }
+      },
     });
     query.resolve(stream);
   }
@@ -1355,8 +1783,7 @@ function Connection(options, queues = {}, { onopen = noop$2, onend = noop$2, onc
   function NoticeResponse(x) {
     onnotice ? onnotice(parseError(x)) : console.log(parseError(x));
   }
-  function EmptyQueryResponse() {
-  }
+  function EmptyQueryResponse() {}
   function FunctionCallResponse() {
     errored(Errors.notSupported("FunctionCallResponse"));
   }
@@ -1371,49 +1798,86 @@ function Connection(options, queues = {}, { onopen = noop$2, onend = noop$2, onc
   }
   function Bind(parameters, types2, statement2 = "", portal = "") {
     let prev, type;
-    b().B().str(portal + b.N).str(statement2 + b.N).i16(0).i16(parameters.length);
+    b()
+      .B()
+      .str(portal + b.N)
+      .str(statement2 + b.N)
+      .i16(0)
+      .i16(parameters.length);
     parameters.forEach((x, i) => {
-      if (x === null)
-        return b.i32(4294967295);
+      if (x === null) return b.i32(4294967295);
       type = types2[i];
-      parameters[i] = x = type in options.serializers ? options.serializers[type](x) : "" + x;
+      parameters[i] = x =
+        type in options.serializers ? options.serializers[type](x) : "" + x;
       prev = b.i;
-      b.inc(4).str(x).i32(b.i - prev - 4, prev);
+      b.inc(4)
+        .str(x)
+        .i32(b.i - prev - 4, prev);
     });
     b.i16(0);
     return b.end();
   }
   function Parse(str, parameters, types2, name = "") {
-    b().P().str(name + b.N).str(str + b.N).i16(parameters.length);
+    b()
+      .P()
+      .str(name + b.N)
+      .str(str + b.N)
+      .i16(parameters.length);
     parameters.forEach((x, i) => b.i32(types2[i] || 0));
     return b.end();
   }
   function Describe(x, name = "") {
-    return b().D().str(x).str(name + b.N).end();
+    return b()
+      .D()
+      .str(x)
+      .str(name + b.N)
+      .end();
   }
   function Execute(portal = "", rows2 = 0) {
     return Buffer.concat([
-      b().E().str(portal + b.N).i32(rows2).end(),
-      Flush
+      b()
+        .E()
+        .str(portal + b.N)
+        .i32(rows2)
+        .end(),
+      Flush,
     ]);
   }
   function Close(portal = "") {
     return Buffer.concat([
-      b().C().str("P").str(portal + b.N).end(),
-      b().S().end()
+      b()
+        .C()
+        .str("P")
+        .str(portal + b.N)
+        .end(),
+      b().S().end(),
     ]);
   }
   function StartupMessage() {
-    return cancelMessage || b().inc(4).i16(3).z(2).str(
-      Object.entries(Object.assign(
-        {
-          user: user2,
-          database,
-          client_encoding: "UTF8"
-        },
-        options.connection
-      )).filter(([, v]) => v).map(([k, v]) => k + b.N + v).join(b.N)
-    ).z(2).end(0);
+    return (
+      cancelMessage ||
+      b()
+        .inc(4)
+        .i16(3)
+        .z(2)
+        .str(
+          Object.entries(
+            Object.assign(
+              {
+                user: user2,
+                database,
+                client_encoding: "UTF8",
+              },
+              options.connection,
+            ),
+          )
+            .filter(([, v]) => v)
+            .map(([k, v]) => k + b.N + v)
+            .join(b.N),
+        )
+        .z(2)
+        .end(0)
+    );
   }
 }
 function parseError(x) {
@@ -1439,35 +1903,36 @@ function sha256(x) {
 function xor(a, b2) {
   const length = Math.max(a.length, b2.length);
   const buffer2 = Buffer.allocUnsafe(length);
-  for (let i = 0; i < length; i++)
-    buffer2[i] = a[i] ^ b2[i];
+  for (let i = 0; i < length; i++) buffer2[i] = a[i] ^ b2[i];
   return buffer2;
 }
 function timer(fn, seconds) {
   seconds = typeof seconds === "function" ? seconds() : seconds;
-  if (!seconds)
-    return { cancel: noop$2, start: noop$2 };
+  if (!seconds) return { cancel: noop$2, start: noop$2 };
   let timer2;
   return {
     cancel() {
-      timer2 && (clearTimeout(timer2), timer2 = null);
+      timer2 && (clearTimeout(timer2), (timer2 = null));
     },
     start() {
       timer2 && clearTimeout(timer2);
       timer2 = setTimeout(done, seconds * 1e3, arguments);
-    }
+    },
   };
   function done(args) {
     fn.apply(null, args);
     timer2 = null;
   }
 }
-const noop$1 = () => {
-};
+const noop$1 = () => {};
 function Subscribe(postgres2, options) {
-  const subscribers = /* @__PURE__ */ new Map(), slot = "postgresjs_" + Math.random().toString(36).slice(2), state = {};
-  let connection2, stream, ended = false;
-  const sql2 = subscribe.sql = postgres2({
+  const subscribers = /* @__PURE__ */ new Map(),
+    slot = "postgresjs_" + Math.random().toString(36).slice(2),
+    state = {};
+  let connection2,
+    stream,
+    ended = false;
+  const sql2 = (subscribe.sql = postgres2({
     ...options,
     transform: { column: {}, value: {}, row: {} },
     max: 1,
@@ -1476,35 +1941,42 @@ function Subscribe(postgres2, options) {
     max_lifetime: null,
     connection: {
       ...options.connection,
-      replication: "database"
+      replication: "database",
     },
-    onclose: async function() {
-      if (ended)
-        return;
+    onclose: async function () {
+      if (ended) return;
       stream = null;
       state.pid = state.secret = void 0;
       connected(await init(sql2, slot, options.publications));
-      subscribers.forEach((event) => event.forEach(({ onsubscribe }) => onsubscribe()));
+      subscribers.forEach((event) =>
+        event.forEach(({ onsubscribe }) => onsubscribe()),
+      );
     },
-    no_subscribe: true
-  });
-  const end = sql2.end, close = sql2.close;
+    no_subscribe: true,
+  }));
+  const end = sql2.end,
+    close = sql2.close;
   sql2.end = async () => {
     ended = true;
-    stream && await new Promise((r2) => (stream.once("close", r2), stream.end()));
+    stream &&
+      (await new Promise((r2) => (stream.once("close", r2), stream.end())));
     return end();
   };
   sql2.close = async () => {
-    stream && await new Promise((r2) => (stream.once("close", r2), stream.end()));
+    stream &&
+      (await new Promise((r2) => (stream.once("close", r2), stream.end())));
     return close();
   };
   return subscribe;
   async function subscribe(event, fn, onsubscribe = noop$1, onerror = noop$1) {
     event = parseEvent(event);
-    if (!connection2)
-      connection2 = init(sql2, slot, options.publications);
+    if (!connection2) connection2 = init(sql2, slot, options.publications);
     const subscriber = { fn, onsubscribe };
-    const fns = subscribers.has(event) ? subscribers.get(event).add(subscriber) : subscribers.set(event, /* @__PURE__ */ new Set([subscriber])).get(event);
+    const fns = subscribers.has(event)
+      ? subscribers.get(event).add(subscriber)
+      : subscribers
+          .set(event, /* @__PURE__ */ new Set([subscriber]))
+          .get(event);
     const unsubscribe = () => {
       fns.delete(subscriber);
       fns.size === 0 && subscribers.delete(event);
@@ -1522,28 +1994,42 @@ function Subscribe(postgres2, options) {
     state.secret = x.state.secret;
   }
   async function init(sql3, slot2, publications) {
-    if (!publications)
-      throw new Error("Missing publication names");
+    if (!publications) throw new Error("Missing publication names");
     const xs = await sql3.unsafe(
-      `CREATE_REPLICATION_SLOT ${slot2} TEMPORARY LOGICAL pgoutput NOEXPORT_SNAPSHOT`
+      `CREATE_REPLICATION_SLOT ${slot2} TEMPORARY LOGICAL pgoutput NOEXPORT_SNAPSHOT`,
     );
     const [x] = xs;
-    const stream2 = await sql3.unsafe(
-      `START_REPLICATION SLOT ${slot2} LOGICAL ${x.consistent_point} (proto_version '1', publication_names '${publications}')`
-    ).writable();
+    const stream2 = await sql3
+      .unsafe(
+        `START_REPLICATION SLOT ${slot2} LOGICAL ${x.consistent_point} (proto_version '1', publication_names '${publications}')`,
+      )
+      .writable();
     const state2 = {
-      lsn: Buffer.concat(x.consistent_point.split("/").map((x2) => Buffer.from(("00000000" + x2).slice(-8), "hex")))
+      lsn: Buffer.concat(
+        x.consistent_point
+          .split("/")
+          .map((x2) => Buffer.from(("00000000" + x2).slice(-8), "hex")),
+      ),
     };
     stream2.on("data", data);
     stream2.on("error", error);
     stream2.on("close", sql3.close);
     return { stream: stream2, state: xs.state };
     function error(e) {
-      console.error("Unexpected error during logical streaming - reconnecting", e);
+      console.error(
+        "Unexpected error during logical streaming - reconnecting",
+        e,
+      );
     }
     function data(x2) {
       if (x2[0] === 119) {
-        parse$1(x2.subarray(25), state2, sql3.options.parsers, handle, options.transform);
+        parse$1(
+          x2.subarray(25),
+          state2,
+          sql3.options.parsers,
+          handle,
+          options.transform,
+        );
       } else if (x2[0] === 107 && x2[17]) {
         state2.lsn = x2.subarray(1, 9);
         pong();
@@ -1553,16 +2039,33 @@ function Subscribe(postgres2, options) {
       const path = b2.relation.schema + "." + b2.relation.table;
       call("*", a, b2);
       call("*:" + path, a, b2);
-      b2.relation.keys.length && call("*:" + path + "=" + b2.relation.keys.map((x2) => a[x2.name]), a, b2);
+      b2.relation.keys.length &&
+        call(
+          "*:" + path + "=" + b2.relation.keys.map((x2) => a[x2.name]),
+          a,
+          b2,
+        );
       call(b2.command, a, b2);
       call(b2.command + ":" + path, a, b2);
-      b2.relation.keys.length && call(b2.command + ":" + path + "=" + b2.relation.keys.map((x2) => a[x2.name]), a, b2);
+      b2.relation.keys.length &&
+        call(
+          b2.command +
+            ":" +
+            path +
+            "=" +
+            b2.relation.keys.map((x2) => a[x2.name]),
+          a,
+          b2,
+        );
     }
     function pong() {
       const x2 = Buffer.alloc(34);
       x2[0] = "r".charCodeAt(0);
       x2.fill(state2.lsn, 1);
-      x2.writeBigInt64BE(BigInt(Date.now() - Date.UTC(2e3, 0, 1)) * BigInt(1e3), 25);
+      x2.writeBigInt64BE(
+        BigInt(Date.now() - Date.UTC(2e3, 0, 1)) * BigInt(1e3),
+        25,
+      );
       stream2.write(x2);
     }
   }
@@ -1574,35 +2077,39 @@ function Time(x) {
   return new Date(Date.UTC(2e3, 0, 1) + Number(x / BigInt(1e3)));
 }
 function parse$1(x, state, parsers2, handle, transform) {
-  const char2 = (acc, [k, v]) => (acc[k.charCodeAt(0)] = v, acc);
+  const char2 = (acc, [k, v]) => ((acc[k.charCodeAt(0)] = v), acc);
   Object.entries({
     R: (x2) => {
       let i = 1;
-      const r2 = state[x2.readUInt32BE(i)] = {
-        schema: x2.toString("utf8", i += 4, i = x2.indexOf(0, i)) || "pg_catalog",
-        table: x2.toString("utf8", i + 1, i = x2.indexOf(0, i + 1)),
-        columns: Array(x2.readUInt16BE(i += 2)),
-        keys: []
-      };
+      const r2 = (state[x2.readUInt32BE(i)] = {
+        schema:
+          x2.toString("utf8", (i += 4), (i = x2.indexOf(0, i))) || "pg_catalog",
+        table: x2.toString("utf8", i + 1, (i = x2.indexOf(0, i + 1))),
+        columns: Array(x2.readUInt16BE((i += 2))),
+        keys: [],
+      });
       i += 2;
-      let columnIndex = 0, column;
+      let columnIndex = 0,
+        column;
       while (i < x2.length) {
         column = r2.columns[columnIndex++] = {
           key: x2[i++],
-          name: transform.column.from ? transform.column.from(x2.toString("utf8", i, i = x2.indexOf(0, i))) : x2.toString("utf8", i, i = x2.indexOf(0, i)),
-          type: x2.readUInt32BE(i += 1),
+          name: transform.column.from
+            ? transform.column.from(
+                x2.toString("utf8", i, (i = x2.indexOf(0, i))),
+              )
+            : x2.toString("utf8", i, (i = x2.indexOf(0, i))),
+          type: x2.readUInt32BE((i += 1)),
           parser: parsers2[x2.readUInt32BE(i)],
-          atttypmod: x2.readUInt32BE(i += 4)
+          atttypmod: x2.readUInt32BE((i += 4)),
         };
         column.key && r2.keys.push(column);
         i += 4;
       }
     },
-    Y: () => {
-    },
+    Y: () => {},
     // Type
-    O: () => {
-    },
+    O: () => {},
     // Origin
     B: (x2) => {
       state.date = Time(x2.readBigInt64BE(9));
@@ -1611,10 +2118,10 @@ function parse$1(x, state, parsers2, handle, transform) {
     I: (x2) => {
       let i = 1;
       const relation = state[x2.readUInt32BE(i)];
-      const { row } = tuples(x2, relation.columns, i += 7, transform);
+      const { row } = tuples(x2, relation.columns, (i += 7), transform);
       handle(row, {
         command: "insert",
-        relation
+        relation,
       });
     },
     D: (x2) => {
@@ -1623,12 +2130,14 @@ function parse$1(x, state, parsers2, handle, transform) {
       i += 4;
       const key = x2[i] === 75;
       handle(
-        key || x2[i] === 79 ? tuples(x2, relation.columns, i += 3, transform).row : null,
+        key || x2[i] === 79
+          ? tuples(x2, relation.columns, (i += 3), transform).row
+          : null,
         {
           command: "delete",
           relation,
-          key
-        }
+          key,
+        },
       );
     },
     U: (x2) => {
@@ -1636,23 +2145,26 @@ function parse$1(x, state, parsers2, handle, transform) {
       const relation = state[x2.readUInt32BE(i)];
       i += 4;
       const key = x2[i] === 75;
-      const xs = key || x2[i] === 79 ? tuples(x2, relation.columns, i += 3, transform) : null;
+      const xs =
+        key || x2[i] === 79
+          ? tuples(x2, relation.columns, (i += 3), transform)
+          : null;
       xs && (i = xs.i);
       const { row } = tuples(x2, relation.columns, i + 3, transform);
       handle(row, {
         command: "update",
         relation,
         key,
-        old: xs && xs.row
+        old: xs && xs.row,
       });
     },
-    T: () => {
-    },
+    T: () => {},
     // Truncate,
-    C: () => {
-    }
+    C: () => {},
     // Commit
-  }).reduce(char2, {})[x[0]](x);
+  })
+    .reduce(char2, {})
+    [x[0]](x);
 }
 function tuples(x, columns, xi, transform) {
   let type, column, value;
@@ -1660,34 +2172,62 @@ function tuples(x, columns, xi, transform) {
   for (let i = 0; i < columns.length; i++) {
     type = x[xi++];
     column = columns[i];
-    value = type === 110 ? null : type === 117 ? void 0 : column.parser === void 0 ? x.toString("utf8", xi + 4, xi += 4 + x.readUInt32BE(xi)) : column.parser.array === true ? column.parser(x.toString("utf8", xi + 5, xi += 4 + x.readUInt32BE(xi))) : column.parser(x.toString("utf8", xi + 4, xi += 4 + x.readUInt32BE(xi)));
-    transform.raw ? row[i] = transform.raw === true ? value : transform.value.from ? transform.value.from(value, column) : value : row[column.name] = transform.value.from ? transform.value.from(value, column) : value;
+    value =
+      type === 110
+        ? null
+        : type === 117
+          ? void 0
+          : column.parser === void 0
+            ? x.toString("utf8", xi + 4, (xi += 4 + x.readUInt32BE(xi)))
+            : column.parser.array === true
+              ? column.parser(
+                  x.toString("utf8", xi + 5, (xi += 4 + x.readUInt32BE(xi))),
+                )
+              : column.parser(
+                  x.toString("utf8", xi + 4, (xi += 4 + x.readUInt32BE(xi))),
+                );
+    transform.raw
+      ? (row[i] =
+          transform.raw === true
+            ? value
+            : transform.value.from
+              ? transform.value.from(value, column)
+              : value)
+      : (row[column.name] = transform.value.from
+          ? transform.value.from(value, column)
+          : value);
   }
   return { i: xi, row: transform.row.from ? transform.row.from(row) : row };
 }
 function parseEvent(x) {
-  const xs = x.match(/^(\*|insert|update|delete)?:?([^.]+?\.?[^=]+)?=?(.+)?/i) || [];
-  if (!xs)
-    throw new Error("Malformed subscribe pattern: " + x);
+  const xs =
+    x.match(/^(\*|insert|update|delete)?:?([^.]+?\.?[^=]+)?=?(.+)?/i) || [];
+  if (!xs) throw new Error("Malformed subscribe pattern: " + x);
   const [, command, path, key] = xs;
-  return (command || "*") + (path ? ":" + (path.indexOf(".") === -1 ? "public." + path : path) : "") + (key ? "=" + key : "");
+  return (
+    (command || "*") +
+    (path ? ":" + (path.indexOf(".") === -1 ? "public." + path : path) : "") +
+    (key ? "=" + key : "")
+  );
 }
 function largeObject(sql2, oid, mode = 131072 | 262144) {
   return new Promise(async (resolve, reject) => {
-    await sql2.begin(async (sql3) => {
-      let finish;
-      !oid && ([{ oid }] = await sql3`select lo_creat(-1) as oid`);
-      const [{ fd }] = await sql3`select lo_open(${oid}, ${mode}) as fd`;
-      const lo = {
-        writable,
-        readable,
-        close: () => sql3`select lo_close(${fd})`.then(finish),
-        tell: () => sql3`select lo_tell64(${fd})`,
-        read: (x) => sql3`select loread(${fd}, ${x}) as data`,
-        write: (x) => sql3`select lowrite(${fd}, ${x})`,
-        truncate: (x) => sql3`select lo_truncate64(${fd}, ${x})`,
-        seek: (x, whence = 0) => sql3`select lo_lseek64(${fd}, ${x}, ${whence})`,
-        size: () => sql3`
+    await sql2
+      .begin(async (sql3) => {
+        let finish;
+        !oid && ([{ oid }] = await sql3`select lo_creat(-1) as oid`);
+        const [{ fd }] = await sql3`select lo_open(${oid}, ${mode}) as fd`;
+        const lo = {
+          writable,
+          readable,
+          close: () => sql3`select lo_close(${fd})`.then(finish),
+          tell: () => sql3`select lo_tell64(${fd})`,
+          read: (x) => sql3`select loread(${fd}, ${x}) as data`,
+          write: (x) => sql3`select lowrite(${fd}, ${x})`,
+          truncate: (x) => sql3`select lo_truncate64(${fd}, ${x})`,
+          seek: (x, whence = 0) =>
+            sql3`select lo_lseek64(${fd}, ${x}, ${whence})`,
+          size: () => sql3`
           select
             lo_lseek64(${fd}, location, 0) as position,
             seek.size
@@ -1697,42 +2237,39 @@ function largeObject(sql2, oid, mode = 131072 | 262144) {
               tell.location
             from (select lo_tell64($1) as location) tell
           ) seek
-        `
-      };
-      resolve(lo);
-      return new Promise(async (r2) => finish = r2);
-      async function readable({
-        highWaterMark = 2048 * 8,
-        start = 0,
-        end = Infinity
-      } = {}) {
-        let max2 = end - start;
-        start && await lo.seek(start);
-        return new require$$0$2.Readable({
-          highWaterMark,
-          async read(size2) {
-            const l = size2 > max2 ? size2 - max2 : size2;
-            max2 -= size2;
-            const [{ data }] = await lo.read(l);
-            this.push(data);
-            if (data.length < size2)
-              this.push(null);
-          }
-        });
-      }
-      async function writable({
-        highWaterMark = 2048 * 8,
-        start = 0
-      } = {}) {
-        start && await lo.seek(start);
-        return new require$$0$2.Writable({
-          highWaterMark,
-          write(chunk, encoding, callback) {
-            lo.write(chunk).then(() => callback(), callback);
-          }
-        });
-      }
-    }).catch(reject);
+        `,
+        };
+        resolve(lo);
+        return new Promise(async (r2) => (finish = r2));
+        async function readable({
+          highWaterMark = 2048 * 8,
+          start = 0,
+          end = Infinity,
+        } = {}) {
+          let max2 = end - start;
+          start && (await lo.seek(start));
+          return new require$$0$2.Readable({
+            highWaterMark,
+            async read(size2) {
+              const l = size2 > max2 ? size2 - max2 : size2;
+              max2 -= size2;
+              const [{ data }] = await lo.read(l);
+              this.push(data);
+              if (data.length < size2) this.push(null);
+            },
+          });
+        }
+        async function writable({ highWaterMark = 2048 * 8, start = 0 } = {}) {
+          start && (await lo.seek(start));
+          return new require$$0$2.Writable({
+            highWaterMark,
+            write(chunk, encoding, callback) {
+              lo.write(chunk).then(() => callback(), callback);
+            },
+          });
+        }
+      })
+      .catch(reject);
   });
 }
 Object.assign(Postgres, {
@@ -1751,14 +2288,25 @@ Object.assign(Postgres, {
     from: [20],
     parse: (x) => BigInt(x),
     // eslint-disable-line
-    serialize: (x) => x.toString()
-  }
+    serialize: (x) => x.toString(),
+  },
 });
 function Postgres(a, b2) {
-  const options = parseOptions(a, b2), subscribe = options.no_subscribe || Subscribe(Postgres, { ...options });
+  const options = parseOptions(a, b2),
+    subscribe = options.no_subscribe || Subscribe(Postgres, { ...options });
   let ending = false;
-  const queries = Queue(), connecting = Queue(), reserved = Queue(), closed = Queue(), ended = Queue(), open = Queue(), busy = Queue(), full = Queue(), queues = { connecting, closed };
-  const connections = [...Array(options.max)].map(() => Connection(options, queues, { onopen, onend, onclose }));
+  const queries = Queue(),
+    connecting = Queue(),
+    reserved = Queue(),
+    closed = Queue(),
+    ended = Queue(),
+    open = Queue(),
+    busy = Queue(),
+    full = Queue(),
+    queues = { connecting, closed };
+  const connections = [...Array(options.max)].map(() =>
+    Connection(options, queues, { onopen, onend, onclose }),
+  );
   const sql2 = Sql(handler2);
   Object.assign(sql2, {
     get parameters() {
@@ -1774,7 +2322,7 @@ function Postgres(a, b2) {
     listen,
     begin,
     close,
-    end
+    end,
   });
   return sql2;
   function Sql(handler3) {
@@ -1790,77 +2338,105 @@ function Postgres(a, b2) {
       notify,
       array,
       json: json2,
-      file
+      file,
     });
     return sql3;
     function typed(value, type) {
       return new Parameter(value, type);
     }
     function sql3(strings, ...args) {
-      const query = strings && Array.isArray(strings.raw) ? new Query(strings, args, handler3, cancel) : typeof strings === "string" && !args.length ? new Identifier(options.transform.column.to ? options.transform.column.to(strings) : strings) : new Builder(strings, args);
+      const query =
+        strings && Array.isArray(strings.raw)
+          ? new Query(strings, args, handler3, cancel)
+          : typeof strings === "string" && !args.length
+            ? new Identifier(
+                options.transform.column.to
+                  ? options.transform.column.to(strings)
+                  : strings,
+              )
+            : new Builder(strings, args);
       return query;
     }
     function unsafe(string, args = [], options2 = {}) {
-      arguments.length === 2 && !Array.isArray(args) && (options2 = args, args = []);
+      arguments.length === 2 &&
+        !Array.isArray(args) &&
+        ((options2 = args), (args = []));
       const query = new Query([string], args, handler3, cancel, {
         prepare: false,
         ...options2,
-        simple: "simple" in options2 ? options2.simple : args.length === 0
+        simple: "simple" in options2 ? options2.simple : args.length === 0,
       });
       return query;
     }
     function file(path, args = [], options2 = {}) {
-      arguments.length === 2 && !Array.isArray(args) && (options2 = args, args = []);
-      const query = new Query([], args, (query2) => {
-        fs.readFile(path, "utf8", (err, string) => {
-          if (err)
-            return query2.reject(err);
-          query2.strings = [string];
-          handler3(query2);
-        });
-      }, cancel, {
-        ...options2,
-        simple: "simple" in options2 ? options2.simple : args.length === 0
-      });
+      arguments.length === 2 &&
+        !Array.isArray(args) &&
+        ((options2 = args), (args = []));
+      const query = new Query(
+        [],
+        args,
+        (query2) => {
+          fs.readFile(path, "utf8", (err, string) => {
+            if (err) return query2.reject(err);
+            query2.strings = [string];
+            handler3(query2);
+          });
+        },
+        cancel,
+        {
+          ...options2,
+          simple: "simple" in options2 ? options2.simple : args.length === 0,
+        },
+      );
       return query;
     }
   }
   async function listen(name, fn, onlisten) {
     const listener = { fn, onlisten };
-    const sql3 = listen.sql || (listen.sql = Postgres({
-      ...options,
-      max: 1,
-      idle_timeout: null,
-      max_lifetime: null,
-      fetch_types: false,
-      onclose() {
-        Object.entries(listen.channels).forEach(([name2, { listeners }]) => {
-          delete listen.channels[name2];
-          Promise.all(listeners.map((l) => listen(name2, l.fn, l.onlisten).catch(() => {
-          })));
-        });
-      },
-      onnotify(c, x) {
-        c in listen.channels && listen.channels[c].listeners.forEach((l) => l.fn(x));
-      }
-    }));
-    const channels = listen.channels || (listen.channels = {}), exists2 = name in channels;
+    const sql3 =
+      listen.sql ||
+      (listen.sql = Postgres({
+        ...options,
+        max: 1,
+        idle_timeout: null,
+        max_lifetime: null,
+        fetch_types: false,
+        onclose() {
+          Object.entries(listen.channels).forEach(([name2, { listeners }]) => {
+            delete listen.channels[name2];
+            Promise.all(
+              listeners.map((l) =>
+                listen(name2, l.fn, l.onlisten).catch(() => {}),
+              ),
+            );
+          });
+        },
+        onnotify(c, x) {
+          c in listen.channels &&
+            listen.channels[c].listeners.forEach((l) => l.fn(x));
+        },
+      }));
+    const channels = listen.channels || (listen.channels = {}),
+      exists2 = name in channels;
     if (exists2) {
       channels[name].listeners.push(listener);
       const result2 = await channels[name].result;
       listener.onlisten && listener.onlisten();
       return { state: result2.state, unlisten };
     }
-    channels[name] = { result: sql3`listen ${sql3.unsafe('"' + name.replace(/"/g, '""') + '"')}`, listeners: [listener] };
+    channels[name] = {
+      result: sql3`listen ${sql3.unsafe('"' + name.replace(/"/g, '""') + '"')}`,
+      listeners: [listener],
+    };
     const result = await channels[name].result;
     listener.onlisten && listener.onlisten();
     return { state: result.state, unlisten };
     async function unlisten() {
-      if (name in channels === false)
-        return;
-      channels[name].listeners = channels[name].listeners.filter((x) => x !== listener);
-      if (channels[name].listeners.length)
-        return;
+      if (name in channels === false) return;
+      channels[name].listeners = channels[name].listeners.filter(
+        (x) => x !== listener,
+      );
+      if (channels[name].listeners.length) return;
       delete channels[name];
       return sql3`unlisten ${sql3.unsafe('"' + name.replace(/"/g, '""') + '"')}`;
     }
@@ -1870,13 +2446,16 @@ function Postgres(a, b2) {
   }
   async function reserve() {
     const queue = Queue();
-    const c = open.length ? open.shift() : await new Promise((resolve, reject) => {
-      const query = { reserve: resolve, reject };
-      queries.push(query);
-      closed.length && connect(closed.shift(), query);
-    });
+    const c = open.length
+      ? open.shift()
+      : await new Promise((resolve, reject) => {
+          const query = { reserve: resolve, reject };
+          queries.push(query);
+          closed.length && connect(closed.shift(), query);
+        });
     move(c, reserved);
-    c.reserved = () => queue.length ? c.execute(queue.shift()) : move(c, reserved);
+    c.reserved = () =>
+      queue.length ? c.execute(queue.shift()) : move(c, reserved);
     c.reserved.release = true;
     const sql3 = Sql(handler3);
     sql3.release = () => {
@@ -1889,14 +2468,18 @@ function Postgres(a, b2) {
     }
   }
   async function begin(options2, fn) {
-    !fn && (fn = options2, options2 = "");
+    !fn && ((fn = options2), (options2 = ""));
     const queries2 = Queue();
-    let savepoints = 0, connection2, prepare = null;
+    let savepoints = 0,
+      connection2,
+      prepare = null;
     try {
-      await sql2.unsafe("begin " + options2.replace(/[^a-z ]/ig, ""), [], { onexecute }).execute();
+      await sql2
+        .unsafe("begin " + options2.replace(/[^a-z ]/gi, ""), [], { onexecute })
+        .execute();
       return await Promise.race([
         scope(connection2, fn),
-        new Promise((_, reject) => connection2.onclose = reject)
+        new Promise((_, reject) => (connection2.onclose = reject)),
       ]);
     } catch (error) {
       throw error;
@@ -1904,28 +2487,35 @@ function Postgres(a, b2) {
     async function scope(c, fn2, name) {
       const sql3 = Sql(handler3);
       sql3.savepoint = savepoint;
-      sql3.prepare = (x) => prepare = x.replace(/[^a-z0-9$-_. ]/gi);
+      sql3.prepare = (x) => (prepare = x.replace(/[^a-z0-9$-_. ]/gi));
       let uncaughtError, result;
-      name && await sql3`savepoint ${sql3(name)}`;
+      name && (await sql3`savepoint ${sql3(name)}`);
       try {
         result = await new Promise((resolve, reject) => {
           const x = fn2(sql3);
-          Promise.resolve(Array.isArray(x) ? Promise.all(x) : x).then(resolve, reject);
+          Promise.resolve(Array.isArray(x) ? Promise.all(x) : x).then(
+            resolve,
+            reject,
+          );
         });
-        if (uncaughtError)
-          throw uncaughtError;
+        if (uncaughtError) throw uncaughtError;
       } catch (e) {
         await (name ? sql3`rollback to ${sql3(name)}` : sql3`rollback`);
-        throw e instanceof PostgresError && e.code === "25P02" && uncaughtError || e;
+        throw (
+          (e instanceof PostgresError && e.code === "25P02" && uncaughtError) ||
+          e
+        );
       }
       if (!name) {
-        prepare ? await sql3`prepare transaction '${sql3.unsafe(prepare)}'` : await sql3`commit`;
+        prepare
+          ? await sql3`prepare transaction '${sql3.unsafe(prepare)}'`
+          : await sql3`commit`;
       }
       return result;
       function savepoint(name2, fn3) {
         if (name2 && Array.isArray(name2.raw))
           return savepoint((sql4) => sql4.apply(sql4, arguments));
-        arguments.length === 1 && (fn3 = name2, name2 = null);
+        arguments.length === 1 && ((fn3 = name2), (name2 = null));
         return scope(c, fn3, "s" + savepoints++ + (name2 ? "_" + name2 : ""));
       }
       function handler3(q) {
@@ -1936,7 +2526,8 @@ function Postgres(a, b2) {
     function onexecute(c) {
       connection2 = c;
       move(c, reserved);
-      c.reserved = () => queries2.length ? c.execute(queries2.shift()) : move(c, reserved);
+      c.reserved = () =>
+        queries2.length ? c.execute(queries2.shift()) : move(c, reserved);
     }
   }
   function move(c, queue) {
@@ -1950,17 +2541,20 @@ function Postgres(a, b2) {
     return new Parameter(x, 3802);
   }
   function array(x, type) {
-    if (!Array.isArray(x))
-      return array(Array.from(arguments));
-    return new Parameter(x, type || (x.length ? inferType(x) || 25 : 0), options.shared.typeArrayMap);
+    if (!Array.isArray(x)) return array(Array.from(arguments));
+    return new Parameter(
+      x,
+      type || (x.length ? inferType(x) || 25 : 0),
+      options.shared.typeArrayMap,
+    );
   }
   function handler2(query) {
     if (ending)
-      return query.reject(Errors.connection("CONNECTION_ENDED", options, options));
-    if (open.length)
-      return go(open.shift(), query);
-    if (closed.length)
-      return connect(closed.shift(), query);
+      return query.reject(
+        Errors.connection("CONNECTION_ENDED", options, options),
+      );
+    if (open.length) return go(open.shift(), query);
+    if (closed.length) return connect(closed.shift(), query);
     busy.length ? go(busy.shift(), query) : queries.push(query);
   }
   function go(c, query) {
@@ -1968,21 +2562,36 @@ function Postgres(a, b2) {
   }
   function cancel(query) {
     return new Promise((resolve, reject) => {
-      query.state ? query.active ? Connection(options).cancel(query.state, resolve, reject) : query.cancelled = { resolve, reject } : (queries.remove(query), query.cancelled = true, query.reject(Errors.generic("57014", "canceling statement due to user request")), resolve());
+      query.state
+        ? query.active
+          ? Connection(options).cancel(query.state, resolve, reject)
+          : (query.cancelled = { resolve, reject })
+        : (queries.remove(query),
+          (query.cancelled = true),
+          query.reject(
+            Errors.generic("57014", "canceling statement due to user request"),
+          ),
+          resolve());
     });
   }
   async function end({ timeout = null } = {}) {
-    if (ending)
-      return ending;
+    if (ending) return ending;
     await 1;
     let timer2;
-    return ending = Promise.race([
-      new Promise((r2) => timeout !== null && (timer2 = setTimeout(destroy, timeout * 1e3, r2))),
-      Promise.all(connections.map((c) => c.end()).concat(
-        listen.sql ? listen.sql.end({ timeout: 0 }) : [],
-        subscribe.sql ? subscribe.sql.end({ timeout: 0 }) : []
-      ))
-    ]).then(() => clearTimeout(timer2));
+    return (ending = Promise.race([
+      new Promise(
+        (r2) =>
+          timeout !== null && (timer2 = setTimeout(destroy, timeout * 1e3, r2)),
+      ),
+      Promise.all(
+        connections
+          .map((c) => c.end())
+          .concat(
+            listen.sql ? listen.sql.end({ timeout: 0 }) : [],
+            subscribe.sql ? subscribe.sql.end({ timeout: 0 }) : [],
+          ),
+      ),
+    ]).then(() => clearTimeout(timer2)));
   }
   async function close() {
     await Promise.all(connections.map((c) => c.end()));
@@ -1990,7 +2599,9 @@ function Postgres(a, b2) {
   async function destroy(resolve) {
     await Promise.all(connections.map((c) => c.terminate()));
     while (queries.length)
-      queries.shift().reject(Errors.connection("CONNECTION_DESTROYED", options));
+      queries
+        .shift()
+        .reject(Errors.connection("CONNECTION_DESTROYED", options));
     resolve();
   }
   function connect(c, query) {
@@ -2002,13 +2613,12 @@ function Postgres(a, b2) {
     move(c, ended);
   }
   function onopen(c) {
-    if (queries.length === 0)
-      return move(c, open);
-    let max2 = Math.ceil(queries.length / (connecting.length + 1)), ready = true;
+    if (queries.length === 0) return move(c, open);
+    let max2 = Math.ceil(queries.length / (connecting.length + 1)),
+      ready = true;
     while (ready && queries.length && max2-- > 0) {
       const query = queries.shift();
-      if (query.reserve)
-        return query.reserve(c);
+      if (query.reserve) return query.reserve(c);
       ready = c.execute(query);
     }
     ready ? move(c, busy) : move(c, full);
@@ -2016,20 +2626,49 @@ function Postgres(a, b2) {
   function onclose(c, e) {
     move(c, closed);
     c.reserved = null;
-    c.onclose && (c.onclose(e), c.onclose = null);
+    c.onclose && (c.onclose(e), (c.onclose = null));
     options.onclose && options.onclose(c.id);
     queries.length && connect(c, queries.shift());
   }
 }
 function parseOptions(a, b2) {
-  if (a && a.shared)
-    return a;
-  const env2 = process.env, o = (!a || typeof a === "string" ? b2 : a) || {}, { url, multihost } = parseUrl(a), query = [...url.searchParams].reduce((a2, [b3, c]) => (a2[b3] = c, a2), {}), host2 = o.hostname || o.host || multihost || url.hostname || env2.PGHOST || "localhost", port = o.port || url.port || env2.PGPORT || 5432, user2 = o.user || o.username || url.username || env2.PGUSERNAME || env2.PGUSER || osUsername();
+  if (a && a.shared) return a;
+  const env2 = process.env,
+    o = (!a || typeof a === "string" ? b2 : a) || {},
+    { url, multihost } = parseUrl(a),
+    query = [...url.searchParams].reduce(
+      (a2, [b3, c]) => ((a2[b3] = c), a2),
+      {},
+    ),
+    host2 =
+      o.hostname ||
+      o.host ||
+      multihost ||
+      url.hostname ||
+      env2.PGHOST ||
+      "localhost",
+    port = o.port || url.port || env2.PGPORT || 5432,
+    user2 =
+      o.user ||
+      o.username ||
+      url.username ||
+      env2.PGUSERNAME ||
+      env2.PGUSER ||
+      osUsername();
   o.no_prepare && (o.prepare = false);
-  query.sslmode && (query.ssl = query.sslmode, delete query.sslmode);
-  "timeout" in o && (console.log("The timeout option is deprecated, use idle_timeout instead"), o.idle_timeout = o.timeout);
+  query.sslmode && ((query.ssl = query.sslmode), delete query.sslmode);
+  "timeout" in o &&
+    (console.log("The timeout option is deprecated, use idle_timeout instead"),
+    (o.idle_timeout = o.timeout));
   query.sslrootcert === "system" && (query.ssl = "verify-full");
-  const ints = ["idle_timeout", "connect_timeout", "max_lifetime", "max_pipeline", "backoff", "keep_alive"];
+  const ints = [
+    "idle_timeout",
+    "connect_timeout",
+    "max_lifetime",
+    "max_pipeline",
+    "backoff",
+    "keep_alive",
+  ];
   const defaults = {
     max: globalThis.Cloudflare ? 3 : 10,
     ssl: false,
@@ -2044,27 +2683,43 @@ function parseOptions(a, b2) {
     debug: false,
     fetch_types: true,
     publications: "alltables",
-    target_session_attrs: null
+    target_session_attrs: null,
   };
   return {
-    host: Array.isArray(host2) ? host2 : host2.split(",").map((x) => x.split(":")[0]),
-    port: Array.isArray(port) ? port : host2.split(",").map((x) => parseInt(x.split(":")[1] || port)),
-    path: o.path || host2.indexOf("/") > -1 && host2 + "/.s.PGSQL." + port,
-    database: o.database || o.db || (url.pathname || "").slice(1) || env2.PGDATABASE || user2,
+    host: Array.isArray(host2)
+      ? host2
+      : host2.split(",").map((x) => x.split(":")[0]),
+    port: Array.isArray(port)
+      ? port
+      : host2.split(",").map((x) => parseInt(x.split(":")[1] || port)),
+    path: o.path || (host2.indexOf("/") > -1 && host2 + "/.s.PGSQL." + port),
+    database:
+      o.database ||
+      o.db ||
+      (url.pathname || "").slice(1) ||
+      env2.PGDATABASE ||
+      user2,
     user: user2,
     pass: o.pass || o.password || url.password || env2.PGPASSWORD || "",
-    ...Object.entries(defaults).reduce(
-      (acc, [k, d]) => {
-        const value = k in o ? o[k] : k in query ? query[k] === "disable" || query[k] === "false" ? false : query[k] : env2["PG" + k.toUpperCase()] || d;
-        acc[k] = typeof value === "string" && ints.includes(k) ? +value : value;
-        return acc;
-      },
-      {}
-    ),
+    ...Object.entries(defaults).reduce((acc, [k, d]) => {
+      const value =
+        k in o
+          ? o[k]
+          : k in query
+            ? query[k] === "disable" || query[k] === "false"
+              ? false
+              : query[k]
+            : env2["PG" + k.toUpperCase()] || d;
+      acc[k] = typeof value === "string" && ints.includes(k) ? +value : value;
+      return acc;
+    }, {}),
     connection: {
       application_name: env2.PGAPPNAME || "postgres.js",
       ...o.connection,
-      ...Object.entries(query).reduce((acc, [k, v]) => (k in defaults || (acc[k] = v), acc), {})
+      ...Object.entries(query).reduce(
+        (acc, [k, v]) => (k in defaults || (acc[k] = v), acc),
+        {},
+      ),
     },
     types: o.types || {},
     target_session_attrs: tsa(o, url, env2),
@@ -2076,12 +2731,24 @@ function parseOptions(a, b2) {
     transform: parseTransform(o.transform || { undefined: void 0 }),
     parameters: {},
     shared: { retries: 0, typeArrayMap: {} },
-    ...mergeUserTypes(o.types)
+    ...mergeUserTypes(o.types),
   };
 }
 function tsa(o, url, env2) {
-  const x = o.target_session_attrs || url.searchParams.get("target_session_attrs") || env2.PGTARGETSESSIONATTRS;
-  if (!x || ["read-write", "read-only", "primary", "standby", "prefer-standby"].includes(x))
+  const x =
+    o.target_session_attrs ||
+    url.searchParams.get("target_session_attrs") ||
+    env2.PGTARGETSESSIONATTRS;
+  if (
+    !x ||
+    [
+      "read-write",
+      "read-only",
+      "primary",
+      "standby",
+      "prefer-standby",
+    ].includes(x)
+  )
     return x;
   throw new Error("target_session_attrs " + x + " is not supported");
 }
@@ -2095,17 +2762,18 @@ function parseTransform(x) {
   return {
     undefined: x.undefined,
     column: {
-      from: typeof x.column === "function" ? x.column : x.column && x.column.from,
-      to: x.column && x.column.to
+      from:
+        typeof x.column === "function" ? x.column : x.column && x.column.from,
+      to: x.column && x.column.to,
     },
     value: {
       from: typeof x.value === "function" ? x.value : x.value && x.value.from,
-      to: x.value && x.value.to
+      to: x.value && x.value.to,
     },
     row: {
       from: typeof x.row === "function" ? x.row : x.row && x.row.from,
-      to: x.row && x.row.to
-    }
+      to: x.row && x.row.to,
+    },
   };
 }
 function parseUrl(url) {
@@ -2123,9 +2791,9 @@ function parseUrl(url) {
       hostname: urlObj.hostname,
       port: urlObj.port,
       pathname: urlObj.pathname,
-      searchParams: urlObj.searchParams
+      searchParams: urlObj.searchParams,
     },
-    multihost: host2.indexOf(",") > -1 && host2
+    multihost: host2.indexOf(",") > -1 && host2,
   };
 }
 function osUsername() {
@@ -2145,7 +2813,7 @@ function is(value, type) {
   }
   if (!Object.prototype.hasOwnProperty.call(type, entityKind)) {
     throw new Error(
-      `Class "${type.name ?? "<unknown>"}" doesn't look like a Drizzle entity. If this is incorrect and the class is provided by Drizzle, please report this as a bug.`
+      `Class "${type.name ?? "<unknown>"}" doesn't look like a Drizzle entity. If this is incorrect and the class is provided by Drizzle, please report this as a bug.`,
     );
   }
   let cls = Object.getPrototypeOf(value).constructor;
@@ -2179,14 +2847,15 @@ class DefaultLogger {
         return String(p);
       }
     });
-    const paramsStr = stringifiedParams.length ? ` -- params: [${stringifiedParams.join(", ")}]` : "";
+    const paramsStr = stringifiedParams.length
+      ? ` -- params: [${stringifiedParams.join(", ")}]`
+      : "";
     this.writer.write(`Query: ${query}${paramsStr}`);
   }
 }
 class NoopLogger {
   static [entityKind] = "NoopLogger";
-  logQuery() {
-  }
+  logQuery() {}
 }
 class QueryPromise {
   static [entityKind] = "QueryPromise";
@@ -2203,7 +2872,7 @@ class QueryPromise {
       (reason) => {
         onFinally?.();
         throw reason;
-      }
+      },
     );
   }
   then(onFulfilled, onRejected) {
@@ -2256,7 +2925,10 @@ class Column {
   }
   // ** @internal */
   shouldDisableInsert() {
-    return this.config.generated !== void 0 && this.config.generated.type !== "byDefault";
+    return (
+      this.config.generated !== void 0 &&
+      this.config.generated.type !== "byDefault"
+    );
   }
 }
 class ColumnBuilder {
@@ -2275,7 +2947,7 @@ class ColumnBuilder {
       uniqueType: void 0,
       dataType,
       columnType,
-      generated: void 0
+      generated: void 0,
     };
   }
   /**
@@ -2372,7 +3044,12 @@ class ForeignKeyBuilder {
   constructor(config, actions) {
     this.reference = () => {
       const { name, columns, foreignColumns } = config();
-      return { name, columns, foreignTable: foreignColumns[0].table, foreignColumns };
+      return {
+        name,
+        columns,
+        foreignTable: foreignColumns[0].table,
+        foreignColumns,
+      };
     };
     if (actions) {
       this._onUpdate = actions.onUpdate;
@@ -2411,7 +3088,7 @@ class ForeignKey {
       this.table[TableName],
       ...columnNames,
       foreignColumns[0].table[TableName],
-      ...foreignColumnNames
+      ...foreignColumnNames,
     ];
     return name ?? `${chunks.join("_")}_fk`;
   }
@@ -2441,7 +3118,12 @@ class UniqueConstraintBuilder {
   }
   /** @internal */
   build(table) {
-    return new UniqueConstraint(table, this.columns, this.nullsNotDistinctConfig, this.name);
+    return new UniqueConstraint(
+      table,
+      this.columns,
+      this.nullsNotDistinctConfig,
+      this.name,
+    );
   }
 }
 class UniqueOnConstraintBuilder {
@@ -2459,7 +3141,12 @@ class UniqueConstraint {
   constructor(table, columns, nullsNotDistinct, name) {
     this.table = table;
     this.columns = columns;
-    this.name = name ?? uniqueKeyName(this.table, this.columns.map((column) => column.name));
+    this.name =
+      name ??
+      uniqueKeyName(
+        this.table,
+        this.columns.map((column) => column.name),
+      );
     this.nullsNotDistinct = nullsNotDistinct;
   }
   static [entityKind] = "PgUniqueConstraint";
@@ -2534,15 +3221,17 @@ function parsePgArray(arrayString) {
   return result;
 }
 function makePgArray(array) {
-  return `{${array.map((item) => {
-    if (Array.isArray(item)) {
-      return makePgArray(item);
-    }
-    if (typeof item === "string") {
-      return `"${item.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
-    }
-    return `${item}`;
-  }).join(",")}}`;
+  return `{${array
+    .map((item) => {
+      if (Array.isArray(item)) {
+        return makePgArray(item);
+      }
+      if (typeof item === "string") {
+        return `"${item.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
+      }
+      return `${item}`;
+    })
+    .join(",")}}`;
 }
 class PgColumnBuilder extends ColumnBuilder {
   foreignKeyConfigs = [];
@@ -2564,7 +3253,7 @@ class PgColumnBuilder extends ColumnBuilder {
     this.config.generated = {
       as,
       type: "always",
-      mode: "stored"
+      mode: "stored",
     };
     return this;
   }
@@ -2586,7 +3275,7 @@ class PgColumnBuilder extends ColumnBuilder {
           return builder.build(table);
         },
         ref,
-        actions
+        actions,
       );
     });
   }
@@ -2613,12 +3302,12 @@ class ExtraConfigColumn extends PgColumn {
   indexConfig = {
     order: this.config.order ?? "asc",
     nulls: this.config.nulls ?? "last",
-    opClass: this.config.opClass
+    opClass: this.config.opClass,
   };
   defaultConfig = {
     order: "asc",
     nulls: "last",
-    opClass: void 0
+    opClass: void 0,
   };
   asc() {
     this.indexConfig.order = "asc";
@@ -2680,11 +3369,7 @@ class PgArrayBuilder extends PgColumnBuilder {
   /** @internal */
   build(table) {
     const baseColumn = this.config.baseBuilder.build(table);
-    return new PgArray(
-      table,
-      this.config,
-      baseColumn
-    );
+    return new PgArray(table, this.config, baseColumn);
   }
 }
 class PgArray extends PgColumn {
@@ -2706,8 +3391,12 @@ class PgArray extends PgColumn {
     return value.map((v) => this.baseColumn.mapFromDriverValue(v));
   }
   mapToDriverValue(value, isNestedArray = false) {
-    const a = value.map(
-      (v) => v === null ? null : is(this.baseColumn, PgArray) ? this.baseColumn.mapToDriverValue(v, true) : this.baseColumn.mapToDriverValue(v)
+    const a = value.map((v) =>
+      v === null
+        ? null
+        : is(this.baseColumn, PgArray)
+          ? this.baseColumn.mapToDriverValue(v, true)
+          : this.baseColumn.mapToDriverValue(v),
     );
     if (isNestedArray) return a;
     return makePgArray(a);
@@ -2721,10 +3410,7 @@ class PgEnumObjectColumnBuilder extends PgColumnBuilder {
   }
   /** @internal */
   build(table) {
-    return new PgEnumObjectColumn(
-      table,
-      this.config
-    );
+    return new PgEnumObjectColumn(table, this.config);
   }
 }
 class PgEnumObjectColumn extends PgColumn {
@@ -2741,7 +3427,12 @@ class PgEnumObjectColumn extends PgColumn {
 }
 const isPgEnumSym = Symbol.for("drizzle:isPgEnum");
 function isPgEnum(obj) {
-  return !!obj && typeof obj === "function" && isPgEnumSym in obj && obj[isPgEnumSym] === true;
+  return (
+    !!obj &&
+    typeof obj === "function" &&
+    isPgEnumSym in obj &&
+    obj[isPgEnumSym] === true
+  );
 }
 class PgEnumColumnBuilder extends PgColumnBuilder {
   static [entityKind] = "PgEnumColumnBuilder";
@@ -2751,10 +3442,7 @@ class PgEnumColumnBuilder extends PgColumnBuilder {
   }
   /** @internal */
   build(table) {
-    return new PgEnumColumn(
-      table,
-      this.config
-    );
+    return new PgEnumColumn(table, this.config);
   }
 }
 class PgEnumColumn extends PgColumn {
@@ -2770,7 +3458,9 @@ class PgEnumColumn extends PgColumn {
   }
 }
 function pgEnum(enumName, input) {
-  return Array.isArray(input) ? pgEnumWithSchema(enumName, [...input], void 0) : pgEnumObjectWithSchema(enumName, input, void 0);
+  return Array.isArray(input)
+    ? pgEnumWithSchema(enumName, [...input], void 0)
+    : pgEnumObjectWithSchema(enumName, input, void 0);
 }
 function pgEnumWithSchema(enumName, values2, schema2) {
   const enumInstance = Object.assign(
@@ -2779,8 +3469,8 @@ function pgEnumWithSchema(enumName, values2, schema2) {
       enumName,
       enumValues: values2,
       schema: schema2,
-      [isPgEnumSym]: true
-    }
+      [isPgEnumSym]: true,
+    },
   );
   return enumInstance;
 }
@@ -2791,8 +3481,8 @@ function pgEnumObjectWithSchema(enumName, values2, schema2) {
       enumName,
       enumValues: Object.values(values2),
       schema: schema2,
-      [isPgEnumSym]: true
-    }
+      [isPgEnumSym]: true,
+    },
   );
   return enumInstance;
 }
@@ -2805,7 +3495,7 @@ class Subquery {
       selectedFields: fields,
       alias,
       isWith,
-      usedTables
+      usedTables,
     };
   }
   // getSQL(): SQL<unknown> {
@@ -2820,7 +3510,7 @@ const tracer = {
     {
       return fn();
     }
-  }
+  },
 };
 const ViewBaseConfig = Symbol.for("drizzle:ViewBaseConfig");
 const Schema = Symbol.for("drizzle:Schema");
@@ -2842,7 +3532,7 @@ class Table {
     ExtraConfigColumns,
     BaseName,
     IsAlias,
-    ExtraConfigBuilder
+    ExtraConfigBuilder,
   };
   /**
    * @internal
@@ -2887,7 +3577,9 @@ function getTableUniqueName(table) {
   return `${table[Schema] ?? "public"}.${table[TableName]}`;
 }
 function isSQLWrapper(value) {
-  return value !== null && value !== void 0 && typeof value.getSQL === "function";
+  return (
+    value !== null && value !== void 0 && typeof value.getSQL === "function"
+  );
 }
 function mergeQueries(queries) {
   const result = { sql: "", params: [] };
@@ -2920,7 +3612,9 @@ class SQL {
       if (is(chunk, Table)) {
         const schemaName = chunk[Table.Symbol.Schema];
         this.usedTables.push(
-          schemaName === void 0 ? chunk[Table.Symbol.Name] : schemaName + "." + chunk[Table.Symbol.Name]
+          schemaName === void 0
+            ? chunk[Table.Symbol.Name]
+            : schemaName + "." + chunk[Table.Symbol.Name],
         );
       }
     }
@@ -2940,7 +3634,7 @@ class SQL {
       const query = this.buildQueryFromSourceParams(this.queryChunks, config);
       span?.setAttributes({
         "drizzle.query.text": query.sql,
-        "drizzle.query.params": JSON.stringify(query.params)
+        "drizzle.query.params": JSON.stringify(query.params),
       });
       return query;
     });
@@ -2948,7 +3642,7 @@ class SQL {
   buildQueryFromSourceParams(chunks, _config) {
     const config = Object.assign({}, _config, {
       inlineParams: _config.inlineParams || this.shouldInlineParams,
-      paramStartIndex: _config.paramStartIndex || { value: 0 }
+      paramStartIndex: _config.paramStartIndex || { value: 0 },
     });
     const {
       casing,
@@ -2956,117 +3650,161 @@ class SQL {
       escapeParam,
       prepareTyping,
       inlineParams,
-      paramStartIndex
+      paramStartIndex,
     } = config;
-    return mergeQueries(chunks.map((chunk) => {
-      if (is(chunk, StringChunk)) {
-        return { sql: chunk.value.join(""), params: [] };
-      }
-      if (is(chunk, Name)) {
-        return { sql: escapeName(chunk.value), params: [] };
-      }
-      if (chunk === void 0) {
-        return { sql: "", params: [] };
-      }
-      if (Array.isArray(chunk)) {
-        const result = [new StringChunk("(")];
-        for (const [i, p] of chunk.entries()) {
-          result.push(p);
-          if (i < chunk.length - 1) {
-            result.push(new StringChunk(", "));
+    return mergeQueries(
+      chunks.map((chunk) => {
+        if (is(chunk, StringChunk)) {
+          return { sql: chunk.value.join(""), params: [] };
+        }
+        if (is(chunk, Name)) {
+          return { sql: escapeName(chunk.value), params: [] };
+        }
+        if (chunk === void 0) {
+          return { sql: "", params: [] };
+        }
+        if (Array.isArray(chunk)) {
+          const result = [new StringChunk("(")];
+          for (const [i, p] of chunk.entries()) {
+            result.push(p);
+            if (i < chunk.length - 1) {
+              result.push(new StringChunk(", "));
+            }
           }
+          result.push(new StringChunk(")"));
+          return this.buildQueryFromSourceParams(result, config);
         }
-        result.push(new StringChunk(")"));
-        return this.buildQueryFromSourceParams(result, config);
-      }
-      if (is(chunk, SQL)) {
-        return this.buildQueryFromSourceParams(chunk.queryChunks, {
-          ...config,
-          inlineParams: inlineParams || chunk.shouldInlineParams
-        });
-      }
-      if (is(chunk, Table)) {
-        const schemaName = chunk[Table.Symbol.Schema];
-        const tableName = chunk[Table.Symbol.Name];
-        return {
-          sql: schemaName === void 0 || chunk[IsAlias] ? escapeName(tableName) : escapeName(schemaName) + "." + escapeName(tableName),
-          params: []
-        };
-      }
-      if (is(chunk, Column)) {
-        const columnName = casing.getColumnCasing(chunk);
-        if (_config.invokeSource === "indexes") {
-          return { sql: escapeName(columnName), params: [] };
+        if (is(chunk, SQL)) {
+          return this.buildQueryFromSourceParams(chunk.queryChunks, {
+            ...config,
+            inlineParams: inlineParams || chunk.shouldInlineParams,
+          });
         }
-        const schemaName = chunk.table[Table.Symbol.Schema];
-        return {
-          sql: chunk.table[IsAlias] || schemaName === void 0 ? escapeName(chunk.table[Table.Symbol.Name]) + "." + escapeName(columnName) : escapeName(schemaName) + "." + escapeName(chunk.table[Table.Symbol.Name]) + "." + escapeName(columnName),
-          params: []
-        };
-      }
-      if (is(chunk, View)) {
-        const schemaName = chunk[ViewBaseConfig].schema;
-        const viewName = chunk[ViewBaseConfig].name;
-        return {
-          sql: schemaName === void 0 || chunk[ViewBaseConfig].isAlias ? escapeName(viewName) : escapeName(schemaName) + "." + escapeName(viewName),
-          params: []
-        };
-      }
-      if (is(chunk, Param)) {
-        if (is(chunk.value, Placeholder)) {
-          return { sql: escapeParam(paramStartIndex.value++, chunk), params: [chunk], typings: ["none"] };
+        if (is(chunk, Table)) {
+          const schemaName = chunk[Table.Symbol.Schema];
+          const tableName = chunk[Table.Symbol.Name];
+          return {
+            sql:
+              schemaName === void 0 || chunk[IsAlias]
+                ? escapeName(tableName)
+                : escapeName(schemaName) + "." + escapeName(tableName),
+            params: [],
+          };
         }
-        const mappedValue = chunk.value === null ? null : chunk.encoder.mapToDriverValue(chunk.value);
-        if (is(mappedValue, SQL)) {
-          return this.buildQueryFromSourceParams([mappedValue], config);
+        if (is(chunk, Column)) {
+          const columnName = casing.getColumnCasing(chunk);
+          if (_config.invokeSource === "indexes") {
+            return { sql: escapeName(columnName), params: [] };
+          }
+          const schemaName = chunk.table[Table.Symbol.Schema];
+          return {
+            sql:
+              chunk.table[IsAlias] || schemaName === void 0
+                ? escapeName(chunk.table[Table.Symbol.Name]) +
+                  "." +
+                  escapeName(columnName)
+                : escapeName(schemaName) +
+                  "." +
+                  escapeName(chunk.table[Table.Symbol.Name]) +
+                  "." +
+                  escapeName(columnName),
+            params: [],
+          };
+        }
+        if (is(chunk, View)) {
+          const schemaName = chunk[ViewBaseConfig].schema;
+          const viewName = chunk[ViewBaseConfig].name;
+          return {
+            sql:
+              schemaName === void 0 || chunk[ViewBaseConfig].isAlias
+                ? escapeName(viewName)
+                : escapeName(schemaName) + "." + escapeName(viewName),
+            params: [],
+          };
+        }
+        if (is(chunk, Param)) {
+          if (is(chunk.value, Placeholder)) {
+            return {
+              sql: escapeParam(paramStartIndex.value++, chunk),
+              params: [chunk],
+              typings: ["none"],
+            };
+          }
+          const mappedValue =
+            chunk.value === null
+              ? null
+              : chunk.encoder.mapToDriverValue(chunk.value);
+          if (is(mappedValue, SQL)) {
+            return this.buildQueryFromSourceParams([mappedValue], config);
+          }
+          if (inlineParams) {
+            return {
+              sql: this.mapInlineParam(mappedValue, config),
+              params: [],
+            };
+          }
+          let typings = ["none"];
+          if (prepareTyping) {
+            typings = [prepareTyping(chunk.encoder)];
+          }
+          return {
+            sql: escapeParam(paramStartIndex.value++, mappedValue),
+            params: [mappedValue],
+            typings,
+          };
+        }
+        if (is(chunk, Placeholder)) {
+          return {
+            sql: escapeParam(paramStartIndex.value++, chunk),
+            params: [chunk],
+            typings: ["none"],
+          };
+        }
+        if (is(chunk, SQL.Aliased) && chunk.fieldAlias !== void 0) {
+          return { sql: escapeName(chunk.fieldAlias), params: [] };
+        }
+        if (is(chunk, Subquery)) {
+          if (chunk._.isWith) {
+            return { sql: escapeName(chunk._.alias), params: [] };
+          }
+          return this.buildQueryFromSourceParams(
+            [
+              new StringChunk("("),
+              chunk._.sql,
+              new StringChunk(") "),
+              new Name(chunk._.alias),
+            ],
+            config,
+          );
+        }
+        if (isPgEnum(chunk)) {
+          if (chunk.schema) {
+            return {
+              sql: escapeName(chunk.schema) + "." + escapeName(chunk.enumName),
+              params: [],
+            };
+          }
+          return { sql: escapeName(chunk.enumName), params: [] };
+        }
+        if (isSQLWrapper(chunk)) {
+          if (chunk.shouldOmitSQLParens?.()) {
+            return this.buildQueryFromSourceParams([chunk.getSQL()], config);
+          }
+          return this.buildQueryFromSourceParams(
+            [new StringChunk("("), chunk.getSQL(), new StringChunk(")")],
+            config,
+          );
         }
         if (inlineParams) {
-          return { sql: this.mapInlineParam(mappedValue, config), params: [] };
+          return { sql: this.mapInlineParam(chunk, config), params: [] };
         }
-        let typings = ["none"];
-        if (prepareTyping) {
-          typings = [prepareTyping(chunk.encoder)];
-        }
-        return { sql: escapeParam(paramStartIndex.value++, mappedValue), params: [mappedValue], typings };
-      }
-      if (is(chunk, Placeholder)) {
-        return { sql: escapeParam(paramStartIndex.value++, chunk), params: [chunk], typings: ["none"] };
-      }
-      if (is(chunk, SQL.Aliased) && chunk.fieldAlias !== void 0) {
-        return { sql: escapeName(chunk.fieldAlias), params: [] };
-      }
-      if (is(chunk, Subquery)) {
-        if (chunk._.isWith) {
-          return { sql: escapeName(chunk._.alias), params: [] };
-        }
-        return this.buildQueryFromSourceParams([
-          new StringChunk("("),
-          chunk._.sql,
-          new StringChunk(") "),
-          new Name(chunk._.alias)
-        ], config);
-      }
-      if (isPgEnum(chunk)) {
-        if (chunk.schema) {
-          return { sql: escapeName(chunk.schema) + "." + escapeName(chunk.enumName), params: [] };
-        }
-        return { sql: escapeName(chunk.enumName), params: [] };
-      }
-      if (isSQLWrapper(chunk)) {
-        if (chunk.shouldOmitSQLParens?.()) {
-          return this.buildQueryFromSourceParams([chunk.getSQL()], config);
-        }
-        return this.buildQueryFromSourceParams([
-          new StringChunk("("),
-          chunk.getSQL(),
-          new StringChunk(")")
-        ], config);
-      }
-      if (inlineParams) {
-        return { sql: this.mapInlineParam(chunk, config), params: [] };
-      }
-      return { sql: escapeParam(paramStartIndex.value++, chunk), params: [chunk], typings: ["none"] };
-    }));
+        return {
+          sql: escapeParam(paramStartIndex.value++, chunk),
+          params: [chunk],
+          typings: ["none"],
+        };
+      }),
+    );
   }
   mapInlineParam(chunk, { escapeString }) {
     if (chunk === null) {
@@ -3097,7 +3835,8 @@ class SQL {
     return new SQL.Aliased(this, alias);
   }
   mapWith(decoder) {
-    this.decoder = typeof decoder === "function" ? { mapFromDriverValue: decoder } : decoder;
+    this.decoder =
+      typeof decoder === "function" ? { mapFromDriverValue: decoder } : decoder;
     return this;
   }
   inlineParams() {
@@ -3125,17 +3864,22 @@ class Name {
   }
 }
 function isDriverValueEncoder(value) {
-  return typeof value === "object" && value !== null && "mapToDriverValue" in value && typeof value.mapToDriverValue === "function";
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "mapToDriverValue" in value &&
+    typeof value.mapToDriverValue === "function"
+  );
 }
 const noopDecoder = {
-  mapFromDriverValue: (value) => value
+  mapFromDriverValue: (value) => value,
 };
 const noopEncoder = {
-  mapToDriverValue: (value) => value
+  mapToDriverValue: (value) => value,
 };
 ({
   ...noopDecoder,
-  ...noopEncoder
+  ...noopEncoder,
 });
 class Param {
   /**
@@ -3154,7 +3898,7 @@ class Param {
 }
 function sql(strings, ...params) {
   const queryChunks = [];
-  if (params.length > 0 || strings.length > 0 && strings[0] !== "") {
+  if (params.length > 0 || (strings.length > 0 && strings[0] !== "")) {
     queryChunks.push(new StringChunk(strings[0]));
   }
   for (const [paramIndex, param2] of params.entries()) {
@@ -3237,7 +3981,9 @@ function fillPlaceholders(params, values2) {
     }
     if (is(p, Param) && is(p.value, Placeholder)) {
       if (!(p.value.name in values2)) {
-        throw new Error(`No value for placeholder "${p.value.name}" was provided`);
+        throw new Error(
+          `No value for placeholder "${p.value.name}" was provided`,
+        );
       }
       return p.encoder.mapToDriverValue(values2[p.value.name]);
     }
@@ -3259,7 +4005,7 @@ class View {
       selectedFields,
       query,
       isExisting: !query,
-      isAlias: false
+      isAlias: false,
     };
   }
   getSQL() {
@@ -3269,13 +4015,13 @@ class View {
 function isView(view) {
   return typeof view === "object" && view !== null && IsDrizzleView in view;
 }
-Column.prototype.getSQL = function() {
+Column.prototype.getSQL = function () {
   return new SQL([this]);
 };
-Table.prototype.getSQL = function() {
+Table.prototype.getSQL = function () {
   return new SQL([this]);
 };
-Subquery.prototype.getSQL = function() {
+Subquery.prototype.getSQL = function () {
   return new SQL([this]);
 };
 class ColumnAliasProxyHandler {
@@ -3310,7 +4056,7 @@ class TableAliasProxyHandler {
       return {
         ...target[ViewBaseConfig],
         name: this.alias,
-        isAlias: true
+        isAlias: true,
       };
     }
     if (prop === Table.Symbol.Columns) {
@@ -3322,14 +4068,17 @@ class TableAliasProxyHandler {
       Object.keys(columns).map((key) => {
         proxiedColumns[key] = new Proxy(
           columns[key],
-          new ColumnAliasProxyHandler(new Proxy(target, this))
+          new ColumnAliasProxyHandler(new Proxy(target, this)),
         );
       });
       return proxiedColumns;
     }
     const value = target[prop];
     if (is(value, Column)) {
-      return new Proxy(value, new ColumnAliasProxyHandler(new Proxy(target, this)));
+      return new Proxy(
+        value,
+        new ColumnAliasProxyHandler(new Proxy(target, this)),
+      );
     }
     return value;
   }
@@ -3340,25 +4089,32 @@ function aliasedTable(table, tableAlias) {
 function aliasedTableColumn(column, tableAlias) {
   return new Proxy(
     column,
-    new ColumnAliasProxyHandler(new Proxy(column.table, new TableAliasProxyHandler(tableAlias, false)))
+    new ColumnAliasProxyHandler(
+      new Proxy(column.table, new TableAliasProxyHandler(tableAlias, false)),
+    ),
   );
 }
 function mapColumnsInAliasedSQLToAlias(query, alias) {
-  return new SQL.Aliased(mapColumnsInSQLToAlias(query.sql, alias), query.fieldAlias);
+  return new SQL.Aliased(
+    mapColumnsInSQLToAlias(query.sql, alias),
+    query.fieldAlias,
+  );
 }
 function mapColumnsInSQLToAlias(query, alias) {
-  return sql.join(query.queryChunks.map((c) => {
-    if (is(c, Column)) {
-      return aliasedTableColumn(c, alias);
-    }
-    if (is(c, SQL)) {
-      return mapColumnsInSQLToAlias(c, alias);
-    }
-    if (is(c, SQL.Aliased)) {
-      return mapColumnsInAliasedSQLToAlias(c, alias);
-    }
-    return c;
-  }));
+  return sql.join(
+    query.queryChunks.map((c) => {
+      if (is(c, Column)) {
+        return aliasedTableColumn(c, alias);
+      }
+      if (is(c, SQL)) {
+        return mapColumnsInSQLToAlias(c, alias);
+      }
+      if (is(c, SQL.Aliased)) {
+        return mapColumnsInAliasedSQLToAlias(c, alias);
+      }
+      return c;
+    }),
+  );
 }
 class SelectionProxyHandler {
   static [entityKind] = "SelectionProxyHandler";
@@ -3370,10 +4126,7 @@ class SelectionProxyHandler {
     if (prop === "_") {
       return {
         ...subquery["_"],
-        selectedFields: new Proxy(
-          subquery._.selectedFields,
-          this
-        )
+        selectedFields: new Proxy(subquery._.selectedFields, this),
       };
     }
     if (prop === ViewBaseConfig) {
@@ -3381,14 +4134,18 @@ class SelectionProxyHandler {
         ...subquery[ViewBaseConfig],
         selectedFields: new Proxy(
           subquery[ViewBaseConfig].selectedFields,
-          this
-        )
+          this,
+        ),
       };
     }
     if (typeof prop === "symbol") {
       return subquery[prop];
     }
-    const columns = is(subquery, Subquery) ? subquery._.selectedFields : is(subquery, View) ? subquery[ViewBaseConfig].selectedFields : subquery;
+    const columns = is(subquery, Subquery)
+      ? subquery._.selectedFields
+      : is(subquery, View)
+        ? subquery[ViewBaseConfig].selectedFields
+        : subquery;
     const value = columns[prop];
     if (is(value, SQL.Aliased)) {
       if (this.config.sqlAliasedBehavior === "sql" && !value.isSelectionField) {
@@ -3403,7 +4160,7 @@ class SelectionProxyHandler {
         return value;
       }
       throw new Error(
-        `You tried to reference "${prop}" field from a subquery, which is a raw SQL field, but it doesn't have an alias declared. Please add an alias to the field using ".as('alias')" method.`
+        `You tried to reference "${prop}" field from a subquery, which is a raw SQL field, but it doesn't have an alias declared. Please add an alias to the field using ".as('alias')" method.`,
       );
     }
     if (is(value, Column)) {
@@ -3413,9 +4170,12 @@ class SelectionProxyHandler {
           new ColumnAliasProxyHandler(
             new Proxy(
               value.table,
-              new TableAliasProxyHandler(this.config.alias, this.config.replaceOriginalName ?? false)
-            )
-          )
+              new TableAliasProxyHandler(
+                this.config.alias,
+                this.config.replaceOriginalName ?? false,
+              ),
+            ),
+          ),
         );
       }
       return value;
@@ -3428,40 +4188,42 @@ class SelectionProxyHandler {
 }
 function mapResultRow(columns, row, joinsNotNullableMap) {
   const nullifyMap = {};
-  const result = columns.reduce(
-    (result2, { path, field }, columnIndex) => {
-      let decoder;
-      if (is(field, Column)) {
-        decoder = field;
-      } else if (is(field, SQL)) {
-        decoder = field.decoder;
+  const result = columns.reduce((result2, { path, field }, columnIndex) => {
+    let decoder;
+    if (is(field, Column)) {
+      decoder = field;
+    } else if (is(field, SQL)) {
+      decoder = field.decoder;
+    } else {
+      decoder = field.sql.decoder;
+    }
+    let node = result2;
+    for (const [pathChunkIndex, pathChunk] of path.entries()) {
+      if (pathChunkIndex < path.length - 1) {
+        if (!(pathChunk in node)) {
+          node[pathChunk] = {};
+        }
+        node = node[pathChunk];
       } else {
-        decoder = field.sql.decoder;
-      }
-      let node = result2;
-      for (const [pathChunkIndex, pathChunk] of path.entries()) {
-        if (pathChunkIndex < path.length - 1) {
-          if (!(pathChunk in node)) {
-            node[pathChunk] = {};
-          }
-          node = node[pathChunk];
-        } else {
-          const rawValue = row[columnIndex];
-          const value = node[pathChunk] = rawValue === null ? null : decoder.mapFromDriverValue(rawValue);
-          if (joinsNotNullableMap && is(field, Column) && path.length === 2) {
-            const objectName = path[0];
-            if (!(objectName in nullifyMap)) {
-              nullifyMap[objectName] = value === null ? getTableName(field.table) : false;
-            } else if (typeof nullifyMap[objectName] === "string" && nullifyMap[objectName] !== getTableName(field.table)) {
-              nullifyMap[objectName] = false;
-            }
+        const rawValue = row[columnIndex];
+        const value = (node[pathChunk] =
+          rawValue === null ? null : decoder.mapFromDriverValue(rawValue));
+        if (joinsNotNullableMap && is(field, Column) && path.length === 2) {
+          const objectName = path[0];
+          if (!(objectName in nullifyMap)) {
+            nullifyMap[objectName] =
+              value === null ? getTableName(field.table) : false;
+          } else if (
+            typeof nullifyMap[objectName] === "string" &&
+            nullifyMap[objectName] !== getTableName(field.table)
+          ) {
+            nullifyMap[objectName] = false;
           }
         }
       }
-      return result2;
-    },
-    {}
-  );
+    }
+    return result2;
+  }, {});
   if (joinsNotNullableMap && Object.keys(nullifyMap).length > 0) {
     for (const [objectName, tableName] of Object.entries(nullifyMap)) {
       if (typeof tableName === "string" && !joinsNotNullableMap[tableName]) {
@@ -3501,13 +4263,15 @@ function haveSameKeys(left, right) {
   return true;
 }
 function mapUpdateSet(table, values2) {
-  const entries = Object.entries(values2).filter(([, value]) => value !== void 0).map(([key, value]) => {
-    if (is(value, SQL) || is(value, Column)) {
-      return [key, value];
-    } else {
-      return [key, new Param(value, table[Table.Symbol.Columns][key])];
-    }
-  });
+  const entries = Object.entries(values2)
+    .filter(([, value]) => value !== void 0)
+    .map(([key, value]) => {
+      if (is(value, SQL) || is(value, Column)) {
+        return [key, value];
+      } else {
+        return [key, new Param(value, table[Table.Symbol.Columns][key])];
+      }
+    });
   if (entries.length === 0) {
     throw new Error("No values to set");
   }
@@ -3520,7 +4284,8 @@ function applyMixins(baseClass, extendedClasses) {
       Object.defineProperty(
         baseClass.prototype,
         name,
-        Object.getOwnPropertyDescriptor(extendedClass.prototype, name) || /* @__PURE__ */ Object.create(null)
+        Object.getOwnPropertyDescriptor(extendedClass.prototype, name) ||
+          /* @__PURE__ */ Object.create(null),
       );
     }
   }
@@ -3532,12 +4297,20 @@ function getViewSelectedFields(view) {
   return view[ViewBaseConfig].selectedFields;
 }
 function getTableLikeName(table) {
-  return is(table, Subquery) ? table._.alias : is(table, View) ? table[ViewBaseConfig].name : is(table, SQL) ? void 0 : table[Table.Symbol.IsAlias] ? table[Table.Symbol.Name] : table[Table.Symbol.BaseName];
+  return is(table, Subquery)
+    ? table._.alias
+    : is(table, View)
+      ? table[ViewBaseConfig].name
+      : is(table, SQL)
+        ? void 0
+        : table[Table.Symbol.IsAlias]
+          ? table[Table.Symbol.Name]
+          : table[Table.Symbol.BaseName];
 }
 function getColumnNameAndConfig(a, b2) {
   return {
     name: typeof a === "string" && a.length > 0 ? a : "",
-    config: typeof a === "object" ? a : b2
+    config: typeof a === "object" ? a : b2,
   };
 }
 function isConfig(data) {
@@ -3545,7 +4318,12 @@ function isConfig(data) {
   if (data.constructor.name !== "Object") return false;
   if ("logger" in data) {
     const type = typeof data["logger"];
-    if (type !== "boolean" && (type !== "object" || typeof data["logger"]["logQuery"] !== "function") && type !== "undefined") return false;
+    if (
+      type !== "boolean" &&
+      (type !== "object" || typeof data["logger"]["logQuery"] !== "function") &&
+      type !== "undefined"
+    )
+      return false;
     return true;
   }
   if ("schema" in data) {
@@ -3559,17 +4337,24 @@ function isConfig(data) {
     return true;
   }
   if ("mode" in data) {
-    if (data["mode"] !== "default" || data["mode"] !== "planetscale" || data["mode"] !== void 0) return false;
+    if (
+      data["mode"] !== "default" ||
+      data["mode"] !== "planetscale" ||
+      data["mode"] !== void 0
+    )
+      return false;
     return true;
   }
   if ("connection" in data) {
     const type = typeof data["connection"];
-    if (type !== "string" && type !== "object" && type !== "undefined") return false;
+    if (type !== "string" && type !== "object" && type !== "undefined")
+      return false;
     return true;
   }
   if ("client" in data) {
     const type = typeof data["client"];
-    if (type !== "object" && type !== "function" && type !== "undefined") return false;
+    if (type !== "object" && type !== "function" && type !== "undefined")
+      return false;
     return true;
   }
   if (Object.keys(data).length === 0) return true;
@@ -3584,11 +4369,11 @@ class PgIntColumnBaseBuilder extends PgColumnBuilder {
       this.config.generatedIdentity = {
         type: "always",
         sequenceName: name,
-        sequenceOptions: options
+        sequenceOptions: options,
       };
     } else {
       this.config.generatedIdentity = {
-        type: "always"
+        type: "always",
       };
     }
     this.config.hasDefault = true;
@@ -3601,11 +4386,11 @@ class PgIntColumnBaseBuilder extends PgColumnBuilder {
       this.config.generatedIdentity = {
         type: "byDefault",
         sequenceName: name,
-        sequenceOptions: options
+        sequenceOptions: options,
       };
     } else {
       this.config.generatedIdentity = {
-        type: "byDefault"
+        type: "byDefault",
       };
     }
     this.config.hasDefault = true;
@@ -3642,10 +4427,7 @@ class PgBigInt64Builder extends PgIntColumnBaseBuilder {
   }
   /** @internal */
   build(table) {
-    return new PgBigInt64(
-      table,
-      this.config
-    );
+    return new PgBigInt64(table, this.config);
   }
 }
 class PgBigInt64 extends PgColumn {
@@ -3674,10 +4456,7 @@ class PgBigSerial53Builder extends PgColumnBuilder {
   }
   /** @internal */
   build(table) {
-    return new PgBigSerial53(
-      table,
-      this.config
-    );
+    return new PgBigSerial53(table, this.config);
   }
 }
 class PgBigSerial53 extends PgColumn {
@@ -3700,10 +4479,7 @@ class PgBigSerial64Builder extends PgColumnBuilder {
   }
   /** @internal */
   build(table) {
-    return new PgBigSerial64(
-      table,
-      this.config
-    );
+    return new PgBigSerial64(table, this.config);
   }
 }
 class PgBigSerial64 extends PgColumn {
@@ -3751,10 +4527,7 @@ class PgCharBuilder extends PgColumnBuilder {
   }
   /** @internal */
   build(table) {
-    return new PgChar(
-      table,
-      this.config
-    );
+    return new PgChar(table, this.config);
   }
 }
 class PgChar extends PgColumn {
@@ -3797,10 +4570,7 @@ class PgCustomColumnBuilder extends PgColumnBuilder {
   }
   /** @internal */
   build(table) {
-    return new PgCustomColumn(
-      table,
-      this.config
-    );
+    return new PgCustomColumn(table, this.config);
   }
 }
 class PgCustomColumn extends PgColumn {
@@ -3865,10 +4635,7 @@ class PgDateStringBuilder extends PgDateColumnBaseBuilder {
   }
   /** @internal */
   build(table) {
-    return new PgDateString(
-      table,
-      this.config
-    );
+    return new PgDateString(table, this.config);
   }
 }
 class PgDateString extends PgColumn {
@@ -3891,10 +4658,7 @@ class PgDoublePrecisionBuilder extends PgColumnBuilder {
   }
   /** @internal */
   build(table) {
-    return new PgDoublePrecision(
-      table,
-      this.config
-    );
+    return new PgDoublePrecision(table, this.config);
   }
 }
 class PgDoublePrecision extends PgColumn {
@@ -4058,10 +4822,7 @@ class PgLineBuilder extends PgColumnBuilder {
   }
   /** @internal */
   build(table) {
-    return new PgLineTuple(
-      table,
-      this.config
-    );
+    return new PgLineTuple(table, this.config);
   }
 }
 class PgLineTuple extends PgColumn {
@@ -4084,10 +4845,7 @@ class PgLineABCBuilder extends PgColumnBuilder {
   }
   /** @internal */
   build(table) {
-    return new PgLineABC(
-      table,
-      this.config
-    );
+    return new PgLineABC(table, this.config);
   }
 }
 class PgLineABC extends PgColumn {
@@ -4097,7 +4855,11 @@ class PgLineABC extends PgColumn {
   }
   mapFromDriverValue(value) {
     const [a, b2, c] = value.slice(1, -1).split(",");
-    return { a: Number.parseFloat(a), b: Number.parseFloat(b2), c: Number.parseFloat(c) };
+    return {
+      a: Number.parseFloat(a),
+      b: Number.parseFloat(b2),
+      c: Number.parseFloat(c),
+    };
   }
   mapToDriverValue(value) {
     return `{${value.a},${value.b},${value.c}}`;
@@ -4192,10 +4954,7 @@ class PgNumericNumberBuilder extends PgColumnBuilder {
   }
   /** @internal */
   build(table) {
-    return new PgNumericNumber(
-      table,
-      this.config
-    );
+    return new PgNumericNumber(table, this.config);
   }
 }
 class PgNumericNumber extends PgColumn {
@@ -4231,10 +4990,7 @@ class PgNumericBigIntBuilder extends PgColumnBuilder {
   }
   /** @internal */
   build(table) {
-    return new PgNumericBigInt(
-      table,
-      this.config
-    );
+    return new PgNumericBigInt(table, this.config);
   }
 }
 class PgNumericBigInt extends PgColumn {
@@ -4261,7 +5017,11 @@ class PgNumericBigInt extends PgColumn {
 function numeric(a, b2) {
   const { name, config } = getColumnNameAndConfig(a, b2);
   const mode = config?.mode;
-  return mode === "number" ? new PgNumericNumberBuilder(name, config?.precision, config?.scale) : mode === "bigint" ? new PgNumericBigIntBuilder(name, config?.precision, config?.scale) : new PgNumericBuilder(name, config?.precision, config?.scale);
+  return mode === "number"
+    ? new PgNumericNumberBuilder(name, config?.precision, config?.scale)
+    : mode === "bigint"
+      ? new PgNumericBigIntBuilder(name, config?.precision, config?.scale)
+      : new PgNumericBuilder(name, config?.precision, config?.scale);
 }
 class PgPointTupleBuilder extends PgColumnBuilder {
   static [entityKind] = "PgPointTupleBuilder";
@@ -4270,10 +5030,7 @@ class PgPointTupleBuilder extends PgColumnBuilder {
   }
   /** @internal */
   build(table) {
-    return new PgPointTuple(
-      table,
-      this.config
-    );
+    return new PgPointTuple(table, this.config);
   }
 }
 class PgPointTuple extends PgColumn {
@@ -4299,10 +5056,7 @@ class PgPointObjectBuilder extends PgColumnBuilder {
   }
   /** @internal */
   build(table) {
-    return new PgPointObject(
-      table,
-      this.config
-    );
+    return new PgPointObject(table, this.config);
   }
 }
 class PgPointObject extends PgColumn {
@@ -4371,10 +5125,7 @@ class PgGeometryBuilder extends PgColumnBuilder {
   }
   /** @internal */
   build(table) {
-    return new PgGeometry(
-      table,
-      this.config
-    );
+    return new PgGeometry(table, this.config);
   }
 }
 class PgGeometry extends PgColumn {
@@ -4396,10 +5147,7 @@ class PgGeometryObjectBuilder extends PgColumnBuilder {
   }
   /** @internal */
   build(table) {
-    return new PgGeometryObject(
-      table,
-      this.config
-    );
+    return new PgGeometryObject(table, this.config);
   }
 }
 class PgGeometryObject extends PgColumn {
@@ -4506,10 +5254,7 @@ class PgSmallSerialBuilder extends PgColumnBuilder {
   }
   /** @internal */
   build(table) {
-    return new PgSmallSerial(
-      table,
-      this.config
-    );
+    return new PgSmallSerial(table, this.config);
   }
 }
 class PgSmallSerial extends PgColumn {
@@ -4573,7 +5318,11 @@ class PgTime extends PgColumn {
 }
 function time(a, b2 = {}) {
   const { name, config } = getColumnNameAndConfig(a, b2);
-  return new PgTimeBuilder(name, config.withTimezone ?? false, config.precision);
+  return new PgTimeBuilder(
+    name,
+    config.withTimezone ?? false,
+    config.precision,
+  );
 }
 class PgTimestampBuilder extends PgDateColumnBaseBuilder {
   static [entityKind] = "PgTimestampBuilder";
@@ -4616,10 +5365,7 @@ class PgTimestampStringBuilder extends PgDateColumnBaseBuilder {
   }
   /** @internal */
   build(table) {
-    return new PgTimestampString(
-      table,
-      this.config
-    );
+    return new PgTimestampString(table, this.config);
   }
 }
 class PgTimestampString extends PgColumn {
@@ -4639,9 +5385,17 @@ class PgTimestampString extends PgColumn {
 function timestamp(a, b2 = {}) {
   const { name, config } = getColumnNameAndConfig(a, b2);
   if (config?.mode === "string") {
-    return new PgTimestampStringBuilder(name, config.withTimezone ?? false, config.precision);
+    return new PgTimestampStringBuilder(
+      name,
+      config.withTimezone ?? false,
+      config.precision,
+    );
   }
-  return new PgTimestampBuilder(name, config?.withTimezone ?? false, config?.precision);
+  return new PgTimestampBuilder(
+    name,
+    config?.withTimezone ?? false,
+    config?.precision,
+  );
 }
 class PgUUIDBuilder extends PgColumnBuilder {
   static [entityKind] = "PgUUIDBuilder";
@@ -4677,10 +5431,7 @@ class PgVarcharBuilder extends PgColumnBuilder {
   }
   /** @internal */
   build(table) {
-    return new PgVarchar(
-      table,
-      this.config
-    );
+    return new PgVarchar(table, this.config);
   }
 }
 class PgVarchar extends PgColumn {
@@ -4703,10 +5454,7 @@ class PgBinaryVectorBuilder extends PgColumnBuilder {
   }
   /** @internal */
   build(table) {
-    return new PgBinaryVector(
-      table,
-      this.config
-    );
+    return new PgBinaryVector(table, this.config);
   }
 }
 class PgBinaryVector extends PgColumn {
@@ -4728,10 +5476,7 @@ class PgHalfVectorBuilder extends PgColumnBuilder {
   }
   /** @internal */
   build(table) {
-    return new PgHalfVector(
-      table,
-      this.config
-    );
+    return new PgHalfVector(table, this.config);
   }
 }
 class PgHalfVector extends PgColumn {
@@ -4744,7 +5489,10 @@ class PgHalfVector extends PgColumn {
     return JSON.stringify(value);
   }
   mapFromDriverValue(value) {
-    return value.slice(1, -1).split(",").map((v) => Number.parseFloat(v));
+    return value
+      .slice(1, -1)
+      .split(",")
+      .map((v) => Number.parseFloat(v));
   }
 }
 function halfvec(a, b2) {
@@ -4759,10 +5507,7 @@ class PgSparseVectorBuilder extends PgColumnBuilder {
   }
   /** @internal */
   build(table) {
-    return new PgSparseVector(
-      table,
-      this.config
-    );
+    return new PgSparseVector(table, this.config);
   }
 }
 class PgSparseVector extends PgColumn {
@@ -4784,10 +5529,7 @@ class PgVectorBuilder extends PgColumnBuilder {
   }
   /** @internal */
   build(table) {
-    return new PgVector(
-      table,
-      this.config
-    );
+    return new PgVector(table, this.config);
   }
 }
 class PgVector extends PgColumn {
@@ -4800,7 +5542,10 @@ class PgVector extends PgColumn {
     return JSON.stringify(value);
   }
   mapFromDriverValue(value) {
-    return value.slice(1, -1).split(",").map((v) => Number.parseFloat(v));
+    return value
+      .slice(1, -1)
+      .split(",")
+      .map((v) => Number.parseFloat(v));
   }
 }
 function vector(a, b2) {
@@ -4840,7 +5585,7 @@ function getPgColumnBuilders() {
     bit,
     halfvec,
     sparsevec,
-    vector
+    vector,
   };
 }
 const InlineForeignKeys = Symbol.for("drizzle:PgInlineForeignKeys");
@@ -4850,7 +5595,7 @@ class PgTable extends Table {
   /** @internal */
   static Symbol = Object.assign({}, Table.Symbol, {
     InlineForeignKeys,
-    EnableRLS
+    EnableRLS,
   });
   /**@internal */
   [InlineForeignKeys] = [];
@@ -4861,17 +5606,26 @@ class PgTable extends Table {
   /** @internal */
   [Table.Symbol.ExtraConfigColumns] = {};
 }
-function pgTableWithSchema(name, columns, extraConfig, schema2, baseName = name) {
+function pgTableWithSchema(
+  name,
+  columns,
+  extraConfig,
+  schema2,
+  baseName = name,
+) {
   const rawTable = new PgTable(name, schema2, baseName);
-  const parsedColumns = typeof columns === "function" ? columns(getPgColumnBuilders()) : columns;
+  const parsedColumns =
+    typeof columns === "function" ? columns(getPgColumnBuilders()) : columns;
   const builtColumns = Object.fromEntries(
     Object.entries(parsedColumns).map(([name2, colBuilderBase]) => {
       const colBuilder = colBuilderBase;
       colBuilder.setName(name2);
       const column = colBuilder.build(rawTable);
-      rawTable[InlineForeignKeys].push(...colBuilder.buildForeignKeys(column, rawTable));
+      rawTable[InlineForeignKeys].push(
+        ...colBuilder.buildForeignKeys(column, rawTable),
+      );
       return [name2, column];
-    })
+    }),
   );
   const builtColumnsForExtraConfig = Object.fromEntries(
     Object.entries(parsedColumns).map(([name2, colBuilderBase]) => {
@@ -4879,7 +5633,7 @@ function pgTableWithSchema(name, columns, extraConfig, schema2, baseName = name)
       colBuilder.setName(name2);
       const column = colBuilder.buildExtraConfigColumn(rawTable);
       return [name2, column];
-    })
+    }),
   );
   const table = Object.assign(rawTable, builtColumns);
   table[Table.Symbol.Columns] = builtColumns;
@@ -4891,7 +5645,7 @@ function pgTableWithSchema(name, columns, extraConfig, schema2, baseName = name)
     enableRLS: () => {
       table[PgTable.Symbol.EnableRLS] = true;
       return table;
-    }
+    },
   });
 }
 const pgTable = (name, columns, extraConfig) => {
@@ -4922,17 +5676,27 @@ class PrimaryKey {
   columns;
   name;
   getName() {
-    return this.name ?? `${this.table[PgTable.Symbol.Name]}_${this.columns.map((column) => column.name).join("_")}_pk`;
+    return (
+      this.name ??
+      `${this.table[PgTable.Symbol.Name]}_${this.columns.map((column) => column.name).join("_")}_pk`
+    );
   }
 }
 function toSnakeCase(input) {
-  const words = input.replace(/['\u2019]/g, "").match(/[\da-z]+|[A-Z]+(?![a-z])|[A-Z][\da-z]+/g) ?? [];
+  const words =
+    input
+      .replace(/['\u2019]/g, "")
+      .match(/[\da-z]+|[A-Z]+(?![a-z])|[A-Z][\da-z]+/g) ?? [];
   return words.map((word) => word.toLowerCase()).join("_");
 }
 function toCamelCase(input) {
-  const words = input.replace(/['\u2019]/g, "").match(/[\da-z]+|[A-Z]+(?![a-z])|[A-Z][\da-z]+/g) ?? [];
+  const words =
+    input
+      .replace(/['\u2019]/g, "")
+      .match(/[\da-z]+|[A-Z]+(?![a-z])|[A-Z][\da-z]+/g) ?? [];
   return words.reduce((acc, word, i) => {
-    const formattedWord = i === 0 ? word.toLowerCase() : `${word[0].toUpperCase()}${word.slice(1)}`;
+    const formattedWord =
+      i === 0 ? word.toLowerCase() : `${word[0].toUpperCase()}${word.slice(1)}`;
     return acc + formattedWord;
   }, "");
 }
@@ -4946,7 +5710,12 @@ class CasingCache {
   cachedTables = {};
   convert;
   constructor(casing) {
-    this.convert = casing === "snake_case" ? toSnakeCase : casing === "camelCase" ? toCamelCase : noopCase;
+    this.convert =
+      casing === "snake_case"
+        ? toSnakeCase
+        : casing === "camelCase"
+          ? toCamelCase
+          : noopCase;
   }
   getColumnCasing(column) {
     if (!column.keyAsName) return column.name;
@@ -5001,7 +5770,15 @@ class TransactionRollbackError extends DrizzleError {
   }
 }
 function bindIfParam(value, column) {
-  if (isDriverValueEncoder(column) && !isSQLWrapper(value) && !is(value, Param) && !is(value, Placeholder) && !is(value, Column) && !is(value, Table) && !is(value, View)) {
+  if (
+    isDriverValueEncoder(column) &&
+    !isSQLWrapper(value) &&
+    !is(value, Param) &&
+    !is(value, Placeholder) &&
+    !is(value, Column) &&
+    !is(value, Table) &&
+    !is(value, View)
+  ) {
     return new Param(value, column);
   }
   return value;
@@ -5013,9 +5790,7 @@ const ne = (left, right) => {
   return sql`${left} <> ${bindIfParam(right, left)}`;
 };
 function and(...unfilteredConditions) {
-  const conditions = unfilteredConditions.filter(
-    (c) => c !== void 0
-  );
+  const conditions = unfilteredConditions.filter((c) => c !== void 0);
   if (conditions.length === 0) {
     return void 0;
   }
@@ -5025,13 +5800,11 @@ function and(...unfilteredConditions) {
   return new SQL([
     new StringChunk("("),
     sql.join(conditions, new StringChunk(" and ")),
-    new StringChunk(")")
+    new StringChunk(")"),
   ]);
 }
 function or(...unfilteredConditions) {
-  const conditions = unfilteredConditions.filter(
-    (c) => c !== void 0
-  );
+  const conditions = unfilteredConditions.filter((c) => c !== void 0);
   if (conditions.length === 0) {
     return void 0;
   }
@@ -5041,7 +5814,7 @@ function or(...unfilteredConditions) {
   return new SQL([
     new StringChunk("("),
     sql.join(conditions, new StringChunk(" or ")),
-    new StringChunk(")")
+    new StringChunk(")"),
   ]);
 }
 function not(condition) {
@@ -5092,13 +5865,13 @@ function notExists(subquery) {
 function between(column, min2, max2) {
   return sql`${column} between ${bindIfParam(min2, column)} and ${bindIfParam(
     max2,
-    column
+    column,
   )}`;
 }
 function notBetween(column, min2, max2) {
   return sql`${column} not between ${bindIfParam(
     min2,
-    column
+    column,
   )} and ${bindIfParam(max2, column)}`;
 }
 function like(column, value) {
@@ -5159,7 +5932,7 @@ class One extends Relation {
       this.sourceTable,
       this.referencedTable,
       this.config,
-      this.isNullable
+      this.isNullable,
     );
     relation.fieldName = fieldName;
     return relation;
@@ -5175,7 +5948,7 @@ class Many extends Relation {
     const relation = new Many(
       this.sourceTable,
       this.referencedTable,
-      this.config
+      this.config,
     );
     relation.fieldName = fieldName;
     return relation;
@@ -5204,18 +5977,22 @@ function getOperators() {
     notIlike,
     notInArray,
     or,
-    sql
+    sql,
   };
 }
 function getOrderByOperators() {
   return {
     sql,
     asc,
-    desc
+    desc,
   };
 }
 function extractTablesRelationalConfig(schema2, configHelpers) {
-  if (Object.keys(schema2).length === 1 && "default" in schema2 && !is(schema2["default"], Table)) {
+  if (
+    Object.keys(schema2).length === 1 &&
+    "default" in schema2 &&
+    !is(schema2["default"], Table)
+  ) {
     schema2 = schema2["default"];
   }
   const tableNamesMap = {};
@@ -5232,16 +6009,16 @@ function extractTablesRelationalConfig(schema2, configHelpers) {
         schema: value[Table.Symbol.Schema],
         columns: value[Table.Symbol.Columns],
         relations: bufferedRelations?.relations ?? {},
-        primaryKey: bufferedRelations?.primaryKey ?? []
+        primaryKey: bufferedRelations?.primaryKey ?? [],
       };
-      for (const column of Object.values(
-        value[Table.Symbol.Columns]
-      )) {
+      for (const column of Object.values(value[Table.Symbol.Columns])) {
         if (column.primary) {
           tablesConfig[key].primaryKey.push(column);
         }
       }
-      const extraConfig = value[Table.Symbol.ExtraConfigBuilder]?.(value[Table.Symbol.ExtraConfigColumns]);
+      const extraConfig = value[Table.Symbol.ExtraConfigBuilder]?.(
+        value[Table.Symbol.ExtraConfigColumns],
+      );
       if (extraConfig) {
         for (const configEntry of Object.values(extraConfig)) {
           if (is(configEntry, PrimaryKeyBuilder)) {
@@ -5252,9 +6029,7 @@ function extractTablesRelationalConfig(schema2, configHelpers) {
     } else if (is(value, Relations)) {
       const dbName = getTableUniqueName(value.table);
       const tableName = tableNamesMap[dbName];
-      const relations2 = value.config(
-        configHelpers(value.table)
-      );
+      const relations2 = value.config(configHelpers(value.table));
       let primaryKey;
       for (const [relationName, relation] of Object.entries(relations2)) {
         if (tableName) {
@@ -5264,7 +6039,7 @@ function extractTablesRelationalConfig(schema2, configHelpers) {
           if (!(dbName in relationsBuffer)) {
             relationsBuffer[dbName] = {
               relations: {},
-              primaryKey
+              primaryKey,
             };
           }
           relationsBuffer[dbName].relations[relationName] = relation;
@@ -5275,14 +6050,13 @@ function extractTablesRelationalConfig(schema2, configHelpers) {
   return { tables: tablesConfig, tableNamesMap };
 }
 function relations(table, relations2) {
-  return new Relations(
-    table,
-    (helpers) => Object.fromEntries(
+  return new Relations(table, (helpers) =>
+    Object.fromEntries(
       Object.entries(relations2(helpers)).map(([key, value]) => [
         key,
-        value.withFieldName(key)
-      ])
-    )
+        value.withFieldName(key),
+      ]),
+    ),
   );
 }
 function createOne(sourceTable) {
@@ -5291,7 +6065,7 @@ function createOne(sourceTable) {
       sourceTable,
       table,
       config,
-      config?.fields.reduce((res, f) => res && f.notNull, true) ?? false
+      config?.fields.reduce((res, f) => res && f.notNull, true) ?? false,
     );
   };
 }
@@ -5304,13 +6078,14 @@ function normalizeRelation(schema2, tableNamesMap, relation) {
   if (is(relation, One) && relation.config) {
     return {
       fields: relation.config.fields,
-      references: relation.config.references
+      references: relation.config.references,
     };
   }
-  const referencedTableTsName = tableNamesMap[getTableUniqueName(relation.referencedTable)];
+  const referencedTableTsName =
+    tableNamesMap[getTableUniqueName(relation.referencedTable)];
   if (!referencedTableTsName) {
     throw new Error(
-      `Table "${relation.referencedTable[Table.Symbol.Name]}" not found in schema`
+      `Table "${relation.referencedTable[Table.Symbol.Name]}" not found in schema`,
     );
   }
   const referencedTableConfig = schema2[referencedTableTsName];
@@ -5321,65 +6096,87 @@ function normalizeRelation(schema2, tableNamesMap, relation) {
   const sourceTableTsName = tableNamesMap[getTableUniqueName(sourceTable)];
   if (!sourceTableTsName) {
     throw new Error(
-      `Table "${sourceTable[Table.Symbol.Name]}" not found in schema`
+      `Table "${sourceTable[Table.Symbol.Name]}" not found in schema`,
     );
   }
   const reverseRelations = [];
   for (const referencedTableRelation of Object.values(
-    referencedTableConfig.relations
+    referencedTableConfig.relations,
   )) {
-    if (relation.relationName && relation !== referencedTableRelation && referencedTableRelation.relationName === relation.relationName || !relation.relationName && referencedTableRelation.referencedTable === relation.sourceTable) {
+    if (
+      (relation.relationName &&
+        relation !== referencedTableRelation &&
+        referencedTableRelation.relationName === relation.relationName) ||
+      (!relation.relationName &&
+        referencedTableRelation.referencedTable === relation.sourceTable)
+    ) {
       reverseRelations.push(referencedTableRelation);
     }
   }
   if (reverseRelations.length > 1) {
-    throw relation.relationName ? new Error(
-      `There are multiple relations with name "${relation.relationName}" in table "${referencedTableTsName}"`
-    ) : new Error(
-      `There are multiple relations between "${referencedTableTsName}" and "${relation.sourceTable[Table.Symbol.Name]}". Please specify relation name`
-    );
+    throw relation.relationName
+      ? new Error(
+          `There are multiple relations with name "${relation.relationName}" in table "${referencedTableTsName}"`,
+        )
+      : new Error(
+          `There are multiple relations between "${referencedTableTsName}" and "${relation.sourceTable[Table.Symbol.Name]}". Please specify relation name`,
+        );
   }
-  if (reverseRelations[0] && is(reverseRelations[0], One) && reverseRelations[0].config) {
+  if (
+    reverseRelations[0] &&
+    is(reverseRelations[0], One) &&
+    reverseRelations[0].config
+  ) {
     return {
       fields: reverseRelations[0].config.references,
-      references: reverseRelations[0].config.fields
+      references: reverseRelations[0].config.fields,
     };
   }
   throw new Error(
-    `There is not enough information to infer relation "${sourceTableTsName}.${relation.fieldName}"`
+    `There is not enough information to infer relation "${sourceTableTsName}.${relation.fieldName}"`,
   );
 }
 function createTableRelationsHelpers(sourceTable) {
   return {
     one: createOne(sourceTable),
-    many: createMany(sourceTable)
+    many: createMany(sourceTable),
   };
 }
-function mapRelationalRow(tablesConfig, tableConfig, row, buildQueryResultSelection, mapColumnValue = (value) => value) {
+function mapRelationalRow(
+  tablesConfig,
+  tableConfig,
+  row,
+  buildQueryResultSelection,
+  mapColumnValue = (value) => value,
+) {
   const result = {};
   for (const [
     selectionItemIndex,
-    selectionItem
+    selectionItem,
   ] of buildQueryResultSelection.entries()) {
     if (selectionItem.isJson) {
       const relation = tableConfig.relations[selectionItem.tsKey];
       const rawSubRows = row[selectionItemIndex];
-      const subRows = typeof rawSubRows === "string" ? JSON.parse(rawSubRows) : rawSubRows;
-      result[selectionItem.tsKey] = is(relation, One) ? subRows && mapRelationalRow(
-        tablesConfig,
-        tablesConfig[selectionItem.relationTableTsKey],
-        subRows,
-        selectionItem.selection,
-        mapColumnValue
-      ) : subRows.map(
-        (subRow) => mapRelationalRow(
-          tablesConfig,
-          tablesConfig[selectionItem.relationTableTsKey],
-          subRow,
-          selectionItem.selection,
-          mapColumnValue
-        )
-      );
+      const subRows =
+        typeof rawSubRows === "string" ? JSON.parse(rawSubRows) : rawSubRows;
+      result[selectionItem.tsKey] = is(relation, One)
+        ? subRows &&
+          mapRelationalRow(
+            tablesConfig,
+            tablesConfig[selectionItem.relationTableTsKey],
+            subRows,
+            selectionItem.selection,
+            mapColumnValue,
+          )
+        : subRows.map((subRow) =>
+            mapRelationalRow(
+              tablesConfig,
+              tablesConfig[selectionItem.relationTableTsKey],
+              subRow,
+              selectionItem.selection,
+              mapColumnValue,
+            ),
+          );
     } else {
       const value = mapColumnValue(row[selectionItemIndex]);
       const field = selectionItem.field;
@@ -5391,7 +6188,8 @@ function mapRelationalRow(tablesConfig, tableConfig, row, buildQueryResultSelect
       } else {
         decoder = field.sql.decoder;
       }
-      result[selectionItem.tsKey] = value === null ? null : decoder.mapFromDriverValue(value);
+      result[selectionItem.tsKey] =
+        value === null ? null : decoder.mapFromDriverValue(value);
     }
   }
   return result;
@@ -5407,8 +6205,14 @@ class PgDialect {
     this.casing = new CasingCache(config?.casing);
   }
   async migrate(migrations, session2, config) {
-    const migrationsTable = typeof config === "string" ? "__drizzle_migrations" : config.migrationsTable ?? "__drizzle_migrations";
-    const migrationsSchema = typeof config === "string" ? "drizzle" : config.migrationsSchema ?? "drizzle";
+    const migrationsTable =
+      typeof config === "string"
+        ? "__drizzle_migrations"
+        : (config.migrationsTable ?? "__drizzle_migrations");
+    const migrationsSchema =
+      typeof config === "string"
+        ? "drizzle"
+        : (config.migrationsSchema ?? "drizzle");
     const migrationTableCreate = sql`
 			CREATE TABLE IF NOT EXISTS ${sql.identifier(migrationsSchema)}.${sql.identifier(migrationsTable)} (
 				id SERIAL PRIMARY KEY,
@@ -5416,20 +6220,25 @@ class PgDialect {
 				created_at bigint
 			)
 		`;
-    await session2.execute(sql`CREATE SCHEMA IF NOT EXISTS ${sql.identifier(migrationsSchema)}`);
+    await session2.execute(
+      sql`CREATE SCHEMA IF NOT EXISTS ${sql.identifier(migrationsSchema)}`,
+    );
     await session2.execute(migrationTableCreate);
     const dbMigrations = await session2.all(
-      sql`select id, hash, created_at from ${sql.identifier(migrationsSchema)}.${sql.identifier(migrationsTable)} order by created_at desc limit 1`
+      sql`select id, hash, created_at from ${sql.identifier(migrationsSchema)}.${sql.identifier(migrationsTable)} order by created_at desc limit 1`,
     );
     const lastDbMigration = dbMigrations[0];
     await session2.transaction(async (tx) => {
       for await (const migration of migrations) {
-        if (!lastDbMigration || Number(lastDbMigration.created_at) < migration.folderMillis) {
+        if (
+          !lastDbMigration ||
+          Number(lastDbMigration.created_at) < migration.folderMillis
+        ) {
           for (const stmt of migration.sql) {
             await tx.execute(sql.raw(stmt));
           }
           await tx.execute(
-            sql`insert into ${sql.identifier(migrationsSchema)}.${sql.identifier(migrationsTable)} ("hash", "created_at") values(${migration.hash}, ${migration.folderMillis})`
+            sql`insert into ${sql.identifier(migrationsSchema)}.${sql.identifier(migrationsTable)} ("hash", "created_at") values(${migration.hash}, ${migration.folderMillis})`,
           );
         }
       }
@@ -5458,25 +6267,30 @@ class PgDialect {
   }
   buildDeleteQuery({ table, where, returning, withList }) {
     const withSql = this.buildWithCTE(withList);
-    const returningSql = returning ? sql` returning ${this.buildSelection(returning, { isSingleTable: true })}` : void 0;
+    const returningSql = returning
+      ? sql` returning ${this.buildSelection(returning, { isSingleTable: true })}`
+      : void 0;
     const whereSql = where ? sql` where ${where}` : void 0;
     return sql`${withSql}delete from ${table}${whereSql}${returningSql}`;
   }
   buildUpdateSet(table, set) {
     const tableColumns = table[Table.Symbol.Columns];
     const columnNames = Object.keys(tableColumns).filter(
-      (colName) => set[colName] !== void 0 || tableColumns[colName]?.onUpdateFn !== void 0
+      (colName) =>
+        set[colName] !== void 0 || tableColumns[colName]?.onUpdateFn !== void 0,
     );
     const setSize = columnNames.length;
-    return sql.join(columnNames.flatMap((colName, i) => {
-      const col = tableColumns[colName];
-      const value = set[colName] ?? sql.param(col.onUpdateFn(), col);
-      const res = sql`${sql.identifier(this.casing.getColumnCasing(col))} = ${value}`;
-      if (i < setSize - 1) {
-        return [res, sql.raw(", ")];
-      }
-      return [res];
-    }));
+    return sql.join(
+      columnNames.flatMap((colName, i) => {
+        const col = tableColumns[colName];
+        const value = set[colName] ?? sql.param(col.onUpdateFn(), col);
+        const res = sql`${sql.identifier(this.casing.getColumnCasing(col))} = ${value}`;
+        if (i < setSize - 1) {
+          return [res, sql.raw(", ")];
+        }
+        return [res];
+      }),
+    );
   }
   buildUpdateQuery({ table, set, where, returning, withList, from, joins }) {
     const withSql = this.buildWithCTE(withList);
@@ -5486,9 +6300,12 @@ class PgDialect {
     const alias = tableName === origTableName ? void 0 : tableName;
     const tableSql = sql`${tableSchema ? sql`${sql.identifier(tableSchema)}.` : void 0}${sql.identifier(origTableName)}${alias && sql` ${sql.identifier(alias)}`}`;
     const setSql = this.buildUpdateSet(table, set);
-    const fromSql = from && sql.join([sql.raw(" from "), this.buildFromTable(from)]);
+    const fromSql =
+      from && sql.join([sql.raw(" from "), this.buildFromTable(from)]);
     const joinsSql = this.buildJoins(joins);
-    const returningSql = returning ? sql` returning ${this.buildSelection(returning, { isSingleTable: !from })}` : void 0;
+    const returningSql = returning
+      ? sql` returning ${this.buildSelection(returning, { isSingleTable: !from })}`
+      : void 0;
     const whereSql = where ? sql` where ${where}` : void 0;
     return sql`${withSql}update ${tableSql} set ${setSql}${fromSql}${joinsSql}${whereSql}${returningSql}`;
   }
@@ -5519,8 +6336,8 @@ class PgDialect {
                   return sql.identifier(this.casing.getColumnCasing(c));
                 }
                 return c;
-              })
-            )
+              }),
+            ),
           );
         } else {
           chunk.push(query);
@@ -5560,7 +6377,7 @@ class PgDialect {
         const origTableName = table[PgTable.Symbol.OriginalName];
         const alias = tableName === origTableName ? void 0 : joinMeta.alias;
         joinsArray.push(
-          sql`${sql.raw(joinMeta.joinType)} join${lateralSql} ${tableSchema ? sql`${sql.identifier(tableSchema)}.` : void 0}${sql.identifier(origTableName)}${alias && sql` ${sql.identifier(alias)}`}${onSql}`
+          sql`${sql.raw(joinMeta.joinType)} join${lateralSql} ${tableSchema ? sql`${sql.identifier(tableSchema)}.` : void 0}${sql.identifier(origTableName)}${alias && sql` ${sql.identifier(alias)}`}${onSql}`,
         );
       } else if (is(table, View)) {
         const viewName = table[ViewBaseConfig].name;
@@ -5568,11 +6385,11 @@ class PgDialect {
         const origViewName = table[ViewBaseConfig].originalName;
         const alias = viewName === origViewName ? void 0 : joinMeta.alias;
         joinsArray.push(
-          sql`${sql.raw(joinMeta.joinType)} join${lateralSql} ${viewSchema ? sql`${sql.identifier(viewSchema)}.` : void 0}${sql.identifier(origViewName)}${alias && sql` ${sql.identifier(alias)}`}${onSql}`
+          sql`${sql.raw(joinMeta.joinType)} join${lateralSql} ${viewSchema ? sql`${sql.identifier(viewSchema)}.` : void 0}${sql.identifier(origViewName)}${alias && sql` ${sql.identifier(alias)}`}${onSql}`,
         );
       } else {
         joinsArray.push(
-          sql`${sql.raw(joinMeta.joinType)} join${lateralSql} ${table}${onSql}`
+          sql`${sql.raw(joinMeta.joinType)} join${lateralSql} ${table}${onSql}`,
         );
       }
       if (index2 < joins.length - 1) {
@@ -5605,16 +6422,32 @@ class PgDialect {
     offset: offset2,
     lockingClause,
     distinct,
-    setOperators
+    setOperators,
   }) {
     const fieldsList = fieldsFlat ?? orderSelectedFields(fields);
     for (const f of fieldsList) {
-      if (is(f.field, Column) && getTableName(f.field.table) !== (is(table, Subquery) ? table._.alias : is(table, PgViewBase) ? table[ViewBaseConfig].name : is(table, SQL) ? void 0 : getTableName(table)) && !((table2) => joins?.some(
-        ({ alias }) => alias === (table2[Table.Symbol.IsAlias] ? getTableName(table2) : table2[Table.Symbol.BaseName])
-      ))(f.field.table)) {
+      if (
+        is(f.field, Column) &&
+        getTableName(f.field.table) !==
+          (is(table, Subquery)
+            ? table._.alias
+            : is(table, PgViewBase)
+              ? table[ViewBaseConfig].name
+              : is(table, SQL)
+                ? void 0
+                : getTableName(table)) &&
+        !((table2) =>
+          joins?.some(
+            ({ alias }) =>
+              alias ===
+              (table2[Table.Symbol.IsAlias]
+                ? getTableName(table2)
+                : table2[Table.Symbol.BaseName]),
+          ))(f.field.table)
+      ) {
         const tableName = getTableName(f.field.table);
         throw new Error(
-          `Your "${f.path.join("->")}" field references a column "${tableName}"."${f.field.name}", but the table "${tableName}" is not part of the query! Did you forget to join it?`
+          `Your "${f.path.join("->")}" field references a column "${tableName}"."${f.field.name}", but the table "${tableName}" is not part of the query! Did you forget to join it?`,
         );
       }
     }
@@ -5622,7 +6455,10 @@ class PgDialect {
     const withSql = this.buildWithCTE(withList);
     let distinctSql;
     if (distinct) {
-      distinctSql = distinct === true ? sql` distinct` : sql` distinct on (${sql.join(distinct.on, sql`, `)})`;
+      distinctSql =
+        distinct === true
+          ? sql` distinct`
+          : sql` distinct on (${sql.join(distinct.on, sql`, `)})`;
     }
     const selection = this.buildSelection(fieldsList, { isSingleTable });
     const tableSql = this.buildFromTable(table);
@@ -5637,7 +6473,10 @@ class PgDialect {
     if (groupBy && groupBy.length > 0) {
       groupBySql = sql` group by ${sql.join(groupBy, sql`, `)}`;
     }
-    const limitSql = typeof limit === "object" || typeof limit === "number" && limit >= 0 ? sql` limit ${limit}` : void 0;
+    const limitSql =
+      typeof limit === "object" || (typeof limit === "number" && limit >= 0)
+        ? sql` limit ${limit}`
+        : void 0;
     const offsetSql = offset2 ? sql` offset ${offset2}` : void 0;
     const lockingClauseSql = sql.empty();
     if (lockingClause) {
@@ -5645,9 +6484,11 @@ class PgDialect {
       if (lockingClause.config.of) {
         clauseSql.append(
           sql` of ${sql.join(
-            Array.isArray(lockingClause.config.of) ? lockingClause.config.of : [lockingClause.config.of],
-            sql`, `
-          )}`
+            Array.isArray(lockingClause.config.of)
+              ? lockingClause.config.of
+              : [lockingClause.config.of],
+            sql`, `,
+          )}`,
         );
       }
       if (lockingClause.config.noWait) {
@@ -5673,12 +6514,12 @@ class PgDialect {
     }
     return this.buildSetOperations(
       this.buildSetOperationQuery({ leftSelect, setOperator }),
-      rest
+      rest,
     );
   }
   buildSetOperationQuery({
     leftSelect,
-    setOperator: { type, isAll, rightSelect, limit, orderBy, offset: offset2 }
+    setOperator: { type, isAll, rightSelect, limit, orderBy, offset: offset2 },
   }) {
     const leftChunk = sql`(${leftSelect.getSQL()}) `;
     const rightChunk = sql`(${rightSelect.getSQL()})`;
@@ -5702,17 +6543,30 @@ class PgDialect {
       }
       orderBySql = sql` order by ${sql.join(orderByValues, sql`, `)} `;
     }
-    const limitSql = typeof limit === "object" || typeof limit === "number" && limit >= 0 ? sql` limit ${limit}` : void 0;
+    const limitSql =
+      typeof limit === "object" || (typeof limit === "number" && limit >= 0)
+        ? sql` limit ${limit}`
+        : void 0;
     const operatorChunk = sql.raw(`${type} ${isAll ? "all " : ""}`);
     const offsetSql = offset2 ? sql` offset ${offset2}` : void 0;
     return sql`${leftChunk}${operatorChunk}${rightChunk}${orderBySql}${limitSql}${offsetSql}`;
   }
-  buildInsertQuery({ table, values: valuesOrSelect, onConflict, returning, withList, select: select2, overridingSystemValue_ }) {
+  buildInsertQuery({
+    table,
+    values: valuesOrSelect,
+    onConflict,
+    returning,
+    withList,
+    select: select2,
+    overridingSystemValue_,
+  }) {
     const valuesSqlList = [];
     const columns = table[Table.Symbol.Columns];
-    const colEntries = Object.entries(columns).filter(([_, col]) => !col.shouldDisableInsert());
-    const insertOrder = colEntries.map(
-      ([, column]) => sql.identifier(this.casing.getColumnCasing(column))
+    const colEntries = Object.entries(columns).filter(
+      ([_, col]) => !col.shouldDisableInsert(),
+    );
+    const insertOrder = colEntries.map(([, column]) =>
+      sql.identifier(this.casing.getColumnCasing(column)),
     );
     if (select2) {
       const select22 = valuesOrSelect;
@@ -5728,14 +6582,21 @@ class PgDialect {
         const valueList = [];
         for (const [fieldName, col] of colEntries) {
           const colValue = value[fieldName];
-          if (colValue === void 0 || is(colValue, Param) && colValue.value === void 0) {
+          if (
+            colValue === void 0 ||
+            (is(colValue, Param) && colValue.value === void 0)
+          ) {
             if (col.defaultFn !== void 0) {
               const defaultFnResult = col.defaultFn();
-              const defaultValue = is(defaultFnResult, SQL) ? defaultFnResult : sql.param(defaultFnResult, col);
+              const defaultValue = is(defaultFnResult, SQL)
+                ? defaultFnResult
+                : sql.param(defaultFnResult, col);
               valueList.push(defaultValue);
             } else if (!col.default && col.onUpdateFn !== void 0) {
               const onUpdateFnResult = col.onUpdateFn();
-              const newValue = is(onUpdateFnResult, SQL) ? onUpdateFnResult : sql.param(onUpdateFnResult, col);
+              const newValue = is(onUpdateFnResult, SQL)
+                ? onUpdateFnResult
+                : sql.param(onUpdateFnResult, col);
               valueList.push(newValue);
             } else {
               valueList.push(sql`default`);
@@ -5752,9 +6613,12 @@ class PgDialect {
     }
     const withSql = this.buildWithCTE(withList);
     const valuesSql = sql.join(valuesSqlList);
-    const returningSql = returning ? sql` returning ${this.buildSelection(returning, { isSingleTable: true })}` : void 0;
+    const returningSql = returning
+      ? sql` returning ${this.buildSelection(returning, { isSingleTable: true })}`
+      : void 0;
     const onConflictSql = onConflict ? sql` on conflict ${onConflict}` : void 0;
-    const overridingSql = overridingSystemValue_ === true ? sql`overriding system value ` : void 0;
+    const overridingSql =
+      overridingSystemValue_ === true ? sql`overriding system value ` : void 0;
     return sql`${withSql}insert into ${table} ${insertOrder} ${overridingSql}${valuesSql}${onConflictSql}${returningSql}`;
   }
   buildRefreshMaterializedViewQuery({ view, concurrently, withNoData }) {
@@ -5786,7 +6650,7 @@ class PgDialect {
       escapeParam: this.escapeParam,
       escapeString: this.escapeString,
       prepareTyping: this.prepareTyping,
-      invokeSource
+      invokeSource,
     });
   }
   // buildRelationalQueryWithPK({
@@ -6279,10 +7143,13 @@ class PgDialect {
     queryConfig: config,
     tableAlias,
     nestedQueryRelation,
-    joinOn
+    joinOn,
   }) {
     let selection = [];
-    let limit, offset2, orderBy = [], where;
+    let limit,
+      offset2,
+      orderBy = [],
+      where;
     const joins = [];
     if (config === true) {
       const selectionEntries = Object.entries(tableConfig.columns);
@@ -6292,14 +7159,20 @@ class PgDialect {
         field: aliasedTableColumn(value, tableAlias),
         relationTableTsKey: void 0,
         isJson: false,
-        selection: []
+        selection: [],
       }));
     } else {
       const aliasedColumns = Object.fromEntries(
-        Object.entries(tableConfig.columns).map(([key, value]) => [key, aliasedTableColumn(value, tableAlias)])
+        Object.entries(tableConfig.columns).map(([key, value]) => [
+          key,
+          aliasedTableColumn(value, tableAlias),
+        ]),
       );
       if (config.where) {
-        const whereSql = typeof config.where === "function" ? config.where(aliasedColumns, getOperators()) : config.where;
+        const whereSql =
+          typeof config.where === "function"
+            ? config.where(aliasedColumns, getOperators())
+            : config.where;
         where = whereSql && mapColumnsInSQLToAlias(whereSql, tableAlias);
       }
       const fieldsSelection = [];
@@ -6318,7 +7191,11 @@ class PgDialect {
           }
         }
         if (selectedColumns.length > 0) {
-          selectedColumns = isIncludeMode ? selectedColumns.filter((c) => config.columns?.[c] === true) : Object.keys(tableConfig.columns).filter((key) => !selectedColumns.includes(key));
+          selectedColumns = isIncludeMode
+            ? selectedColumns.filter((c) => config.columns?.[c] === true)
+            : Object.keys(tableConfig.columns).filter(
+                (key) => !selectedColumns.includes(key),
+              );
         }
       } else {
         selectedColumns = Object.keys(tableConfig.columns);
@@ -6329,29 +7206,45 @@ class PgDialect {
       }
       let selectedRelations = [];
       if (config.with) {
-        selectedRelations = Object.entries(config.with).filter((entry) => !!entry[1]).map(([tsKey, queryConfig]) => ({ tsKey, queryConfig, relation: tableConfig.relations[tsKey] }));
+        selectedRelations = Object.entries(config.with)
+          .filter((entry) => !!entry[1])
+          .map(([tsKey, queryConfig]) => ({
+            tsKey,
+            queryConfig,
+            relation: tableConfig.relations[tsKey],
+          }));
       }
       let extras;
       if (config.extras) {
-        extras = typeof config.extras === "function" ? config.extras(aliasedColumns, { sql }) : config.extras;
+        extras =
+          typeof config.extras === "function"
+            ? config.extras(aliasedColumns, { sql })
+            : config.extras;
         for (const [tsKey, value] of Object.entries(extras)) {
           fieldsSelection.push({
             tsKey,
-            value: mapColumnsInAliasedSQLToAlias(value, tableAlias)
+            value: mapColumnsInAliasedSQLToAlias(value, tableAlias),
           });
         }
       }
       for (const { tsKey, value } of fieldsSelection) {
         selection.push({
-          dbKey: is(value, SQL.Aliased) ? value.fieldAlias : tableConfig.columns[tsKey].name,
+          dbKey: is(value, SQL.Aliased)
+            ? value.fieldAlias
+            : tableConfig.columns[tsKey].name,
           tsKey,
-          field: is(value, Column) ? aliasedTableColumn(value, tableAlias) : value,
+          field: is(value, Column)
+            ? aliasedTableColumn(value, tableAlias)
+            : value,
           relationTableTsKey: void 0,
           isJson: false,
-          selection: []
+          selection: [],
         });
       }
-      let orderByOrig = typeof config.orderBy === "function" ? config.orderBy(aliasedColumns, getOrderByOperators()) : config.orderBy ?? [];
+      let orderByOrig =
+        typeof config.orderBy === "function"
+          ? config.orderBy(aliasedColumns, getOrderByOperators())
+          : (config.orderBy ?? []);
       if (!Array.isArray(orderByOrig)) {
         orderByOrig = [orderByOrig];
       }
@@ -6366,19 +7259,26 @@ class PgDialect {
       for (const {
         tsKey: selectedRelationTsKey,
         queryConfig: selectedRelationConfigValue,
-        relation
+        relation,
       } of selectedRelations) {
-        const normalizedRelation = normalizeRelation(schema2, tableNamesMap, relation);
+        const normalizedRelation = normalizeRelation(
+          schema2,
+          tableNamesMap,
+          relation,
+        );
         const relationTableName = getTableUniqueName(relation.referencedTable);
         const relationTableTsName = tableNamesMap[relationTableName];
         const relationTableAlias = `${tableAlias}_${selectedRelationTsKey}`;
         const joinOn2 = and(
-          ...normalizedRelation.fields.map(
-            (field2, i) => eq(
-              aliasedTableColumn(normalizedRelation.references[i], relationTableAlias),
-              aliasedTableColumn(field2, tableAlias)
-            )
-          )
+          ...normalizedRelation.fields.map((field2, i) =>
+            eq(
+              aliasedTableColumn(
+                normalizedRelation.references[i],
+                relationTableAlias,
+              ),
+              aliasedTableColumn(field2, tableAlias),
+            ),
+          ),
         );
         const builtRelation = this.buildRelationalQueryWithoutPK({
           fullSchema,
@@ -6386,18 +7286,25 @@ class PgDialect {
           tableNamesMap,
           table: fullSchema[relationTableTsName],
           tableConfig: schema2[relationTableTsName],
-          queryConfig: is(relation, One) ? selectedRelationConfigValue === true ? { limit: 1 } : { ...selectedRelationConfigValue, limit: 1 } : selectedRelationConfigValue,
+          queryConfig: is(relation, One)
+            ? selectedRelationConfigValue === true
+              ? { limit: 1 }
+              : { ...selectedRelationConfigValue, limit: 1 }
+            : selectedRelationConfigValue,
           tableAlias: relationTableAlias,
           joinOn: joinOn2,
-          nestedQueryRelation: relation
+          nestedQueryRelation: relation,
         });
-        const field = sql`${sql.identifier(relationTableAlias)}.${sql.identifier("data")}`.as(selectedRelationTsKey);
+        const field =
+          sql`${sql.identifier(relationTableAlias)}.${sql.identifier("data")}`.as(
+            selectedRelationTsKey,
+          );
         joins.push({
           on: sql`true`,
           table: new Subquery(builtRelation.sql, {}, relationTableAlias),
           alias: relationTableAlias,
           joinType: "left",
-          lateral: true
+          lateral: true,
         });
         selection.push({
           dbKey: selectedRelationTsKey,
@@ -6405,47 +7312,58 @@ class PgDialect {
           field,
           relationTableTsKey: relationTableTsName,
           isJson: true,
-          selection: builtRelation.selection
+          selection: builtRelation.selection,
         });
       }
     }
     if (selection.length === 0) {
-      throw new DrizzleError({ message: `No fields selected for table "${tableConfig.tsName}" ("${tableAlias}")` });
+      throw new DrizzleError({
+        message: `No fields selected for table "${tableConfig.tsName}" ("${tableAlias}")`,
+      });
     }
     let result;
     where = and(joinOn, where);
     if (nestedQueryRelation) {
       let field = sql`json_build_array(${sql.join(
-        selection.map(
-          ({ field: field2, tsKey, isJson }) => isJson ? sql`${sql.identifier(`${tableAlias}_${tsKey}`)}.${sql.identifier("data")}` : is(field2, SQL.Aliased) ? field2.sql : field2
+        selection.map(({ field: field2, tsKey, isJson }) =>
+          isJson
+            ? sql`${sql.identifier(`${tableAlias}_${tsKey}`)}.${sql.identifier("data")}`
+            : is(field2, SQL.Aliased)
+              ? field2.sql
+              : field2,
         ),
-        sql`, `
+        sql`, `,
       )})`;
       if (is(nestedQueryRelation, Many)) {
         field = sql`coalesce(json_agg(${field}${orderBy.length > 0 ? sql` order by ${sql.join(orderBy, sql`, `)}` : void 0}), '[]'::json)`;
       }
-      const nestedSelection = [{
-        dbKey: "data",
-        tsKey: "data",
-        field: field.as("data"),
-        isJson: true,
-        relationTableTsKey: tableConfig.tsName,
-        selection
-      }];
-      const needsSubquery = limit !== void 0 || offset2 !== void 0 || orderBy.length > 0;
+      const nestedSelection = [
+        {
+          dbKey: "data",
+          tsKey: "data",
+          field: field.as("data"),
+          isJson: true,
+          relationTableTsKey: tableConfig.tsName,
+          selection,
+        },
+      ];
+      const needsSubquery =
+        limit !== void 0 || offset2 !== void 0 || orderBy.length > 0;
       if (needsSubquery) {
         result = this.buildSelectQuery({
           table: aliasedTable(table, tableAlias),
           fields: {},
-          fieldsFlat: [{
-            path: [],
-            field: sql.raw("*")
-          }],
+          fieldsFlat: [
+            {
+              path: [],
+              field: sql.raw("*"),
+            },
+          ],
           where,
           limit,
           offset: offset2,
           orderBy,
-          setOperators: []
+          setOperators: [],
         });
         where = void 0;
         limit = void 0;
@@ -6455,18 +7373,22 @@ class PgDialect {
         result = aliasedTable(table, tableAlias);
       }
       result = this.buildSelectQuery({
-        table: is(result, PgTable) ? result : new Subquery(result, {}, tableAlias),
+        table: is(result, PgTable)
+          ? result
+          : new Subquery(result, {}, tableAlias),
         fields: {},
         fieldsFlat: nestedSelection.map(({ field: field2 }) => ({
           path: [],
-          field: is(field2, Column) ? aliasedTableColumn(field2, tableAlias) : field2
+          field: is(field2, Column)
+            ? aliasedTableColumn(field2, tableAlias)
+            : field2,
         })),
         joins,
         where,
         limit,
         offset: offset2,
         orderBy,
-        setOperators: []
+        setOperators: [],
       });
     } else {
       result = this.buildSelectQuery({
@@ -6474,20 +7396,22 @@ class PgDialect {
         fields: {},
         fieldsFlat: selection.map(({ field }) => ({
           path: [],
-          field: is(field, Column) ? aliasedTableColumn(field, tableAlias) : field
+          field: is(field, Column)
+            ? aliasedTableColumn(field, tableAlias)
+            : field,
         })),
         joins,
         where,
         limit,
         offset: offset2,
         orderBy,
-        setOperators: []
+        setOperators: [],
       });
     }
     return {
       tableTsKey: tableConfig.tsName,
       sql: result,
-      selection
+      selection,
     };
   }
 }
@@ -6534,7 +7458,7 @@ class PgSelectBuilder {
       fields = this.fields;
     } else if (is(src, Subquery)) {
       fields = Object.fromEntries(
-        Object.keys(src._.selectedFields).map((key) => [key, src[key]])
+        Object.keys(src._.selectedFields).map((key) => [key, src[key]]),
       );
     } else if (is(src, PgViewBase)) {
       fields = src[ViewBaseConfig].selectedFields;
@@ -6550,7 +7474,7 @@ class PgSelectBuilder {
       session: this.session,
       dialect: this.dialect,
       withList: this.withList,
-      distinct: this.distinct
+      distinct: this.distinct,
     }).setToken(this.authToken);
   }
 }
@@ -6565,24 +7489,33 @@ class PgSelectQueryBuilderBase extends TypedQueryBuilder {
   dialect;
   cacheConfig = void 0;
   usedTables = /* @__PURE__ */ new Set();
-  constructor({ table, fields, isPartialSelect, session: session2, dialect, withList, distinct }) {
+  constructor({
+    table,
+    fields,
+    isPartialSelect,
+    session: session2,
+    dialect,
+    withList,
+    distinct,
+  }) {
     super();
     this.config = {
       withList,
       table,
       fields: { ...fields },
       distinct,
-      setOperators: []
+      setOperators: [],
     };
     this.isPartialSelect = isPartialSelect;
     this.session = session2;
     this.dialect = dialect;
     this._ = {
       selectedFields: fields,
-      config: this.config
+      config: this.config,
     };
     this.tableName = getTableLikeName(table);
-    this.joinsNotNullableMap = typeof this.tableName === "string" ? { [this.tableName]: true } : {};
+    this.joinsNotNullableMap =
+      typeof this.tableName === "string" ? { [this.tableName]: true } : {};
     for (const item of extractUsedTable(table)) this.usedTables.add(item);
   }
   /** @internal */
@@ -6594,17 +7527,27 @@ class PgSelectQueryBuilderBase extends TypedQueryBuilder {
       const baseTableName = this.tableName;
       const tableName = getTableLikeName(table);
       for (const item of extractUsedTable(table)) this.usedTables.add(item);
-      if (typeof tableName === "string" && this.config.joins?.some((join) => join.alias === tableName)) {
+      if (
+        typeof tableName === "string" &&
+        this.config.joins?.some((join) => join.alias === tableName)
+      ) {
         throw new Error(`Alias "${tableName}" is already used in this query`);
       }
       if (!this.isPartialSelect) {
-        if (Object.keys(this.joinsNotNullableMap).length === 1 && typeof baseTableName === "string") {
+        if (
+          Object.keys(this.joinsNotNullableMap).length === 1 &&
+          typeof baseTableName === "string"
+        ) {
           this.config.fields = {
-            [baseTableName]: this.config.fields
+            [baseTableName]: this.config.fields,
           };
         }
         if (typeof tableName === "string" && !is(table, SQL)) {
-          const selection = is(table, Subquery) ? table._.selectedFields : is(table, View) ? table[ViewBaseConfig].selectedFields : table[Table.Symbol.Columns];
+          const selection = is(table, Subquery)
+            ? table._.selectedFields
+            : is(table, View)
+              ? table[ViewBaseConfig].selectedFields
+              : table[Table.Symbol.Columns];
           this.config.fields[tableName] = selection;
         }
       }
@@ -6612,14 +7555,23 @@ class PgSelectQueryBuilderBase extends TypedQueryBuilder {
         on = on(
           new Proxy(
             this.config.fields,
-            new SelectionProxyHandler({ sqlAliasedBehavior: "sql", sqlBehavior: "sql" })
-          )
+            new SelectionProxyHandler({
+              sqlAliasedBehavior: "sql",
+              sqlBehavior: "sql",
+            }),
+          ),
         );
       }
       if (!this.config.joins) {
         this.config.joins = [];
       }
-      this.config.joins.push({ on, table, joinType, alias: tableName, lateral });
+      this.config.joins.push({
+        on,
+        table,
+        joinType,
+        alias: tableName,
+        lateral,
+      });
       if (typeof tableName === "string") {
         switch (joinType) {
           case "left": {
@@ -6628,7 +7580,10 @@ class PgSelectQueryBuilderBase extends TypedQueryBuilder {
           }
           case "right": {
             this.joinsNotNullableMap = Object.fromEntries(
-              Object.entries(this.joinsNotNullableMap).map(([key]) => [key, false])
+              Object.entries(this.joinsNotNullableMap).map(([key]) => [
+                key,
+                false,
+              ]),
             );
             this.joinsNotNullableMap[tableName] = true;
             break;
@@ -6640,7 +7595,10 @@ class PgSelectQueryBuilderBase extends TypedQueryBuilder {
           }
           case "full": {
             this.joinsNotNullableMap = Object.fromEntries(
-              Object.entries(this.joinsNotNullableMap).map(([key]) => [key, false])
+              Object.entries(this.joinsNotNullableMap).map(([key]) => [
+                key,
+                false,
+              ]),
             );
             this.joinsNotNullableMap[tableName] = false;
             break;
@@ -6829,10 +7787,15 @@ class PgSelectQueryBuilderBase extends TypedQueryBuilder {
   crossJoinLateral = this.createJoin("cross", true);
   createSetOperator(type, isAll) {
     return (rightSelection) => {
-      const rightSelect = typeof rightSelection === "function" ? rightSelection(getPgSetOperators()) : rightSelection;
-      if (!haveSameKeys(this.getSelectedFields(), rightSelect.getSelectedFields())) {
+      const rightSelect =
+        typeof rightSelection === "function"
+          ? rightSelection(getPgSetOperators())
+          : rightSelection;
+      if (
+        !haveSameKeys(this.getSelectedFields(), rightSelect.getSelectedFields())
+      ) {
         throw new Error(
-          "Set operator error (union / intersect / except): selected fields are not the same or are in a different order"
+          "Set operator error (union / intersect / except): selected fields are not the same or are in a different order",
         );
       }
       this.config.setOperators.push({ type, isAll, rightSelect });
@@ -7064,8 +8027,11 @@ class PgSelectQueryBuilderBase extends TypedQueryBuilder {
       where = where(
         new Proxy(
           this.config.fields,
-          new SelectionProxyHandler({ sqlAliasedBehavior: "sql", sqlBehavior: "sql" })
-        )
+          new SelectionProxyHandler({
+            sqlAliasedBehavior: "sql",
+            sqlBehavior: "sql",
+          }),
+        ),
       );
     }
     this.config.where = where;
@@ -7098,8 +8064,11 @@ class PgSelectQueryBuilderBase extends TypedQueryBuilder {
       having = having(
         new Proxy(
           this.config.fields,
-          new SelectionProxyHandler({ sqlAliasedBehavior: "sql", sqlBehavior: "sql" })
-        )
+          new SelectionProxyHandler({
+            sqlAliasedBehavior: "sql",
+            sqlBehavior: "sql",
+          }),
+        ),
       );
     }
     this.config.having = having;
@@ -7110,8 +8079,11 @@ class PgSelectQueryBuilderBase extends TypedQueryBuilder {
       const groupBy = columns[0](
         new Proxy(
           this.config.fields,
-          new SelectionProxyHandler({ sqlAliasedBehavior: "alias", sqlBehavior: "sql" })
-        )
+          new SelectionProxyHandler({
+            sqlAliasedBehavior: "alias",
+            sqlBehavior: "sql",
+          }),
+        ),
       );
       this.config.groupBy = Array.isArray(groupBy) ? groupBy : [groupBy];
     } else {
@@ -7124,8 +8096,11 @@ class PgSelectQueryBuilderBase extends TypedQueryBuilder {
       const orderBy = columns[0](
         new Proxy(
           this.config.fields,
-          new SelectionProxyHandler({ sqlAliasedBehavior: "alias", sqlBehavior: "sql" })
-        )
+          new SelectionProxyHandler({
+            sqlAliasedBehavior: "alias",
+            sqlBehavior: "sql",
+          }),
+        ),
       );
       const orderByArray = Array.isArray(orderBy) ? orderBy : [orderBy];
       if (this.config.setOperators.length > 0) {
@@ -7210,32 +8185,50 @@ class PgSelectQueryBuilderBase extends TypedQueryBuilder {
     return this.dialect.buildSelectQuery(this.config);
   }
   toSQL() {
-    const { typings: _typings, ...rest } = this.dialect.sqlToQuery(this.getSQL());
+    const { typings: _typings, ...rest } = this.dialect.sqlToQuery(
+      this.getSQL(),
+    );
     return rest;
   }
   as(alias) {
     const usedTables = [];
     usedTables.push(...extractUsedTable(this.config.table));
     if (this.config.joins) {
-      for (const it of this.config.joins) usedTables.push(...extractUsedTable(it.table));
+      for (const it of this.config.joins)
+        usedTables.push(...extractUsedTable(it.table));
     }
     return new Proxy(
-      new Subquery(this.getSQL(), this.config.fields, alias, false, [...new Set(usedTables)]),
-      new SelectionProxyHandler({ alias, sqlAliasedBehavior: "alias", sqlBehavior: "error" })
+      new Subquery(this.getSQL(), this.config.fields, alias, false, [
+        ...new Set(usedTables),
+      ]),
+      new SelectionProxyHandler({
+        alias,
+        sqlAliasedBehavior: "alias",
+        sqlBehavior: "error",
+      }),
     );
   }
   /** @internal */
   getSelectedFields() {
     return new Proxy(
       this.config.fields,
-      new SelectionProxyHandler({ alias: this.tableName, sqlAliasedBehavior: "alias", sqlBehavior: "error" })
+      new SelectionProxyHandler({
+        alias: this.tableName,
+        sqlAliasedBehavior: "alias",
+        sqlBehavior: "error",
+      }),
     );
   }
   $dynamic() {
     return this;
   }
   $withCache(config) {
-    this.cacheConfig = config === void 0 ? { config: {}, enable: true, autoInvalidate: true } : config === false ? { enable: false } : { enable: true, autoInvalidate: true, ...config };
+    this.cacheConfig =
+      config === void 0
+        ? { config: {}, enable: true, autoInvalidate: true }
+        : config === false
+          ? { enable: false }
+          : { enable: true, autoInvalidate: true, ...config };
     return this;
   }
 }
@@ -7243,17 +8236,35 @@ class PgSelectBase extends PgSelectQueryBuilderBase {
   static [entityKind] = "PgSelect";
   /** @internal */
   _prepare(name) {
-    const { session: session2, config, dialect, joinsNotNullableMap, authToken, cacheConfig, usedTables } = this;
+    const {
+      session: session2,
+      config,
+      dialect,
+      joinsNotNullableMap,
+      authToken,
+      cacheConfig,
+      usedTables,
+    } = this;
     if (!session2) {
-      throw new Error("Cannot execute a query on a query builder. Please use a database instance instead.");
+      throw new Error(
+        "Cannot execute a query on a query builder. Please use a database instance instead.",
+      );
     }
     const { fields } = config;
     return tracer.startActiveSpan("drizzle.prepareQuery", () => {
       const fieldsList = orderSelectedFields(fields);
-      const query = session2.prepareQuery(dialect.sqlToQuery(this.getSQL()), fieldsList, name, true, void 0, {
-        type: "select",
-        tables: [...usedTables]
-      }, cacheConfig);
+      const query = session2.prepareQuery(
+        dialect.sqlToQuery(this.getSQL()),
+        fieldsList,
+        name,
+        true,
+        void 0,
+        {
+          type: "select",
+          tables: [...usedTables],
+        },
+        cacheConfig,
+      );
       query.joinsNotNullableMap = joinsNotNullableMap;
       return query.setToken(authToken);
     });
@@ -7286,12 +8297,17 @@ function createSetOperator(type, isAll) {
     const setOperators = [rightSelect, ...restSelects].map((select2) => ({
       type,
       isAll,
-      rightSelect: select2
+      rightSelect: select2,
     }));
     for (const setOperator of setOperators) {
-      if (!haveSameKeys(leftSelect.getSelectedFields(), setOperator.rightSelect.getSelectedFields())) {
+      if (
+        !haveSameKeys(
+          leftSelect.getSelectedFields(),
+          setOperator.rightSelect.getSelectedFields(),
+        )
+      ) {
         throw new Error(
-          "Set operator error (union / intersect / except): selected fields are not the same or are in a different order"
+          "Set operator error (union / intersect / except): selected fields are not the same or are in a different order",
         );
       }
     }
@@ -7304,7 +8320,7 @@ const getPgSetOperators = () => ({
   intersect,
   intersectAll,
   except,
-  exceptAll
+  exceptAll,
 });
 const union = createSetOperator("union", false);
 const unionAll = createSetOperator("union", true);
@@ -7329,11 +8345,16 @@ class QueryBuilder {
       return new Proxy(
         new WithSubquery(
           qb.getSQL(),
-          selection ?? ("getSelectedFields" in qb ? qb.getSelectedFields() ?? {} : {}),
+          selection ??
+            ("getSelectedFields" in qb ? (qb.getSelectedFields() ?? {}) : {}),
           alias,
-          true
+          true,
         ),
-        new SelectionProxyHandler({ alias, sqlAliasedBehavior: "alias", sqlBehavior: "error" })
+        new SelectionProxyHandler({
+          alias,
+          sqlAliasedBehavior: "alias",
+          sqlBehavior: "error",
+        }),
       );
     };
     return { as };
@@ -7345,7 +8366,7 @@ class QueryBuilder {
         fields: fields ?? void 0,
         session: void 0,
         dialect: self2.getDialect(),
-        withList: queries
+        withList: queries,
       });
     }
     function selectDistinct(fields) {
@@ -7353,7 +8374,7 @@ class QueryBuilder {
         fields: fields ?? void 0,
         session: void 0,
         dialect: self2.getDialect(),
-        distinct: true
+        distinct: true,
       });
     }
     function selectDistinctOn(on, fields) {
@@ -7361,7 +8382,7 @@ class QueryBuilder {
         fields: fields ?? void 0,
         session: void 0,
         dialect: self2.getDialect(),
-        distinct: { on }
+        distinct: { on },
       });
     }
     return { select: select2, selectDistinct, selectDistinctOn };
@@ -7370,7 +8391,7 @@ class QueryBuilder {
     return new PgSelectBuilder({
       fields: fields ?? void 0,
       session: void 0,
-      dialect: this.getDialect()
+      dialect: this.getDialect(),
     });
   }
   selectDistinct(fields) {
@@ -7378,7 +8399,7 @@ class QueryBuilder {
       fields: fields ?? void 0,
       session: void 0,
       dialect: this.getDialect(),
-      distinct: true
+      distinct: true,
     });
   }
   selectDistinctOn(on, fields) {
@@ -7386,7 +8407,7 @@ class QueryBuilder {
       fields: fields ?? void 0,
       session: void 0,
       dialect: this.getDialect(),
-      distinct: { on }
+      distinct: { on },
     });
   }
   // Lazy load dialect to avoid circular dependency
@@ -7399,7 +8420,11 @@ class QueryBuilder {
 }
 function extractUsedTable(table) {
   if (is(table, PgTable)) {
-    return [table[Schema] ? `${table[Schema]}.${table[Table.Symbol.BaseName]}` : table[Table.Symbol.BaseName]];
+    return [
+      table[Schema]
+        ? `${table[Schema]}.${table[Table.Symbol.BaseName]}`
+        : table[Table.Symbol.BaseName],
+    ];
   }
   if (is(table, Subquery)) {
     return table._.usedTables ?? [];
@@ -7462,16 +8487,26 @@ class PgDeleteBase extends QueryPromise {
     return this.dialect.buildDeleteQuery(this.config);
   }
   toSQL() {
-    const { typings: _typings, ...rest } = this.dialect.sqlToQuery(this.getSQL());
+    const { typings: _typings, ...rest } = this.dialect.sqlToQuery(
+      this.getSQL(),
+    );
     return rest;
   }
   /** @internal */
   _prepare(name) {
     return tracer.startActiveSpan("drizzle.prepareQuery", () => {
-      return this.session.prepareQuery(this.dialect.sqlToQuery(this.getSQL()), this.config.returning, name, true, void 0, {
-        type: "delete",
-        tables: extractUsedTable(this.config.table)
-      }, this.cacheConfig);
+      return this.session.prepareQuery(
+        this.dialect.sqlToQuery(this.getSQL()),
+        this.config.returning,
+        name,
+        true,
+        void 0,
+        {
+          type: "delete",
+          tables: extractUsedTable(this.config.table),
+        },
+        this.cacheConfig,
+      );
     });
   }
   prepare(name) {
@@ -7490,14 +8525,16 @@ class PgDeleteBase extends QueryPromise {
   };
   /** @internal */
   getSelectedFields() {
-    return this.config.returningFields ? new Proxy(
-      this.config.returningFields,
-      new SelectionProxyHandler({
-        alias: getTableName(this.config.table),
-        sqlAliasedBehavior: "alias",
-        sqlBehavior: "error"
-      })
-    ) : void 0;
+    return this.config.returningFields
+      ? new Proxy(
+          this.config.returningFields,
+          new SelectionProxyHandler({
+            alias: getTableName(this.config.table),
+            sqlAliasedBehavior: "alias",
+            sqlBehavior: "error",
+          }),
+        )
+      : void 0;
   }
   $dynamic() {
     return this;
@@ -7532,7 +8569,9 @@ class PgInsertBuilder {
       const cols = this.table[Table.Symbol.Columns];
       for (const colKey of Object.keys(entry)) {
         const colValue = entry[colKey];
-        result[colKey] = is(colValue, SQL) ? colValue : new Param(colValue, cols[colKey]);
+        result[colKey] = is(colValue, SQL)
+          ? colValue
+          : new Param(colValue, cols[colKey]);
       }
       return result;
     });
@@ -7543,25 +8582,52 @@ class PgInsertBuilder {
       this.dialect,
       this.withList,
       false,
-      this.overridingSystemValue_
+      this.overridingSystemValue_,
     ).setToken(this.authToken);
   }
   select(selectQuery) {
-    const select2 = typeof selectQuery === "function" ? selectQuery(new QueryBuilder()) : selectQuery;
-    if (!is(select2, SQL) && !haveSameKeys(this.table[Columns], select2._.selectedFields)) {
+    const select2 =
+      typeof selectQuery === "function"
+        ? selectQuery(new QueryBuilder())
+        : selectQuery;
+    if (
+      !is(select2, SQL) &&
+      !haveSameKeys(this.table[Columns], select2._.selectedFields)
+    ) {
       throw new Error(
-        "Insert select error: selected fields are not the same or are in a different order compared to the table definition"
+        "Insert select error: selected fields are not the same or are in a different order compared to the table definition",
       );
     }
-    return new PgInsertBase(this.table, select2, this.session, this.dialect, this.withList, true);
+    return new PgInsertBase(
+      this.table,
+      select2,
+      this.session,
+      this.dialect,
+      this.withList,
+      true,
+    );
   }
 }
 class PgInsertBase extends QueryPromise {
-  constructor(table, values2, session2, dialect, withList, select2, overridingSystemValue_) {
+  constructor(
+    table,
+    values2,
+    session2,
+    dialect,
+    withList,
+    select2,
+    overridingSystemValue_,
+  ) {
     super();
     this.session = session2;
     this.dialect = dialect;
-    this.config = { table, values: values2, withList, select: select2, overridingSystemValue_ };
+    this.config = {
+      table,
+      values: values2,
+      withList,
+      select: select2,
+      overridingSystemValue_,
+    };
   }
   static [entityKind] = "PgInsert";
   config;
@@ -7598,7 +8664,15 @@ class PgInsertBase extends QueryPromise {
       this.config.onConflict = sql`do nothing`;
     } else {
       let targetColumn = "";
-      targetColumn = Array.isArray(config.target) ? config.target.map((it) => this.dialect.escapeName(this.dialect.casing.getColumnCasing(it))).join(",") : this.dialect.escapeName(this.dialect.casing.getColumnCasing(config.target));
+      targetColumn = Array.isArray(config.target)
+        ? config.target
+            .map((it) =>
+              this.dialect.escapeName(this.dialect.casing.getColumnCasing(it)),
+            )
+            .join(",")
+        : this.dialect.escapeName(
+            this.dialect.casing.getColumnCasing(config.target),
+          );
       const whereSql = config.where ? sql` where ${config.where}` : void 0;
       this.config.onConflict = sql`(${sql.raw(targetColumn)})${whereSql} do nothing`;
     }
@@ -7636,15 +8710,30 @@ class PgInsertBase extends QueryPromise {
   onConflictDoUpdate(config) {
     if (config.where && (config.targetWhere || config.setWhere)) {
       throw new Error(
-        'You cannot use both "where" and "targetWhere"/"setWhere" at the same time - "where" is deprecated, use "targetWhere" or "setWhere" instead.'
+        'You cannot use both "where" and "targetWhere"/"setWhere" at the same time - "where" is deprecated, use "targetWhere" or "setWhere" instead.',
       );
     }
     const whereSql = config.where ? sql` where ${config.where}` : void 0;
-    const targetWhereSql = config.targetWhere ? sql` where ${config.targetWhere}` : void 0;
-    const setWhereSql = config.setWhere ? sql` where ${config.setWhere}` : void 0;
-    const setSql = this.dialect.buildUpdateSet(this.config.table, mapUpdateSet(this.config.table, config.set));
+    const targetWhereSql = config.targetWhere
+      ? sql` where ${config.targetWhere}`
+      : void 0;
+    const setWhereSql = config.setWhere
+      ? sql` where ${config.setWhere}`
+      : void 0;
+    const setSql = this.dialect.buildUpdateSet(
+      this.config.table,
+      mapUpdateSet(this.config.table, config.set),
+    );
     let targetColumn = "";
-    targetColumn = Array.isArray(config.target) ? config.target.map((it) => this.dialect.escapeName(this.dialect.casing.getColumnCasing(it))).join(",") : this.dialect.escapeName(this.dialect.casing.getColumnCasing(config.target));
+    targetColumn = Array.isArray(config.target)
+      ? config.target
+          .map((it) =>
+            this.dialect.escapeName(this.dialect.casing.getColumnCasing(it)),
+          )
+          .join(",")
+      : this.dialect.escapeName(
+          this.dialect.casing.getColumnCasing(config.target),
+        );
     this.config.onConflict = sql`(${sql.raw(targetColumn)})${targetWhereSql} do update set ${setSql}${whereSql}${setWhereSql}`;
     return this;
   }
@@ -7653,16 +8742,26 @@ class PgInsertBase extends QueryPromise {
     return this.dialect.buildInsertQuery(this.config);
   }
   toSQL() {
-    const { typings: _typings, ...rest } = this.dialect.sqlToQuery(this.getSQL());
+    const { typings: _typings, ...rest } = this.dialect.sqlToQuery(
+      this.getSQL(),
+    );
     return rest;
   }
   /** @internal */
   _prepare(name) {
     return tracer.startActiveSpan("drizzle.prepareQuery", () => {
-      return this.session.prepareQuery(this.dialect.sqlToQuery(this.getSQL()), this.config.returning, name, true, void 0, {
-        type: "insert",
-        tables: extractUsedTable(this.config.table)
-      }, this.cacheConfig);
+      return this.session.prepareQuery(
+        this.dialect.sqlToQuery(this.getSQL()),
+        this.config.returning,
+        name,
+        true,
+        void 0,
+        {
+          type: "insert",
+          tables: extractUsedTable(this.config.table),
+        },
+        this.cacheConfig,
+      );
     });
   }
   prepare(name) {
@@ -7681,14 +8780,16 @@ class PgInsertBase extends QueryPromise {
   };
   /** @internal */
   getSelectedFields() {
-    return this.config.returningFields ? new Proxy(
-      this.config.returningFields,
-      new SelectionProxyHandler({
-        alias: getTableName(this.config.table),
-        sqlAliasedBehavior: "alias",
-        sqlBehavior: "error"
-      })
-    ) : void 0;
+    return this.config.returningFields
+      ? new Proxy(
+          this.config.returningFields,
+          new SelectionProxyHandler({
+            alias: getTableName(this.config.table),
+            sqlAliasedBehavior: "alias",
+            sqlBehavior: "error",
+          }),
+        )
+      : void 0;
   }
   $dynamic() {
     return this;
@@ -7722,13 +8823,20 @@ class PgRefreshMaterializedView extends QueryPromise {
     return this.dialect.buildRefreshMaterializedViewQuery(this.config);
   }
   toSQL() {
-    const { typings: _typings, ...rest } = this.dialect.sqlToQuery(this.getSQL());
+    const { typings: _typings, ...rest } = this.dialect.sqlToQuery(
+      this.getSQL(),
+    );
     return rest;
   }
   /** @internal */
   _prepare(name) {
     return tracer.startActiveSpan("drizzle.prepareQuery", () => {
-      return this.session.prepareQuery(this.dialect.sqlToQuery(this.getSQL()), void 0, name, true);
+      return this.session.prepareQuery(
+        this.dialect.sqlToQuery(this.getSQL()),
+        void 0,
+        name,
+        true,
+      );
     });
   }
   prepare(name) {
@@ -7765,7 +8873,7 @@ class PgUpdateBuilder {
       mapUpdateSet(this.table, values2),
       this.session,
       this.dialect,
-      this.withList
+      this.withList,
     ).setToken(this.authToken);
   }
 }
@@ -7776,7 +8884,8 @@ class PgUpdateBase extends QueryPromise {
     this.dialect = dialect;
     this.config = { set, table, withList, joins: [] };
     this.tableName = getTableLikeName(table);
-    this.joinsNotNullableMap = typeof this.tableName === "string" ? { [this.tableName]: true } : {};
+    this.joinsNotNullableMap =
+      typeof this.tableName === "string" ? { [this.tableName]: true } : {};
   }
   static [entityKind] = "PgUpdate";
   config;
@@ -7803,20 +8912,33 @@ class PgUpdateBase extends QueryPromise {
   createJoin(joinType) {
     return (table, on) => {
       const tableName = getTableLikeName(table);
-      if (typeof tableName === "string" && this.config.joins.some((join) => join.alias === tableName)) {
+      if (
+        typeof tableName === "string" &&
+        this.config.joins.some((join) => join.alias === tableName)
+      ) {
         throw new Error(`Alias "${tableName}" is already used in this query`);
       }
       if (typeof on === "function") {
-        const from = this.config.from && !is(this.config.from, SQL) ? this.getTableLikeFields(this.config.from) : void 0;
+        const from =
+          this.config.from && !is(this.config.from, SQL)
+            ? this.getTableLikeFields(this.config.from)
+            : void 0;
         on = on(
           new Proxy(
             this.config.table[Table.Symbol.Columns],
-            new SelectionProxyHandler({ sqlAliasedBehavior: "sql", sqlBehavior: "sql" })
+            new SelectionProxyHandler({
+              sqlAliasedBehavior: "sql",
+              sqlBehavior: "sql",
+            }),
           ),
-          from && new Proxy(
-            from,
-            new SelectionProxyHandler({ sqlAliasedBehavior: "sql", sqlBehavior: "sql" })
-          )
+          from &&
+            new Proxy(
+              from,
+              new SelectionProxyHandler({
+                sqlAliasedBehavior: "sql",
+                sqlBehavior: "sql",
+              }),
+            ),
         );
       }
       this.config.joins.push({ on, table, joinType, alias: tableName });
@@ -7828,7 +8950,10 @@ class PgUpdateBase extends QueryPromise {
           }
           case "right": {
             this.joinsNotNullableMap = Object.fromEntries(
-              Object.entries(this.joinsNotNullableMap).map(([key]) => [key, false])
+              Object.entries(this.joinsNotNullableMap).map(([key]) => [
+                key,
+                false,
+              ]),
             );
             this.joinsNotNullableMap[tableName] = true;
             break;
@@ -7839,7 +8964,10 @@ class PgUpdateBase extends QueryPromise {
           }
           case "full": {
             this.joinsNotNullableMap = Object.fromEntries(
-              Object.entries(this.joinsNotNullableMap).map(([key]) => [key, false])
+              Object.entries(this.joinsNotNullableMap).map(([key]) => [
+                key,
+                false,
+              ]),
             );
             this.joinsNotNullableMap[tableName] = false;
             break;
@@ -7895,7 +9023,11 @@ class PgUpdateBase extends QueryPromise {
       fields = Object.assign({}, this.config.table[Table.Symbol.Columns]);
       if (this.config.from) {
         const tableName = getTableLikeName(this.config.from);
-        if (typeof tableName === "string" && this.config.from && !is(this.config.from, SQL)) {
+        if (
+          typeof tableName === "string" &&
+          this.config.from &&
+          !is(this.config.from, SQL)
+        ) {
           const fromFields = this.getTableLikeFields(this.config.from);
           fields[tableName] = fromFields;
         }
@@ -7917,15 +9049,25 @@ class PgUpdateBase extends QueryPromise {
     return this.dialect.buildUpdateQuery(this.config);
   }
   toSQL() {
-    const { typings: _typings, ...rest } = this.dialect.sqlToQuery(this.getSQL());
+    const { typings: _typings, ...rest } = this.dialect.sqlToQuery(
+      this.getSQL(),
+    );
     return rest;
   }
   /** @internal */
   _prepare(name) {
-    const query = this.session.prepareQuery(this.dialect.sqlToQuery(this.getSQL()), this.config.returning, name, true, void 0, {
-      type: "insert",
-      tables: extractUsedTable(this.config.table)
-    }, this.cacheConfig);
+    const query = this.session.prepareQuery(
+      this.dialect.sqlToQuery(this.getSQL()),
+      this.config.returning,
+      name,
+      true,
+      void 0,
+      {
+        type: "insert",
+        tables: extractUsedTable(this.config.table),
+      },
+      this.cacheConfig,
+    );
     query.joinsNotNullableMap = this.joinsNotNullableMap;
     return query;
   }
@@ -7943,14 +9085,16 @@ class PgUpdateBase extends QueryPromise {
   };
   /** @internal */
   getSelectedFields() {
-    return this.config.returningFields ? new Proxy(
-      this.config.returningFields,
-      new SelectionProxyHandler({
-        alias: getTableName(this.config.table),
-        sqlAliasedBehavior: "alias",
-        sqlBehavior: "error"
-      })
-    ) : void 0;
+    return this.config.returningFields
+      ? new Proxy(
+          this.config.returningFields,
+          new SelectionProxyHandler({
+            alias: getTableName(this.config.table),
+            sqlAliasedBehavior: "alias",
+            sqlBehavior: "error",
+          }),
+        )
+      : void 0;
   }
   $dynamic() {
     return this;
@@ -7958,14 +9102,14 @@ class PgUpdateBase extends QueryPromise {
 }
 class PgCountBuilder extends SQL {
   constructor(params) {
-    super(PgCountBuilder.buildEmbeddedCount(params.source, params.filters).queryChunks);
+    super(
+      PgCountBuilder.buildEmbeddedCount(params.source, params.filters)
+        .queryChunks,
+    );
     this.params = params;
     this.mapWith(Number);
     this.session = params.session;
-    this.sql = PgCountBuilder.buildCount(
-      params.source,
-      params.filters
-    );
+    this.sql = PgCountBuilder.buildCount(params.source, params.filters);
   }
   sql;
   token;
@@ -7986,7 +9130,7 @@ class PgCountBuilder extends SQL {
   then(onfulfilled, onrejected) {
     return Promise.resolve(this.session.count(this.sql, this.token)).then(
       onfulfilled,
-      onrejected
+      onrejected,
     );
   }
   catch(onRejected) {
@@ -8001,12 +9145,20 @@ class PgCountBuilder extends SQL {
       (reason) => {
         onFinally?.();
         throw reason;
-      }
+      },
     );
   }
 }
 class RelationalQueryBuilder {
-  constructor(fullSchema, schema2, tableNamesMap, table, tableConfig, dialect, session2) {
+  constructor(
+    fullSchema,
+    schema2,
+    tableNamesMap,
+    table,
+    tableConfig,
+    dialect,
+    session2,
+  ) {
     this.fullSchema = fullSchema;
     this.schema = schema2;
     this.tableNamesMap = tableNamesMap;
@@ -8026,7 +9178,7 @@ class RelationalQueryBuilder {
       this.dialect,
       this.session,
       config ? config : {},
-      "many"
+      "many",
     );
   }
   findFirst(config) {
@@ -8039,12 +9191,22 @@ class RelationalQueryBuilder {
       this.dialect,
       this.session,
       config ? { ...config, limit: 1 } : { limit: 1 },
-      "first"
+      "first",
     );
   }
 }
 class PgRelationalQuery extends QueryPromise {
-  constructor(fullSchema, schema2, tableNamesMap, table, tableConfig, dialect, session2, config, mode) {
+  constructor(
+    fullSchema,
+    schema2,
+    tableNamesMap,
+    table,
+    tableConfig,
+    dialect,
+    session2,
+    config,
+    mode,
+  ) {
     super();
     this.fullSchema = fullSchema;
     this.schema = schema2;
@@ -8067,14 +9229,20 @@ class PgRelationalQuery extends QueryPromise {
         name,
         true,
         (rawRows, mapColumnValue) => {
-          const rows = rawRows.map(
-            (row) => mapRelationalRow(this.schema, this.tableConfig, row, query.selection, mapColumnValue)
+          const rows = rawRows.map((row) =>
+            mapRelationalRow(
+              this.schema,
+              this.tableConfig,
+              row,
+              query.selection,
+              mapColumnValue,
+            ),
           );
           if (this.mode === "first") {
             return rows[0];
           }
           return rows;
-        }
+        },
       );
     });
   }
@@ -8089,7 +9257,7 @@ class PgRelationalQuery extends QueryPromise {
       table: this.table,
       tableConfig: this.tableConfig,
       queryConfig: this.config,
-      tableAlias: this.tableConfig.tsName
+      tableAlias: this.tableConfig.tsName,
     });
   }
   /** @internal */
@@ -8147,17 +9315,19 @@ class PgDatabase {
   constructor(dialect, session2, schema2) {
     this.dialect = dialect;
     this.session = session2;
-    this._ = schema2 ? {
-      schema: schema2.schema,
-      fullSchema: schema2.fullSchema,
-      tableNamesMap: schema2.tableNamesMap,
-      session: session2
-    } : {
-      schema: void 0,
-      fullSchema: {},
-      tableNamesMap: {},
-      session: session2
-    };
+    this._ = schema2
+      ? {
+          schema: schema2.schema,
+          fullSchema: schema2.fullSchema,
+          tableNamesMap: schema2.tableNamesMap,
+          session: session2,
+        }
+      : {
+          schema: void 0,
+          fullSchema: {},
+          tableNamesMap: {},
+          session: session2,
+        };
     this.query = {};
     if (this._.schema) {
       for (const [tableName, columns] of Object.entries(this._.schema)) {
@@ -8168,12 +9338,11 @@ class PgDatabase {
           schema2.fullSchema[tableName],
           columns,
           dialect,
-          session2
+          session2,
         );
       }
     }
-    this.$cache = { invalidate: async (_params) => {
-    } };
+    this.$cache = { invalidate: async (_params) => {} };
   }
   static [entityKind] = "PgDatabase";
   query;
@@ -8218,11 +9387,16 @@ class PgDatabase {
       return new Proxy(
         new WithSubquery(
           qb.getSQL(),
-          selection ?? ("getSelectedFields" in qb ? qb.getSelectedFields() ?? {} : {}),
+          selection ??
+            ("getSelectedFields" in qb ? (qb.getSelectedFields() ?? {}) : {}),
           alias,
-          true
+          true,
         ),
-        new SelectionProxyHandler({ alias, sqlAliasedBehavior: "alias", sqlBehavior: "error" })
+        new SelectionProxyHandler({
+          alias,
+          sqlAliasedBehavior: "alias",
+          sqlBehavior: "error",
+        }),
       );
     };
     return { as };
@@ -8257,7 +9431,7 @@ class PgDatabase {
         fields: fields ?? void 0,
         session: self2.session,
         dialect: self2.dialect,
-        withList: queries
+        withList: queries,
       });
     }
     function selectDistinct(fields) {
@@ -8266,7 +9440,7 @@ class PgDatabase {
         session: self2.session,
         dialect: self2.dialect,
         withList: queries,
-        distinct: true
+        distinct: true,
       });
     }
     function selectDistinctOn(on, fields) {
@@ -8275,7 +9449,7 @@ class PgDatabase {
         session: self2.session,
         dialect: self2.dialect,
         withList: queries,
-        distinct: { on }
+        distinct: { on },
       });
     }
     function update(table) {
@@ -8287,13 +9461,20 @@ class PgDatabase {
     function delete_(table) {
       return new PgDeleteBase(table, self2.session, self2.dialect, queries);
     }
-    return { select: select2, selectDistinct, selectDistinctOn, update, insert, delete: delete_ };
+    return {
+      select: select2,
+      selectDistinct,
+      selectDistinctOn,
+      update,
+      insert,
+      delete: delete_,
+    };
   }
   select(fields) {
     return new PgSelectBuilder({
       fields: fields ?? void 0,
       session: this.session,
-      dialect: this.dialect
+      dialect: this.dialect,
     });
   }
   selectDistinct(fields) {
@@ -8301,7 +9482,7 @@ class PgDatabase {
       fields: fields ?? void 0,
       session: this.session,
       dialect: this.dialect,
-      distinct: true
+      distinct: true,
     });
   }
   selectDistinctOn(on, fields) {
@@ -8309,7 +9490,7 @@ class PgDatabase {
       fields: fields ?? void 0,
       session: this.session,
       dialect: this.dialect,
-      distinct: { on }
+      distinct: { on },
     });
   }
   /**
@@ -8407,13 +9588,13 @@ class PgDatabase {
       builtQuery,
       void 0,
       void 0,
-      false
+      false,
     );
     return new PgRaw(
       () => prepared.execute(void 0, this.authToken),
       sequel,
       builtQuery,
-      (result) => prepared.mapResult(result, true)
+      (result) => prepared.mapResult(result, true),
     );
   }
   transaction(transaction, config) {
@@ -8431,10 +9612,8 @@ class NoopCache extends Cache {
   async get(_key) {
     return void 0;
   }
-  async put(_hashedQuery, _response, _tables, _config) {
-  }
-  async onMutate(_params) {
-  }
+  async put(_hashedQuery, _response, _tables, _config) {}
+  async onMutate(_params) {}
 }
 async function hashQuery(sql2, params) {
   const dataToHash = `${sql2}-${JSON.stringify(params)}`;
@@ -8442,7 +9621,9 @@ async function hashQuery(sql2, params) {
   const data = encoder.encode(dataToHash);
   const hashBuffer = await crypto.subtle.digest("SHA-256", data);
   const hashArray = [...new Uint8Array(hashBuffer)];
-  const hashHex = hashArray.map((b2) => b2.toString(16).padStart(2, "0")).join("");
+  const hashHex = hashArray
+    .map((b2) => b2.toString(16).padStart(2, "0"))
+    .join("");
   return hashHex;
 }
 class PgPreparedQuery {
@@ -8475,7 +9656,11 @@ class PgPreparedQuery {
   joinsNotNullableMap;
   /** @internal */
   async queryWithCache(queryString, params, query) {
-    if (this.cache === void 0 || is(this.cache, NoopCache) || this.queryMetadata === void 0) {
+    if (
+      this.cache === void 0 ||
+      is(this.cache, NoopCache) ||
+      this.queryMetadata === void 0
+    ) {
       try {
         return await query();
       } catch (e) {
@@ -8489,11 +9674,16 @@ class PgPreparedQuery {
         throw new DrizzleQueryError(queryString, params, e);
       }
     }
-    if ((this.queryMetadata.type === "insert" || this.queryMetadata.type === "update" || this.queryMetadata.type === "delete") && this.queryMetadata.tables.length > 0) {
+    if (
+      (this.queryMetadata.type === "insert" ||
+        this.queryMetadata.type === "update" ||
+        this.queryMetadata.type === "delete") &&
+      this.queryMetadata.tables.length > 0
+    ) {
       try {
         const [res] = await Promise.all([
           query(),
-          this.cache.onMutate({ tables: this.queryMetadata.tables })
+          this.cache.onMutate({ tables: this.queryMetadata.tables }),
         ]);
         return res;
       } catch (e) {
@@ -8509,10 +9699,10 @@ class PgPreparedQuery {
     }
     if (this.queryMetadata.type === "select") {
       const fromCache = await this.cache.get(
-        this.cacheConfig.tag ?? await hashQuery(queryString, params),
+        this.cacheConfig.tag ?? (await hashQuery(queryString, params)),
         this.queryMetadata.tables,
         this.cacheConfig.tag !== void 0,
-        this.cacheConfig.autoInvalidate
+        this.cacheConfig.autoInvalidate,
       );
       if (fromCache === void 0) {
         let result;
@@ -8522,12 +9712,12 @@ class PgPreparedQuery {
           throw new DrizzleQueryError(queryString, params, e);
         }
         await this.cache.put(
-          this.cacheConfig.tag ?? await hashQuery(queryString, params),
+          this.cacheConfig.tag ?? (await hashQuery(queryString, params)),
           result,
           // make sure we send tables that were used in a query only if user wants to invalidate it on each write
           this.cacheConfig.autoInvalidate ? this.queryMetadata.tables : [],
           this.cacheConfig.tag !== void 0,
-          this.cacheConfig.config
+          this.cacheConfig.config,
         );
         return result;
       }
@@ -8553,7 +9743,7 @@ class PgSession {
           this.dialect.sqlToQuery(query),
           void 0,
           void 0,
-          false
+          false,
         );
       });
       return prepared.setToken(token).execute(void 0, token);
@@ -8564,15 +9754,13 @@ class PgSession {
       this.dialect.sqlToQuery(query),
       void 0,
       void 0,
-      false
+      false,
     ).all();
   }
   /** @internal */
   async count(sql2, token) {
     const res = await this.execute(sql2, token);
-    return Number(
-      res[0]["count"]
-    );
+    return Number(res[0]["count"]);
   }
 }
 class PgTransaction extends PgDatabase {
@@ -8600,11 +9788,24 @@ class PgTransaction extends PgDatabase {
     return sql.raw(chunks.join(" "));
   }
   setTransaction(config) {
-    return this.session.execute(sql`set transaction ${this.getTransactionConfigSQL(config)}`);
+    return this.session.execute(
+      sql`set transaction ${this.getTransactionConfigSQL(config)}`,
+    );
   }
 }
 class PostgresJsPreparedQuery extends PgPreparedQuery {
-  constructor(client2, queryString, params, logger, cache, queryMetadata, cacheConfig, fields, _isResponseInArrayMode, customResultMapper) {
+  constructor(
+    client2,
+    queryString,
+    params,
+    logger,
+    cache,
+    queryMetadata,
+    cacheConfig,
+    fields,
+    _isResponseInArrayMode,
+    customResultMapper,
+  ) {
     super({ sql: queryString, params }, cache, queryMetadata, cacheConfig);
     this.client = client2;
     this.queryString = queryString;
@@ -8620,10 +9821,16 @@ class PostgresJsPreparedQuery extends PgPreparedQuery {
       const params = fillPlaceholders(this.params, placeholderValues);
       span?.setAttributes({
         "drizzle.query.text": this.queryString,
-        "drizzle.query.params": JSON.stringify(params)
+        "drizzle.query.params": JSON.stringify(params),
       });
       this.logger.logQuery(this.queryString, params);
-      const { fields, queryString: query, client: client2, joinsNotNullableMap, customResultMapper } = this;
+      const {
+        fields,
+        queryString: query,
+        client: client2,
+        joinsNotNullableMap,
+        customResultMapper,
+      } = this;
       if (!fields && !customResultMapper) {
         return tracer.startActiveSpan("drizzle.driver.execute", () => {
           return this.queryWithCache(query, params, async () => {
@@ -8631,17 +9838,22 @@ class PostgresJsPreparedQuery extends PgPreparedQuery {
           });
         });
       }
-      const rows = await tracer.startActiveSpan("drizzle.driver.execute", () => {
-        span?.setAttributes({
-          "drizzle.query.text": query,
-          "drizzle.query.params": JSON.stringify(params)
-        });
-        return this.queryWithCache(query, params, async () => {
-          return await client2.unsafe(query, params).values();
-        });
-      });
+      const rows = await tracer.startActiveSpan(
+        "drizzle.driver.execute",
+        () => {
+          span?.setAttributes({
+            "drizzle.query.text": query,
+            "drizzle.query.params": JSON.stringify(params),
+          });
+          return this.queryWithCache(query, params, async () => {
+            return await client2.unsafe(query, params).values();
+          });
+        },
+      );
       return tracer.startActiveSpan("drizzle.mapResponse", () => {
-        return customResultMapper ? customResultMapper(rows) : rows.map((row) => mapResultRow(fields, row, joinsNotNullableMap));
+        return customResultMapper
+          ? customResultMapper(rows)
+          : rows.map((row) => mapResultRow(fields, row, joinsNotNullableMap));
       });
     });
   }
@@ -8650,13 +9862,13 @@ class PostgresJsPreparedQuery extends PgPreparedQuery {
       const params = fillPlaceholders(this.params, placeholderValues);
       span?.setAttributes({
         "drizzle.query.text": this.queryString,
-        "drizzle.query.params": JSON.stringify(params)
+        "drizzle.query.params": JSON.stringify(params),
       });
       this.logger.logQuery(this.queryString, params);
       return tracer.startActiveSpan("drizzle.driver.execute", () => {
         span?.setAttributes({
           "drizzle.query.text": this.queryString,
-          "drizzle.query.params": JSON.stringify(params)
+          "drizzle.query.params": JSON.stringify(params),
         });
         return this.queryWithCache(this.queryString, params, async () => {
           return this.client.unsafe(this.queryString, params);
@@ -8681,7 +9893,15 @@ class PostgresJsSession extends PgSession {
   static [entityKind] = "PostgresJsSession";
   logger;
   cache;
-  prepareQuery(query, fields, name, isResponseInArrayMode, customResultMapper, queryMetadata, cacheConfig) {
+  prepareQuery(
+    query,
+    fields,
+    name,
+    isResponseInArrayMode,
+    customResultMapper,
+    queryMetadata,
+    cacheConfig,
+  ) {
     return new PostgresJsPreparedQuery(
       this.client,
       query.sql,
@@ -8692,7 +9912,7 @@ class PostgresJsSession extends PgSession {
       cacheConfig,
       fields,
       isResponseInArrayMode,
-      customResultMapper
+      customResultMapper,
     );
   }
   query(query, params) {
@@ -8708,7 +9928,7 @@ class PostgresJsSession extends PgSession {
         client2,
         this.dialect,
         this.schema,
-        this.options
+        this.options,
       );
       const tx = new PostgresJsTransaction(this.dialect, session2, this.schema);
       if (config) {
@@ -8730,7 +9950,7 @@ class PostgresJsTransaction extends PgTransaction {
         client2,
         this.dialect,
         this.schema,
-        this.session.options
+        this.session.options,
       );
       const tx = new PostgresJsTransaction(this.dialect, session2, this.schema);
       return transaction(tx);
@@ -8742,7 +9962,16 @@ class PostgresJsDatabase extends PgDatabase {
 }
 function construct(client2, config = {}) {
   const transparentParser = (val) => val;
-  for (const type of ["1184", "1082", "1083", "1114", "1182", "1185", "1115", "1231"]) {
+  for (const type of [
+    "1184",
+    "1082",
+    "1083",
+    "1114",
+    "1182",
+    "1185",
+    "1115",
+    "1231",
+  ]) {
     client2.options.parsers[type] = transparentParser;
     client2.options.serializers[type] = transparentParser;
   }
@@ -8759,15 +9988,18 @@ function construct(client2, config = {}) {
   if (config.schema) {
     const tablesConfig = extractTablesRelationalConfig(
       config.schema,
-      createTableRelationsHelpers
+      createTableRelationsHelpers,
     );
     schema2 = {
       fullSchema: config.schema,
       schema: tablesConfig.tables,
-      tableNamesMap: tablesConfig.tableNamesMap
+      tableNamesMap: tablesConfig.tableNamesMap,
     };
   }
-  const session2 = new PostgresJsSession(client2, dialect, schema2, { logger, cache: config.cache });
+  const session2 = new PostgresJsSession(client2, dialect, schema2, {
+    logger,
+    cache: config.cache,
+  });
   const db2 = new PostgresJsDatabase(dialect, session2, schema2);
   db2.$client = client2;
   db2.$cache = config.cache;
@@ -8782,7 +10014,11 @@ function drizzle(...params) {
     return construct(instance, params[1]);
   }
   if (isConfig(params[0])) {
-    const { connection: connection2, client: client2, ...drizzleConfig } = params[0];
+    const {
+      connection: connection2,
+      client: client2,
+      ...drizzleConfig
+    } = params[0];
     if (client2) return construct(client2, drizzleConfig);
     if (typeof connection2 === "object" && connection2.url !== void 0) {
       const { url, ...config } = connection2;
@@ -8796,12 +10032,15 @@ function drizzle(...params) {
 }
 ((drizzle2) => {
   function mock(config) {
-    return construct({
-      options: {
-        parsers: {},
-        serializers: {}
-      }
-    }, config);
+    return construct(
+      {
+        options: {
+          parsers: {},
+          serializers: {},
+        },
+      },
+      config,
+    );
   }
   drizzle2.mock = mock;
 })(drizzle || (drizzle = {}));
@@ -8816,7 +10055,7 @@ const user = pgTable("user", (t2) => ({
   role: t2.text().default("roomie"),
   banned: t2.boolean().default(false),
   banReason: t2.text(),
-  banExpires: t2.timestamp()
+  banExpires: t2.timestamp(),
 }));
 const session = pgTable("session", (t2) => ({
   id: t2.text().primaryKey(),
@@ -8826,14 +10065,20 @@ const session = pgTable("session", (t2) => ({
   updatedAt: t2.timestamp().defaultNow().notNull(),
   ipAddress: t2.text(),
   userAgent: t2.text(),
-  userId: t2.text().notNull().references(() => user.id, { onDelete: "cascade" }),
-  impersonatedBy: t2.text()
+  userId: t2
+    .text()
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  impersonatedBy: t2.text(),
 }));
 const account = pgTable("account", (t2) => ({
   id: t2.text().primaryKey(),
   accountId: t2.text().notNull(),
   providerId: t2.text().notNull(),
-  userId: t2.text().notNull().references(() => user.id, { onDelete: "cascade" }),
+  userId: t2
+    .text()
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
   accessToken: t2.text(),
   refreshToken: t2.text(),
   idToken: t2.text(),
@@ -8842,7 +10087,7 @@ const account = pgTable("account", (t2) => ({
   scope: t2.text(),
   password: t2.text(),
   createdAt: t2.timestamp().defaultNow().notNull(),
-  updatedAt: t2.timestamp().defaultNow().notNull()
+  updatedAt: t2.timestamp().defaultNow().notNull(),
 }));
 const verification = pgTable("verification", (t2) => ({
   id: t2.text().primaryKey(),
@@ -8850,7 +10095,7 @@ const verification = pgTable("verification", (t2) => ({
   value: t2.text().notNull(),
   expiresAt: t2.timestamp().notNull(),
   createdAt: t2.timestamp().defaultNow(),
-  updatedAt: t2.timestamp().defaultNow()
+  updatedAt: t2.timestamp().defaultNow(),
 }));
 const CONSTANTS = {
   INT8_MIN: -128,
@@ -8870,19 +10115,28 @@ const CONSTANTS = {
   INT48_UNSIGNED_MAX: 281474976710655,
   INT64_MIN: -9223372036854775808n,
   INT64_MAX: 9223372036854775807n,
-  INT64_UNSIGNED_MAX: 18446744073709551615n
+  INT64_UNSIGNED_MAX: 18446744073709551615n,
 };
 function isColumnType(column, columnTypes) {
   return columnTypes.includes(column.columnType);
 }
 function isWithEnum(column) {
-  return "enumValues" in column && Array.isArray(column.enumValues) && column.enumValues.length > 0;
+  return (
+    "enumValues" in column &&
+    Array.isArray(column.enumValues) &&
+    column.enumValues.length > 0
+  );
 }
-const literalSchema = z$1.union([z$1.string(), z$1.number(), z$1.boolean(), z$1.null()]);
+const literalSchema = z$1.union([
+  z$1.string(),
+  z$1.number(),
+  z$1.boolean(),
+  z$1.null(),
+]);
 const jsonSchema = z$1.union([
   literalSchema,
   z$1.record(z$1.string(), z$1.any()),
-  z$1.array(z$1.any())
+  z$1.array(z$1.any()),
 ]);
 const bufferSchema = z$1.custom((v) => v instanceof Buffer);
 function columnToSchema(column, factory) {
@@ -8890,7 +10144,9 @@ function columnToSchema(column, factory) {
   const coerce = {};
   let schema2;
   if (isWithEnum(column)) {
-    schema2 = column.enumValues.length ? z$1$1.enum(column.enumValues) : z$1$1.string();
+    schema2 = column.enumValues.length
+      ? z$1$1.enum(column.enumValues)
+      : z$1$1.string();
   }
   if (!schema2) {
     if (isColumnType(column, ["PgGeometry", "PgPointTuple"])) {
@@ -8906,7 +10162,7 @@ function columnToSchema(column, factory) {
       schema2 = z$1$1.object({
         a: z$1$1.number(),
         b: z$1$1.number(),
-        c: z$1$1.number()
+        c: z$1$1.number(),
       });
     } else if (isColumnType(column, ["PgArray"])) {
       schema2 = z$1$1.array(columnToSchema(column.baseColumn));
@@ -8918,9 +10174,13 @@ function columnToSchema(column, factory) {
     } else if (column.dataType === "bigint") {
       schema2 = bigintColumnToSchema(column, z$1$1, coerce);
     } else if (column.dataType === "boolean") {
-      schema2 = coerce === true || coerce.boolean ? z$1$1.coerce.boolean() : z$1$1.boolean();
+      schema2 =
+        coerce === true || coerce.boolean
+          ? z$1$1.coerce.boolean()
+          : z$1$1.boolean();
     } else if (column.dataType === "date") {
-      schema2 = coerce === true || coerce.date ? z$1$1.coerce.date() : z$1$1.date();
+      schema2 =
+        coerce === true || coerce.date ? z$1$1.coerce.date() : z$1$1.date();
     } else if (column.dataType === "string") {
       schema2 = stringColumnToSchema(column, z$1$1, coerce);
     } else if (column.dataType === "json") {
@@ -8945,54 +10205,65 @@ function numberColumnToSchema(column, z2, coerce) {
     min2 = unsigned ? 0 : CONSTANTS.INT8_MIN;
     max2 = unsigned ? CONSTANTS.INT8_UNSIGNED_MAX : CONSTANTS.INT8_MAX;
     integer2 = true;
-  } else if (isColumnType(column, [
-    "PgSmallInt",
-    "PgSmallSerial",
-    "MySqlSmallInt",
-    "SingleStoreSmallInt"
-  ])) {
+  } else if (
+    isColumnType(column, [
+      "PgSmallInt",
+      "PgSmallSerial",
+      "MySqlSmallInt",
+      "SingleStoreSmallInt",
+    ])
+  ) {
     min2 = unsigned ? 0 : CONSTANTS.INT16_MIN;
     max2 = unsigned ? CONSTANTS.INT16_UNSIGNED_MAX : CONSTANTS.INT16_MAX;
     integer2 = true;
-  } else if (isColumnType(column, [
-    "PgReal",
-    "MySqlFloat",
-    "MySqlMediumInt",
-    "SingleStoreMediumInt",
-    "SingleStoreFloat"
-  ])) {
+  } else if (
+    isColumnType(column, [
+      "PgReal",
+      "MySqlFloat",
+      "MySqlMediumInt",
+      "SingleStoreMediumInt",
+      "SingleStoreFloat",
+    ])
+  ) {
     min2 = unsigned ? 0 : CONSTANTS.INT24_MIN;
     max2 = unsigned ? CONSTANTS.INT24_UNSIGNED_MAX : CONSTANTS.INT24_MAX;
     integer2 = isColumnType(column, ["MySqlMediumInt", "SingleStoreMediumInt"]);
-  } else if (isColumnType(column, [
-    "PgInteger",
-    "PgSerial",
-    "MySqlInt",
-    "SingleStoreInt"
-  ])) {
+  } else if (
+    isColumnType(column, [
+      "PgInteger",
+      "PgSerial",
+      "MySqlInt",
+      "SingleStoreInt",
+    ])
+  ) {
     min2 = unsigned ? 0 : CONSTANTS.INT32_MIN;
     max2 = unsigned ? CONSTANTS.INT32_UNSIGNED_MAX : CONSTANTS.INT32_MAX;
     integer2 = true;
-  } else if (isColumnType(column, [
-    "PgDoublePrecision",
-    "MySqlReal",
-    "MySqlDouble",
-    "SingleStoreReal",
-    "SingleStoreDouble",
-    "SQLiteReal"
-  ])) {
+  } else if (
+    isColumnType(column, [
+      "PgDoublePrecision",
+      "MySqlReal",
+      "MySqlDouble",
+      "SingleStoreReal",
+      "SingleStoreDouble",
+      "SQLiteReal",
+    ])
+  ) {
     min2 = unsigned ? 0 : CONSTANTS.INT48_MIN;
     max2 = unsigned ? CONSTANTS.INT48_UNSIGNED_MAX : CONSTANTS.INT48_MAX;
-  } else if (isColumnType(column, [
-    "PgBigInt53",
-    "PgBigSerial53",
-    "MySqlBigInt53",
-    "MySqlSerial",
-    "SingleStoreBigInt53",
-    "SingleStoreSerial",
-    "SQLiteInteger"
-  ])) {
-    unsigned = unsigned || isColumnType(column, ["MySqlSerial", "SingleStoreSerial"]);
+  } else if (
+    isColumnType(column, [
+      "PgBigInt53",
+      "PgBigSerial53",
+      "MySqlBigInt53",
+      "MySqlSerial",
+      "SingleStoreBigInt53",
+      "SingleStoreSerial",
+      "SQLiteInteger",
+    ])
+  ) {
+    unsigned =
+      unsigned || isColumnType(column, ["MySqlSerial", "SingleStoreSerial"]);
     min2 = unsigned ? 0 : Number.MIN_SAFE_INTEGER;
     max2 = Number.MAX_SAFE_INTEGER;
     integer2 = true;
@@ -9004,7 +10275,14 @@ function numberColumnToSchema(column, z2, coerce) {
     min2 = Number.MIN_SAFE_INTEGER;
     max2 = Number.MAX_SAFE_INTEGER;
   }
-  let schema2 = coerce === true || coerce?.number ? integer2 ? z2.coerce.number() : z2.coerce.number().int() : integer2 ? z2.int() : z2.number();
+  let schema2 =
+    coerce === true || coerce?.number
+      ? integer2
+        ? z2.coerce.number()
+        : z2.coerce.number().int()
+      : integer2
+        ? z2.int()
+        : z2.number();
   schema2 = schema2.gte(min2).lte(max2);
   return schema2;
 }
@@ -9012,7 +10290,8 @@ function bigintColumnToSchema(column, z2, coerce) {
   const unsigned = column.getSQLType().includes("unsigned");
   const min2 = unsigned ? 0n : CONSTANTS.INT64_MIN;
   const max2 = unsigned ? CONSTANTS.INT64_UNSIGNED_MAX : CONSTANTS.INT64_MAX;
-  const schema2 = coerce === true || coerce?.bigint ? z2.coerce.bigint() : z2.bigint();
+  const schema2 =
+    coerce === true || coerce?.bigint ? z2.coerce.bigint() : z2.bigint();
   return schema2.gte(min2).lte(max2);
 }
 function stringColumnToSchema(column, z2, coerce) {
@@ -9037,11 +10316,7 @@ function stringColumnToSchema(column, z2, coerce) {
       max2 = CONSTANTS.INT8_UNSIGNED_MAX;
     }
   }
-  if (isColumnType(column, [
-    "PgChar",
-    "MySqlChar",
-    "SingleStoreChar"
-  ])) {
+  if (isColumnType(column, ["PgChar", "MySqlChar", "SingleStoreChar"])) {
     max2 = column.length;
     fixed = true;
   }
@@ -9049,19 +10324,36 @@ function stringColumnToSchema(column, z2, coerce) {
     regex = /^[01]+$/;
     max2 = column.dimensions;
   }
-  let schema2 = coerce === true || coerce?.string ? z2.coerce.string() : z2.string();
+  let schema2 =
+    coerce === true || coerce?.string ? z2.coerce.string() : z2.string();
   schema2 = regex ? schema2.regex(regex) : schema2;
-  return max2 && fixed ? schema2.length(max2) : max2 ? schema2.max(max2) : schema2;
+  return max2 && fixed
+    ? schema2.length(max2)
+    : max2
+      ? schema2.max(max2)
+      : schema2;
 }
 function getColumns(tableLike) {
-  return isTable(tableLike) ? getTableColumns(tableLike) : getViewSelectedFields(tableLike);
+  return isTable(tableLike)
+    ? getTableColumns(tableLike)
+    : getViewSelectedFields(tableLike);
 }
 function handleColumns(columns, refinements, conditions, factory) {
   const columnSchemas = {};
   for (const [key, selected] of Object.entries(columns)) {
-    if (!is(selected, Column) && !is(selected, SQL) && !is(selected, SQL.Aliased) && typeof selected === "object") {
-      const columns2 = isTable(selected) || isView(selected) ? getColumns(selected) : selected;
-      columnSchemas[key] = handleColumns(columns2, refinements[key] ?? {}, conditions);
+    if (
+      !is(selected, Column) &&
+      !is(selected, SQL) &&
+      !is(selected, SQL.Aliased) &&
+      typeof selected === "object"
+    ) {
+      const columns2 =
+        isTable(selected) || isView(selected) ? getColumns(selected) : selected;
+      columnSchemas[key] = handleColumns(
+        columns2,
+        refinements[key] ?? {},
+        conditions,
+      );
       continue;
     }
     const refinement = refinements[key];
@@ -9071,7 +10363,8 @@ function handleColumns(columns, refinements, conditions, factory) {
     }
     const column = is(selected, Column) ? selected : void 0;
     const schema2 = column ? columnToSchema(column) : z$1.any();
-    const refined = typeof refinement === "function" ? refinement(schema2) : schema2;
+    const refined =
+      typeof refinement === "function" ? refinement(schema2) : schema2;
     if (conditions.never(column)) {
       continue;
     } else {
@@ -9089,9 +10382,12 @@ function handleColumns(columns, refinements, conditions, factory) {
   return z$1.object(columnSchemas);
 }
 const insertConditions = {
-  never: (column) => column?.generated?.type === "always" || column?.generatedIdentity?.type === "always",
-  optional: (column) => !column.notNull || column.notNull && column.hasDefault,
-  nullable: (column) => !column.notNull
+  never: (column) =>
+    column?.generated?.type === "always" ||
+    column?.generatedIdentity?.type === "always",
+  optional: (column) =>
+    !column.notNull || (column.notNull && column.hasDefault),
+  nullable: (column) => !column.notNull,
 };
 const createInsertSchema = (entity, refine) => {
   const columns = getColumns(entity);
@@ -9102,47 +10398,31 @@ const roomStatusEnum = pgEnum("room_status", [
   "draft",
   "listed",
   "occupied",
-  "unlisted"
+  "unlisted",
 ]);
 const complexImageKindEnum = pgEnum("complex_image_kind", [
   "exterior",
   "common",
-  "other"
+  "other",
 ]);
-const roomImageKindEnum = pgEnum("room_image_kind", [
-  "room",
-  "apartment"
-]);
+const roomImageKindEnum = pgEnum("room_image_kind", ["room", "apartment"]);
 const stayStatusEnum = pgEnum("stay_status", ["current", "past"]);
 const householdGenderEnum = pgEnum("household_gender", [
   "male",
   "female",
-  "mixed"
+  "mixed",
 ]);
 const bathroomTypeEnum = pgEnum("bathroom_type", ["private", "shared"]);
-const furnishedEnum = pgEnum("furnished", [
-  "furnished",
-  "semi",
-  "unfurnished"
-]);
-const smokingPolicyEnum = pgEnum("smoking_policy", [
-  "no",
-  "outdoor",
-  "yes"
-]);
-const overnightGuestsEnum = pgEnum("overnight_guests", [
-  "no",
-  "ask",
-  "yes"
-]);
-const cleanlinessEnum = pgEnum("cleanliness", [
-  "relaxed",
-  "average",
-  "tidy"
-]);
+const furnishedEnum = pgEnum("furnished", ["furnished", "semi", "unfurnished"]);
+const smokingPolicyEnum = pgEnum("smoking_policy", ["no", "outdoor", "yes"]);
+const overnightGuestsEnum = pgEnum("overnight_guests", ["no", "ask", "yes"]);
+const cleanlinessEnum = pgEnum("cleanliness", ["relaxed", "average", "tidy"]);
 const Complex = pgTable("complex", (t2) => ({
   id: t2.uuid().notNull().primaryKey().defaultRandom(),
-  hostId: t2.text().notNull().references(() => user.id, { onDelete: "cascade" }),
+  hostId: t2
+    .text()
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
   agentId: t2.text().references(() => user.id, { onDelete: "set null" }),
   title: t2.varchar({ length: 256 }).notNull(),
   description: t2.text().notNull(),
@@ -9156,16 +10436,24 @@ const Complex = pgTable("complex", (t2) => ({
   longitude: t2.doublePrecision(),
   amenities: t2.text().array().notNull().default([]),
   petFriendly: t2.boolean().notNull().default(false),
-  createdAt: t2.timestamp({ mode: "date", withTimezone: true }).defaultNow().notNull(),
-  updatedAt: t2.timestamp({ mode: "date", withTimezone: true }).$onUpdateFn(() => sql`now()`)
+  createdAt: t2
+    .timestamp({ mode: "date", withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: t2
+    .timestamp({ mode: "date", withTimezone: true })
+    .$onUpdateFn(() => sql`now()`),
 }));
 const ComplexImage = pgTable("complex_image", (t2) => ({
   id: t2.uuid().notNull().primaryKey().defaultRandom(),
-  complexId: t2.uuid().notNull().references(() => Complex.id, { onDelete: "cascade" }),
+  complexId: t2
+    .uuid()
+    .notNull()
+    .references(() => Complex.id, { onDelete: "cascade" }),
   url: t2.text().notNull(),
   alt: t2.varchar({ length: 256 }),
   sortOrder: t2.integer().notNull().default(0),
-  kind: complexImageKindEnum().notNull().default("other")
+  kind: complexImageKindEnum().notNull().default("other"),
 }));
 const Room = pgTable("room", (t2) => ({
   id: t2.uuid().notNull().primaryKey().defaultRandom(),
@@ -9202,89 +10490,119 @@ const Room = pgTable("room", (t2) => ({
   cleanliness: cleanlinessEnum().notNull().default("average"),
   availableFrom: t2.timestamp({ mode: "date", withTimezone: true }),
   status: roomStatusEnum().notNull().default("listed"),
-  createdAt: t2.timestamp({ mode: "date", withTimezone: true }).defaultNow().notNull(),
-  updatedAt: t2.timestamp({ mode: "date", withTimezone: true }).$onUpdateFn(() => sql`now()`)
+  createdAt: t2
+    .timestamp({ mode: "date", withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: t2
+    .timestamp({ mode: "date", withTimezone: true })
+    .$onUpdateFn(() => sql`now()`),
 }));
 const RoomImage = pgTable("room_image", (t2) => ({
   id: t2.uuid().notNull().primaryKey().defaultRandom(),
-  roomId: t2.uuid().notNull().references(() => Room.id, { onDelete: "cascade" }),
+  roomId: t2
+    .uuid()
+    .notNull()
+    .references(() => Room.id, { onDelete: "cascade" }),
   url: t2.text().notNull(),
   alt: t2.varchar({ length: 256 }),
   sortOrder: t2.integer().notNull().default(0),
-  kind: roomImageKindEnum().notNull().default("room")
+  kind: roomImageKindEnum().notNull().default("room"),
 }));
 const Stay = pgTable("stay", (t2) => ({
   id: t2.uuid().notNull().primaryKey().defaultRandom(),
-  roomId: t2.uuid().notNull().references(() => Room.id, { onDelete: "cascade" }),
-  userId: t2.text().notNull().references(() => user.id, { onDelete: "cascade" }),
+  roomId: t2
+    .uuid()
+    .notNull()
+    .references(() => Room.id, { onDelete: "cascade" }),
+  userId: t2
+    .text()
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
   startedAt: t2.timestamp({ mode: "date", withTimezone: true }).notNull(),
   endedAt: t2.timestamp({ mode: "date", withTimezone: true }),
-  status: stayStatusEnum().notNull().default("current")
+  status: stayStatusEnum().notNull().default("current"),
 }));
 const RoommeRating = pgTable(
   "roomme_rating",
   (t2) => ({
     id: t2.uuid().notNull().primaryKey().defaultRandom(),
-    raterId: t2.text().notNull().references(() => user.id, { onDelete: "cascade" }),
-    rateeId: t2.text().notNull().references(() => user.id, { onDelete: "cascade" }),
-    stayId: t2.uuid().notNull().references(() => Stay.id, { onDelete: "cascade" }),
+    raterId: t2
+      .text()
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    rateeId: t2
+      .text()
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    stayId: t2
+      .uuid()
+      .notNull()
+      .references(() => Stay.id, { onDelete: "cascade" }),
     score: t2.integer().notNull(),
     comment: t2.text(),
-    createdAt: t2.timestamp({ mode: "date", withTimezone: true }).defaultNow().notNull()
+    createdAt: t2
+      .timestamp({ mode: "date", withTimezone: true })
+      .defaultNow()
+      .notNull(),
   }),
   (t2) => [
-    unique("roomme_rating_rater_ratee_stay").on(t2.raterId, t2.rateeId, t2.stayId)
-  ]
+    unique("roomme_rating_rater_ratee_stay").on(
+      t2.raterId,
+      t2.rateeId,
+      t2.stayId,
+    ),
+  ],
 );
 const complexRelations = relations(Complex, ({ one, many }) => ({
   host: one(user, {
     fields: [Complex.hostId],
     references: [user.id],
-    relationName: "complexHost"
+    relationName: "complexHost",
   }),
   agent: one(user, {
     fields: [Complex.agentId],
     references: [user.id],
-    relationName: "complexAgent"
+    relationName: "complexAgent",
   }),
   images: many(ComplexImage),
-  rooms: many(Room)
+  rooms: many(Room),
 }));
 const complexImageRelations = relations(ComplexImage, ({ one }) => ({
   complex: one(Complex, {
     fields: [ComplexImage.complexId],
-    references: [Complex.id]
-  })
+    references: [Complex.id],
+  }),
 }));
 const roomRelations = relations(Room, ({ one, many }) => ({
   host: one(user, {
     fields: [Room.hostId],
     references: [user.id],
-    relationName: "roomHost"
+    relationName: "roomHost",
   }),
   complex: one(Complex, {
     fields: [Room.complexId],
-    references: [Complex.id]
+    references: [Complex.id],
   }),
   images: many(RoomImage),
-  stays: many(Stay)
+  stays: many(Stay),
 }));
 const roomImageRelations = relations(RoomImage, ({ one }) => ({
   room: one(Room, {
     fields: [RoomImage.roomId],
-    references: [Room.id]
-  })
+    references: [Room.id],
+  }),
 }));
 const stayRelations = relations(Stay, ({ one, many }) => ({
   room: one(Room, {
     fields: [Stay.roomId],
-    references: [Room.id]
+    references: [Room.id],
   }),
   roomie: one(user, {
     fields: [Stay.userId],
-    references: [user.id]
+    references: [user.id],
   }),
-  ratings: many(RoommeRating)
+  ratings: many(RoommeRating),
 }));
 const userRelations = relations(user, ({ many }) => ({
   hostedComplexes: many(Complex, { relationName: "complexHost" }),
@@ -9292,101 +10610,107 @@ const userRelations = relations(user, ({ many }) => ({
   hostedRooms: many(Room, { relationName: "roomHost" }),
   stays: many(Stay),
   ratingsGiven: many(RoommeRating, { relationName: "ratingRater" }),
-  ratingsReceived: many(RoommeRating, { relationName: "ratingRatee" })
+  ratingsReceived: many(RoommeRating, { relationName: "ratingRatee" }),
 }));
 const roommeRatingRelations = relations(RoommeRating, ({ one }) => ({
   rater: one(user, {
     fields: [RoommeRating.raterId],
     references: [user.id],
-    relationName: "ratingRater"
+    relationName: "ratingRater",
   }),
   ratee: one(user, {
     fields: [RoommeRating.rateeId],
     references: [user.id],
-    relationName: "ratingRatee"
+    relationName: "ratingRatee",
   }),
   stay: one(Stay, {
     fields: [RoommeRating.stayId],
-    references: [Stay.id]
-  })
+    references: [Stay.id],
+  }),
 }));
 const CreateComplexSchema$1 = createInsertSchema(Complex, {
   title: z$1.string().min(1).max(256),
   description: z$1.string().min(1).max(4e3),
   addressLine1: z$1.string().min(1).max(256),
   neighborhood: z$1.string().min(1).max(128),
-  city: z$1.enum(["queretaro", "cdmx"])
+  city: z$1.enum(["queretaro", "cdmx"]),
 }).omit({
   id: true,
   hostId: true,
   agentId: true,
   createdAt: true,
-  updatedAt: true
+  updatedAt: true,
 });
 const CreateRoomSchema = createInsertSchema(Room, {
   title: z$1.string().min(1).max(256),
   description: z$1.string().min(1).max(4e3),
   rentPriceCents: z$1.number().int().positive(),
-  capacity: z$1.number().int().min(1).max(12)
+  capacity: z$1.number().int().min(1).max(12),
 }).omit({
   id: true,
   hostId: true,
   complexId: true,
   createdAt: true,
-  updatedAt: true
+  updatedAt: true,
 });
-const schema = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
-  __proto__: null,
-  Complex,
-  ComplexImage,
-  CreateComplexSchema: CreateComplexSchema$1,
-  CreateRoomSchema,
-  Room,
-  RoomImage,
-  RoommeRating,
-  Stay,
-  account,
-  bathroomTypeEnum,
-  cityEnum,
-  cleanlinessEnum,
-  complexImageKindEnum,
-  complexImageRelations,
-  complexRelations,
-  furnishedEnum,
-  householdGenderEnum,
-  overnightGuestsEnum,
-  roomImageKindEnum,
-  roomImageRelations,
-  roomRelations,
-  roomStatusEnum,
-  roommeRatingRelations,
-  session,
-  smokingPolicyEnum,
-  stayRelations,
-  stayStatusEnum,
-  user,
-  userRelations,
-  verification
-}, Symbol.toStringTag, { value: "Module" }));
+const schema = /* @__PURE__ */ Object.freeze(
+  /* @__PURE__ */ Object.defineProperty(
+    {
+      __proto__: null,
+      Complex,
+      ComplexImage,
+      CreateComplexSchema: CreateComplexSchema$1,
+      CreateRoomSchema,
+      Room,
+      RoomImage,
+      RoommeRating,
+      Stay,
+      account,
+      bathroomTypeEnum,
+      cityEnum,
+      cleanlinessEnum,
+      complexImageKindEnum,
+      complexImageRelations,
+      complexRelations,
+      furnishedEnum,
+      householdGenderEnum,
+      overnightGuestsEnum,
+      roomImageKindEnum,
+      roomImageRelations,
+      roomRelations,
+      roomStatusEnum,
+      roommeRatingRelations,
+      session,
+      smokingPolicyEnum,
+      stayRelations,
+      stayStatusEnum,
+      user,
+      userRelations,
+      verification,
+    },
+    Symbol.toStringTag,
+    { value: "Module" },
+  ),
+);
 const connectionString = process.env.POSTGRES_URL;
 if (!connectionString) {
   throw new Error("POSTGRES_URL is not set");
 }
 const client = Postgres(connectionString, {
   prepare: false,
-  max: process.env.VERCEL ? 1 : 10
+  max: process.env.VERCEL ? 1 : 10,
 });
 const db = drizzle(client, {
   schema,
-  casing: "snake_case"
+  casing: "snake_case",
 });
 const createTRPCContext = async (opts) => {
   const session2 = await opts.auth.api.getSession({
-    headers: opts.headers
+    headers: opts.headers,
   });
   return {
     session: session2,
-    db
+    db,
   };
 };
 const t = initTRPC.context().create({
@@ -9395,9 +10719,10 @@ const t = initTRPC.context().create({
     ...shape,
     data: {
       ...shape.data,
-      zodError: error.cause instanceof ZodError ? z$1.flattenError(error.cause) : null
-    }
-  })
+      zodError:
+        error.cause instanceof ZodError ? z$1.flattenError(error.cause) : null,
+    },
+  }),
 });
 const createTRPCRouter = t.router;
 const timingMiddleware = t.middleware(async ({ next, path }) => {
@@ -9412,30 +10737,33 @@ const timingMiddleware = t.middleware(async ({ next, path }) => {
   return result;
 });
 const publicProcedure = t.procedure.use(timingMiddleware);
-const protectedProcedure = t.procedure.use(timingMiddleware).use(({ ctx, next }) => {
-  if (!ctx.session?.user) {
-    throw new TRPCError({ code: "UNAUTHORIZED" });
-  }
-  return next({
-    ctx: {
-      // infers the `session` as non-nullable
-      session: { ...ctx.session, user: ctx.session.user }
+const protectedProcedure = t.procedure
+  .use(timingMiddleware)
+  .use(({ ctx, next }) => {
+    if (!ctx.session?.user) {
+      throw new TRPCError({ code: "UNAUTHORIZED" });
     }
+    return next({
+      ctx: {
+        // infers the `session` as non-nullable
+        session: { ...ctx.session, user: ctx.session.user },
+      },
+    });
   });
-});
-const requireRoles = (roles) => t.procedure.use(timingMiddleware).use(({ ctx, next }) => {
-  if (!ctx.session?.user) {
-    throw new TRPCError({ code: "UNAUTHORIZED" });
-  }
-  if (!hasAnyRole(ctx.session.user.role, roles)) {
-    throw new TRPCError({ code: "FORBIDDEN" });
-  }
-  return next({
-    ctx: {
-      session: { ...ctx.session, user: ctx.session.user }
+const requireRoles = (roles) =>
+  t.procedure.use(timingMiddleware).use(({ ctx, next }) => {
+    if (!ctx.session?.user) {
+      throw new TRPCError({ code: "UNAUTHORIZED" });
     }
+    if (!hasAnyRole(ctx.session.user.role, roles)) {
+      throw new TRPCError({ code: "FORBIDDEN" });
+    }
+    return next({
+      ctx: {
+        session: { ...ctx.session, user: ctx.session.user },
+      },
+    });
   });
-});
 requireRoles(["host", "agent", "admin"]);
 requireRoles(["admin"]);
 const authRouter = {
@@ -9444,7 +10772,7 @@ const authRouter = {
   }),
   getSecretMessage: protectedProcedure.query(() => {
     return "you can see this secret message!";
-  })
+  }),
 };
 const CitySchema = z$1.enum(["queretaro", "cdmx"]);
 z$1.enum(["MXN", "USD"]);
@@ -9454,13 +10782,7 @@ const FurnishedSchema = z$1.enum(["furnished", "semi", "unfurnished"]);
 const SmokingPolicySchema = z$1.enum(["no", "outdoor", "yes"]);
 const OvernightGuestsSchema = z$1.enum(["no", "ask", "yes"]);
 const CleanlinessSchema = z$1.enum(["relaxed", "average", "tidy"]);
-const LISTING_INCLUDES = [
-  "wifi",
-  "water",
-  "electricity",
-  "gas",
-  "cleaning"
-];
+const LISTING_INCLUDES = ["wifi", "water", "electricity", "gas", "cleaning"];
 const ListingIncludeSchema = z$1.enum(LISTING_INCLUDES);
 const COMPLEX_AMENITIES = [
   "wifi",
@@ -9474,144 +10796,163 @@ const COMPLEX_AMENITIES = [
   "pool",
   "gym",
   "garden",
-  "furnished"
+  "furnished",
 ];
 const ComplexAmenitySchema = z$1.enum(COMPLEX_AMENITIES);
 const LEASE_MONTHS = [1, 3, 6, 12];
-const LeaseMonthsSchema = z$1.coerce.number().int().refine(
-  (value) => LEASE_MONTHS.includes(value),
-  { message: "Lease must be 1, 3, 6, or 12 months" }
-);
+const LeaseMonthsSchema = z$1.coerce
+  .number()
+  .int()
+  .refine((value) => LEASE_MONTHS.includes(value), {
+    message: "Lease must be 1, 3, 6, or 12 months",
+  });
 const NONE_COMPLEX_ID = "none";
 const AgeSchema = z$1.number().int().min(18).max(99);
 const OptionalUrlSchema = z$1.union([
   z$1.literal(""),
-  z$1.url({ message: "Enter a valid URL" })
+  z$1.url({ message: "Enter a valid URL" }),
 ]);
 const requireMapPin = (data, ctx) => {
   if (data.latitude === void 0 || data.longitude === void 0) {
     ctx.addIssue({
       code: "custom",
       path: ["latitude"],
-      message: "A map pin is required"
+      message: "A map pin is required",
     });
   }
 };
-const CreateListingSchema = z$1.object({
-  isComplex: z$1.boolean().default(false),
-  complexId: z$1.uuid().optional(),
-  addressLine1: z$1.string().min(1).max(256),
-  city: CitySchema,
-  neighborhood: z$1.string().min(1).max(128),
-  latitude: z$1.number().min(-90).max(90).optional(),
-  longitude: z$1.number().min(-180).max(180).optional(),
-  roomTitle: z$1.string().min(1).max(256),
-  roomDescription: z$1.string().min(1).max(4e3),
-  rentPriceMxn: z$1.number().positive(),
-  includes: z$1.array(ListingIncludeSchema).default([]),
-  capacity: z$1.number().int().min(1).max(12).default(1),
-  householdGender: HouseholdGenderSchema.default("mixed"),
-  preferredAgeMin: AgeSchema.default(18),
-  preferredAgeMax: AgeSchema.default(99),
-  hasPets: z$1.boolean().default(false),
-  acceptsPets: z$1.boolean().default(false),
-  bathroomType: BathroomTypeSchema.default("shared"),
-  furnished: FurnishedSchema.default("furnished"),
-  availableFrom: z$1.coerce.date(),
-  depositMonths: z$1.number().int().min(0).max(3).default(1),
-  leaseMonths: LeaseMonthsSchema.default(12),
-  couplesAllowed: z$1.boolean().default(false),
-  smokingPolicy: SmokingPolicySchema.default("no"),
-  overnightGuests: OvernightGuestsSchema.default("ask"),
-  wfhFriendly: z$1.boolean().default(false),
-  quietHome: z$1.boolean().default(false),
-  cleanliness: CleanlinessSchema.default("average"),
-  roomImageUrl: z$1.string().optional()
-}).refine((value) => value.preferredAgeMin <= value.preferredAgeMax, {
-  message: "Minimum age must be less than or equal to maximum age",
-  path: ["preferredAgeMax"]
-}).superRefine((data, ctx) => {
-  if (data.isComplex && data.complexId) {
-    return;
-  }
-  requireMapPin(data, ctx);
-});
-const UpdateListingSchema = z$1.object({ id: z$1.uuid() }).and(CreateListingSchema);
-z$1.object({
-  isComplex: z$1.boolean(),
-  complexId: z$1.string(),
-  addressLine1: z$1.string().max(256),
-  city: CitySchema,
-  neighborhood: z$1.string().max(128),
-  latitude: z$1.number().min(-90).max(90).optional(),
-  longitude: z$1.number().min(-180).max(180).optional(),
-  roomTitle: z$1.string().min(1).max(256),
-  roomDescription: z$1.string().min(1).max(4e3),
-  rentPriceMxn: z$1.number().positive(),
-  includes: z$1.array(ListingIncludeSchema),
-  capacity: z$1.number().int().min(1).max(12),
-  householdGender: HouseholdGenderSchema,
-  preferredAgeMin: AgeSchema,
-  preferredAgeMax: AgeSchema,
-  hasPets: z$1.boolean(),
-  acceptsPets: z$1.boolean(),
-  bathroomType: BathroomTypeSchema,
-  furnished: FurnishedSchema,
-  availableFrom: z$1.string().regex(/^\d{4}-\d{2}-\d{2}$/, {
-    message: "Choose an available-from date"
-  }),
-  depositMonths: z$1.number().int().min(0).max(3),
-  leaseMonths: z$1.number().int().refine(
-    (value) => LEASE_MONTHS.includes(value),
-    { message: "Lease must be 1, 3, 6, or 12 months" }
-  ),
-  couplesAllowed: z$1.boolean(),
-  smokingPolicy: SmokingPolicySchema,
-  overnightGuests: OvernightGuestsSchema,
-  wfhFriendly: z$1.boolean(),
-  quietHome: z$1.boolean(),
-  cleanliness: CleanlinessSchema,
-  roomImageUrl: OptionalUrlSchema
-}).refine((value) => value.preferredAgeMin <= value.preferredAgeMax, {
-  message: "Minimum age must be less than or equal to maximum age",
-  path: ["preferredAgeMax"]
-}).superRefine((data, ctx) => {
-  const attached = data.isComplex && data.complexId !== NONE_COMPLEX_ID && data.complexId.length > 0;
-  if (attached) {
-    return;
-  }
-  if (data.addressLine1.trim().length === 0) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["addressLine1"],
-      message: "Address is required"
-    });
-  }
-  if (data.neighborhood.trim().length === 0) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["neighborhood"],
-      message: "Neighborhood is required"
-    });
-  }
-  requireMapPin(data, ctx);
-});
-const ComplexFormSchema = z$1.object({
-  title: z$1.string().min(1).max(256),
-  description: z$1.string().min(1).max(4e3),
-  addressLine1: z$1.string().min(1).max(256),
-  city: CitySchema,
-  neighborhood: z$1.string().min(1).max(128),
-  latitude: z$1.number().min(-90).max(90).optional(),
-  longitude: z$1.number().min(-180).max(180).optional(),
-  petFriendly: z$1.boolean(),
-  amenities: z$1.array(ComplexAmenitySchema),
-  imageUrl: OptionalUrlSchema
-}).superRefine((data, ctx) => {
-  requireMapPin(data, ctx);
-});
+const CreateListingSchema = z$1
+  .object({
+    isComplex: z$1.boolean().default(false),
+    complexId: z$1.uuid().optional(),
+    addressLine1: z$1.string().min(1).max(256),
+    city: CitySchema,
+    neighborhood: z$1.string().min(1).max(128),
+    latitude: z$1.number().min(-90).max(90).optional(),
+    longitude: z$1.number().min(-180).max(180).optional(),
+    roomTitle: z$1.string().min(1).max(256),
+    roomDescription: z$1.string().min(1).max(4e3),
+    rentPriceMxn: z$1.number().positive(),
+    includes: z$1.array(ListingIncludeSchema).default([]),
+    capacity: z$1.number().int().min(1).max(12).default(1),
+    householdGender: HouseholdGenderSchema.default("mixed"),
+    preferredAgeMin: AgeSchema.default(18),
+    preferredAgeMax: AgeSchema.default(99),
+    hasPets: z$1.boolean().default(false),
+    acceptsPets: z$1.boolean().default(false),
+    bathroomType: BathroomTypeSchema.default("shared"),
+    furnished: FurnishedSchema.default("furnished"),
+    availableFrom: z$1.coerce.date(),
+    depositMonths: z$1.number().int().min(0).max(3).default(1),
+    leaseMonths: LeaseMonthsSchema.default(12),
+    couplesAllowed: z$1.boolean().default(false),
+    smokingPolicy: SmokingPolicySchema.default("no"),
+    overnightGuests: OvernightGuestsSchema.default("ask"),
+    wfhFriendly: z$1.boolean().default(false),
+    quietHome: z$1.boolean().default(false),
+    cleanliness: CleanlinessSchema.default("average"),
+    roomImageUrl: z$1.string().optional(),
+  })
+  .refine((value) => value.preferredAgeMin <= value.preferredAgeMax, {
+    message: "Minimum age must be less than or equal to maximum age",
+    path: ["preferredAgeMax"],
+  })
+  .superRefine((data, ctx) => {
+    if (data.isComplex && data.complexId) {
+      return;
+    }
+    requireMapPin(data, ctx);
+  });
+const UpdateListingSchema = z$1
+  .object({ id: z$1.uuid() })
+  .and(CreateListingSchema);
+z$1
+  .object({
+    isComplex: z$1.boolean(),
+    complexId: z$1.string(),
+    addressLine1: z$1.string().max(256),
+    city: CitySchema,
+    neighborhood: z$1.string().max(128),
+    latitude: z$1.number().min(-90).max(90).optional(),
+    longitude: z$1.number().min(-180).max(180).optional(),
+    roomTitle: z$1.string().min(1).max(256),
+    roomDescription: z$1.string().min(1).max(4e3),
+    rentPriceMxn: z$1.number().positive(),
+    includes: z$1.array(ListingIncludeSchema),
+    capacity: z$1.number().int().min(1).max(12),
+    householdGender: HouseholdGenderSchema,
+    preferredAgeMin: AgeSchema,
+    preferredAgeMax: AgeSchema,
+    hasPets: z$1.boolean(),
+    acceptsPets: z$1.boolean(),
+    bathroomType: BathroomTypeSchema,
+    furnished: FurnishedSchema,
+    availableFrom: z$1.string().regex(/^\d{4}-\d{2}-\d{2}$/, {
+      message: "Choose an available-from date",
+    }),
+    depositMonths: z$1.number().int().min(0).max(3),
+    leaseMonths: z$1
+      .number()
+      .int()
+      .refine((value) => LEASE_MONTHS.includes(value), {
+        message: "Lease must be 1, 3, 6, or 12 months",
+      }),
+    couplesAllowed: z$1.boolean(),
+    smokingPolicy: SmokingPolicySchema,
+    overnightGuests: OvernightGuestsSchema,
+    wfhFriendly: z$1.boolean(),
+    quietHome: z$1.boolean(),
+    cleanliness: CleanlinessSchema,
+    roomImageUrl: OptionalUrlSchema,
+  })
+  .refine((value) => value.preferredAgeMin <= value.preferredAgeMax, {
+    message: "Minimum age must be less than or equal to maximum age",
+    path: ["preferredAgeMax"],
+  })
+  .superRefine((data, ctx) => {
+    const attached =
+      data.isComplex &&
+      data.complexId !== NONE_COMPLEX_ID &&
+      data.complexId.length > 0;
+    if (attached) {
+      return;
+    }
+    if (data.addressLine1.trim().length === 0) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["addressLine1"],
+        message: "Address is required",
+      });
+    }
+    if (data.neighborhood.trim().length === 0) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["neighborhood"],
+        message: "Neighborhood is required",
+      });
+    }
+    requireMapPin(data, ctx);
+  });
+const ComplexFormSchema = z$1
+  .object({
+    title: z$1.string().min(1).max(256),
+    description: z$1.string().min(1).max(4e3),
+    addressLine1: z$1.string().min(1).max(256),
+    city: CitySchema,
+    neighborhood: z$1.string().min(1).max(128),
+    latitude: z$1.number().min(-90).max(90).optional(),
+    longitude: z$1.number().min(-180).max(180).optional(),
+    petFriendly: z$1.boolean(),
+    amenities: z$1.array(ComplexAmenitySchema),
+    imageUrl: OptionalUrlSchema,
+  })
+  .superRefine((data, ctx) => {
+    requireMapPin(data, ctx);
+  });
 const CreateComplexSchema = ComplexFormSchema;
-const UpdateComplexSchema = z$1.object({ id: z$1.uuid() }).and(ComplexFormSchema);
+const UpdateComplexSchema = z$1
+  .object({ id: z$1.uuid() })
+  .and(ComplexFormSchema);
 const ListListingsSchema = z$1.object({
   city: CitySchema.optional(),
   limit: z$1.number().int().min(1).max(50).optional(),
@@ -9630,12 +10971,12 @@ const ListListingsSchema = z$1.object({
   quietHome: z$1.boolean().optional(),
   cleanliness: CleanlinessSchema.optional(),
   includes: z$1.array(ListingIncludeSchema).optional(),
-  availableBy: z$1.coerce.date().optional()
+  availableBy: z$1.coerce.date().optional(),
 });
 const NOMINATIM_HEADERS = {
   Accept: "application/json",
   "Accept-Language": "es",
-  "User-Agent": "RoomMe/1.0 (https://roomme.app)"
+  "User-Agent": "RoomMe/1.0 (https://roomme.app)",
 };
 const CDMX_CENTER = { latitude: 19.4326, longitude: -99.1332 };
 const QUERETARO_CENTER = { latitude: 20.5888, longitude: -100.3899 };
@@ -9645,7 +10986,8 @@ const asRecord = (value) => {
   }
   return value;
 };
-const optionalString = (value) => typeof value === "string" && value.length > 0 ? value : void 0;
+const optionalString = (value) =>
+  typeof value === "string" && value.length > 0 ? value : void 0;
 const parseAddress = (value) => {
   const record = asRecord(value);
   if (!record) {
@@ -9663,7 +11005,7 @@ const parseAddress = (value) => {
     village: optionalString(record.village),
     county: optionalString(record.county),
     state: optionalString(record.state),
-    postcode: optionalString(record.postcode)
+    postcode: optionalString(record.postcode),
   };
 };
 const parsePlace = (value) => {
@@ -9681,10 +11023,14 @@ const parsePlace = (value) => {
     display_name: displayName,
     lat,
     lon,
-    address: parseAddress(record.address)
+    address: parseAddress(record.address),
   };
 };
-const fold = (value) => value.normalize("NFD").replace(new RegExp("\\p{Diacritic}", "gu"), "").toLowerCase();
+const fold = (value) =>
+  value
+    .normalize("NFD")
+    .replace(new RegExp("\\p{Diacritic}", "gu"), "")
+    .toLowerCase();
 const distanceSq = (a, b2) => {
   const dLat = a.latitude - b2.latitude;
   const dLng = a.longitude - b2.longitude;
@@ -9697,16 +11043,26 @@ const inferCity = (address, latitude, longitude) => {
       address?.town,
       address?.village,
       address?.county,
-      address?.state
-    ].filter((part) => typeof part === "string").join(" ")
+      address?.state,
+    ]
+      .filter((part) => typeof part === "string")
+      .join(" "),
   );
   if (blob.includes("queretaro")) {
     return "queretaro";
   }
-  if (blob.includes("ciudad de mexico") || blob.includes("mexico city") || blob.includes("cdmx") || blob.includes("distrito federal")) {
+  if (
+    blob.includes("ciudad de mexico") ||
+    blob.includes("mexico city") ||
+    blob.includes("cdmx") ||
+    blob.includes("distrito federal")
+  ) {
     return "cdmx";
   }
-  return distanceSq({ latitude, longitude }, QUERETARO_CENTER) < distanceSq({ latitude, longitude }, CDMX_CENTER) ? "queretaro" : "cdmx";
+  return distanceSq({ latitude, longitude }, QUERETARO_CENTER) <
+    distanceSq({ latitude, longitude }, CDMX_CENTER)
+    ? "queretaro"
+    : "cdmx";
 };
 const toHit = (place) => {
   const latitude = Number(place.lat);
@@ -9714,20 +11070,31 @@ const toHit = (place) => {
   if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
     return null;
   }
-  const street = [place.address?.house_number, place.address?.road].filter((part) => typeof part === "string").join(" ").trim();
+  const street = [place.address?.house_number, place.address?.road]
+    .filter((part) => typeof part === "string")
+    .join(" ")
+    .trim();
   return {
     label: place.display_name,
-    addressLine1: street.length > 0 ? street : place.display_name.split(",")[0] ?? place.display_name,
-    neighborhood: place.address?.neighbourhood ?? place.address?.suburb ?? place.address?.quarter ?? place.address?.city_district ?? "",
+    addressLine1:
+      street.length > 0
+        ? street
+        : (place.display_name.split(",")[0] ?? place.display_name),
+    neighborhood:
+      place.address?.neighbourhood ??
+      place.address?.suburb ??
+      place.address?.quarter ??
+      place.address?.city_district ??
+      "",
     city: inferCity(place.address, latitude, longitude),
     latitude,
-    longitude
+    longitude,
   };
 };
 const nominatimGet = async (path) => {
   const response = await fetch(`https://nominatim.openstreetmap.org/${path}`, {
     headers: NOMINATIM_HEADERS,
-    signal: AbortSignal.timeout(8e3)
+    signal: AbortSignal.timeout(8e3),
   });
   if (!response.ok) {
     throw new Error("Address lookup failed");
@@ -9740,16 +11107,18 @@ const searchAddresses = async (query) => {
     format: "jsonv2",
     addressdetails: "1",
     countrycodes: "mx",
-    limit: "6"
+    limit: "6",
   });
   const payload = await nominatimGet(`search?${params.toString()}`);
   if (!Array.isArray(payload)) {
     return [];
   }
-  return payload.map((item) => {
-    const place = parsePlace(item);
-    return place ? toHit(place) : null;
-  }).filter((hit) => hit !== null);
+  return payload
+    .map((item) => {
+      const place = parsePlace(item);
+      return place ? toHit(place) : null;
+    })
+    .filter((hit) => hit !== null);
 };
 const reverseGeocode = async (latitude, longitude) => {
   const params = new URLSearchParams({
@@ -9757,7 +11126,7 @@ const reverseGeocode = async (latitude, longitude) => {
     lon: String(longitude),
     format: "jsonv2",
     addressdetails: "1",
-    zoom: "18"
+    zoom: "18",
   });
   const place = parsePlace(await nominatimGet(`reverse?${params.toString()}`));
   return place ? toHit(place) : null;
@@ -9769,7 +11138,7 @@ const toListingHost = (host2) => {
   return {
     id: host2.id,
     name: host2.name,
-    image: host2.image
+    image: host2.image,
   };
 };
 const toRoomAttributes = (room) => ({
@@ -9790,14 +11159,12 @@ const toRoomAttributes = (room) => ({
   wfhFriendly: room.wfhFriendly,
   quietHome: room.quietHome,
   cleanliness: room.cleanliness,
-  availableFrom: room.availableFrom
+  availableFrom: room.availableFrom,
 });
-const toListingIncludes = (values2) => values2.filter(
-  (item) => LISTING_INCLUDES.includes(item)
-);
-const toComplexAmenities = (values2) => values2.filter(
-  (item) => COMPLEX_AMENITIES.includes(item)
-);
+const toListingIncludes = (values2) =>
+  values2.filter((item) => LISTING_INCLUDES.includes(item));
+const toComplexAmenities = (values2) =>
+  values2.filter((item) => COMPLEX_AMENITIES.includes(item));
 const assertCanManage = (actor, hostId) => {
   if (hasRole(actor.role, "admin")) {
     return;
@@ -9843,7 +11210,7 @@ const roomWriteValues = (input, hostId, selectedComplex) => ({
   wfhFriendly: input.wfhFriendly,
   quietHome: input.quietHome,
   cleanliness: input.cleanliness,
-  availableFrom: input.availableFrom
+  availableFrom: input.availableFrom,
 });
 const toListingSummary = (room) => {
   const city = room.city ?? room.complex?.city;
@@ -9864,10 +11231,10 @@ const toListingSummary = (room) => {
       city,
       neighborhood,
       petFriendly: room.complex?.petFriendly ?? room.acceptsPets,
-      amenities: room.complex?.amenities ?? []
+      amenities: room.complex?.amenities ?? [],
     },
     host: toListingHost(room.host ?? room.complex?.host),
-    ...toRoomAttributes(room)
+    ...toRoomAttributes(room),
   };
 };
 const listingRelations = {
@@ -9876,128 +11243,136 @@ const listingRelations = {
   complex: {
     with: {
       images: true,
-      host: true
-    }
-  }
+      host: true,
+    },
+  },
 };
 const listingRouter = {
-  list: publicProcedure.input(ListListingsSchema.optional()).query(async ({ ctx, input }) => {
-    const limit = input?.limit ?? 12;
-    const conditions = [eq(Room.status, "listed")];
-    if (input?.city) {
-      conditions.push(eq(Room.city, input.city));
-    }
-    if (input?.minRentMxn !== void 0) {
-      conditions.push(
-        gte(Room.rentPriceCents, Math.round(input.minRentMxn * 100))
-      );
-    }
-    if (input?.maxRentMxn !== void 0) {
-      conditions.push(
-        lte(Room.rentPriceCents, Math.round(input.maxRentMxn * 100))
-      );
-    }
-    if (input?.householdGender) {
-      conditions.push(eq(Room.householdGender, input.householdGender));
-    }
-    if (input?.seekerAge !== void 0) {
-      conditions.push(lte(Room.preferredAgeMin, input.seekerAge));
-      conditions.push(gte(Room.preferredAgeMax, input.seekerAge));
-    }
-    if (input?.hasPets !== void 0) {
-      conditions.push(eq(Room.hasPets, input.hasPets));
-    }
-    if (input?.acceptsPets !== void 0) {
-      conditions.push(eq(Room.acceptsPets, input.acceptsPets));
-    }
-    if (input?.bathroomType) {
-      conditions.push(eq(Room.bathroomType, input.bathroomType));
-    }
-    if (input?.furnished) {
-      conditions.push(eq(Room.furnished, input.furnished));
-    }
-    if (input?.couplesAllowed !== void 0) {
-      conditions.push(eq(Room.couplesAllowed, input.couplesAllowed));
-    }
-    if (input?.smokingPolicy) {
-      conditions.push(eq(Room.smokingPolicy, input.smokingPolicy));
-    }
-    if (input?.overnightGuests) {
-      conditions.push(eq(Room.overnightGuests, input.overnightGuests));
-    }
-    if (input?.wfhFriendly !== void 0) {
-      conditions.push(eq(Room.wfhFriendly, input.wfhFriendly));
-    }
-    if (input?.quietHome !== void 0) {
-      conditions.push(eq(Room.quietHome, input.quietHome));
-    }
-    if (input?.cleanliness) {
-      conditions.push(eq(Room.cleanliness, input.cleanliness));
-    }
-    if (input?.includes && input.includes.length > 0) {
-      conditions.push(arrayContains(Room.includes, [...input.includes]));
-    }
-    if (input?.availableBy) {
-      conditions.push(
-        or(
-          isNull(Room.availableFrom),
-          lte(Room.availableFrom, input.availableBy)
-        )
-      );
-    }
-    const rooms = await ctx.db.query.Room.findMany({
-      where: and(...conditions),
-      with: listingRelations,
-      limit,
-      orderBy: [asc(Room.rentPriceCents)]
-    });
-    return rooms.flatMap((room) => {
-      const listing = toListingSummary(room);
-      return listing ? [listing] : [];
-    });
-  }),
-  byId: publicProcedure.input(z$1.object({ id: z$1.string() })).query(async ({ ctx, input }) => {
-    const room = await ctx.db.query.Room.findFirst({
-      where: eq(Room.id, input.id),
-      with: listingRelations
-    });
-    if (!room) {
-      return null;
-    }
-    const city = room.city ?? room.complex?.city ?? null;
-    const neighborhood = room.neighborhood ?? room.complex?.neighborhood ?? null;
-    const cover = room.images[0]?.url ?? room.complex?.images[0]?.url ?? null;
-    return {
-      id: room.id,
-      title: room.title,
-      description: room.description,
-      rentPriceCents: room.rentPriceCents,
-      currency: room.currency,
-      addressLine1: room.addressLine1 ?? room.complex?.addressLine1 ?? null,
-      city,
-      neighborhood,
-      coverUrl: cover,
-      images: room.images.map((image) => ({
-        id: image.id,
-        url: image.url,
-        alt: image.alt
-      })),
-      complex: city && neighborhood ? {
-        id: room.complex?.id ?? null,
-        title: room.complex?.title ?? null,
+  list: publicProcedure
+    .input(ListListingsSchema.optional())
+    .query(async ({ ctx, input }) => {
+      const limit = input?.limit ?? 12;
+      const conditions = [eq(Room.status, "listed")];
+      if (input?.city) {
+        conditions.push(eq(Room.city, input.city));
+      }
+      if (input?.minRentMxn !== void 0) {
+        conditions.push(
+          gte(Room.rentPriceCents, Math.round(input.minRentMxn * 100)),
+        );
+      }
+      if (input?.maxRentMxn !== void 0) {
+        conditions.push(
+          lte(Room.rentPriceCents, Math.round(input.maxRentMxn * 100)),
+        );
+      }
+      if (input?.householdGender) {
+        conditions.push(eq(Room.householdGender, input.householdGender));
+      }
+      if (input?.seekerAge !== void 0) {
+        conditions.push(lte(Room.preferredAgeMin, input.seekerAge));
+        conditions.push(gte(Room.preferredAgeMax, input.seekerAge));
+      }
+      if (input?.hasPets !== void 0) {
+        conditions.push(eq(Room.hasPets, input.hasPets));
+      }
+      if (input?.acceptsPets !== void 0) {
+        conditions.push(eq(Room.acceptsPets, input.acceptsPets));
+      }
+      if (input?.bathroomType) {
+        conditions.push(eq(Room.bathroomType, input.bathroomType));
+      }
+      if (input?.furnished) {
+        conditions.push(eq(Room.furnished, input.furnished));
+      }
+      if (input?.couplesAllowed !== void 0) {
+        conditions.push(eq(Room.couplesAllowed, input.couplesAllowed));
+      }
+      if (input?.smokingPolicy) {
+        conditions.push(eq(Room.smokingPolicy, input.smokingPolicy));
+      }
+      if (input?.overnightGuests) {
+        conditions.push(eq(Room.overnightGuests, input.overnightGuests));
+      }
+      if (input?.wfhFriendly !== void 0) {
+        conditions.push(eq(Room.wfhFriendly, input.wfhFriendly));
+      }
+      if (input?.quietHome !== void 0) {
+        conditions.push(eq(Room.quietHome, input.quietHome));
+      }
+      if (input?.cleanliness) {
+        conditions.push(eq(Room.cleanliness, input.cleanliness));
+      }
+      if (input?.includes && input.includes.length > 0) {
+        conditions.push(arrayContains(Room.includes, [...input.includes]));
+      }
+      if (input?.availableBy) {
+        conditions.push(
+          or(
+            isNull(Room.availableFrom),
+            lte(Room.availableFrom, input.availableBy),
+          ),
+        );
+      }
+      const rooms = await ctx.db.query.Room.findMany({
+        where: and(...conditions),
+        with: listingRelations,
+        limit,
+        orderBy: [asc(Room.rentPriceCents)],
+      });
+      return rooms.flatMap((room) => {
+        const listing = toListingSummary(room);
+        return listing ? [listing] : [];
+      });
+    }),
+  byId: publicProcedure
+    .input(z$1.object({ id: z$1.string() }))
+    .query(async ({ ctx, input }) => {
+      const room = await ctx.db.query.Room.findFirst({
+        where: eq(Room.id, input.id),
+        with: listingRelations,
+      });
+      if (!room) {
+        return null;
+      }
+      const city = room.city ?? room.complex?.city ?? null;
+      const neighborhood =
+        room.neighborhood ?? room.complex?.neighborhood ?? null;
+      const cover = room.images[0]?.url ?? room.complex?.images[0]?.url ?? null;
+      return {
+        id: room.id,
+        title: room.title,
+        description: room.description,
+        rentPriceCents: room.rentPriceCents,
+        currency: room.currency,
+        addressLine1: room.addressLine1 ?? room.complex?.addressLine1 ?? null,
         city,
         neighborhood,
-        petFriendly: room.complex?.petFriendly ?? room.acceptsPets,
-        amenities: room.complex?.amenities ?? []
-      } : null,
-      host: toListingHost(room.host ?? room.complex?.host),
-      ...toRoomAttributes(room)
-    };
-  }),
-  complexes: protectedProcedure.query(
-    async ({ ctx }) => {
-      const showAll = hasAnyRole(ctx.session.user.role, ["admin", "agent"]);
-      return ctx.db.select({
+        coverUrl: cover,
+        images: room.images.map((image) => ({
+          id: image.id,
+          url: image.url,
+          alt: image.alt,
+        })),
+        complex:
+          city && neighborhood
+            ? {
+                id: room.complex?.id ?? null,
+                title: room.complex?.title ?? null,
+                city,
+                neighborhood,
+                petFriendly: room.complex?.petFriendly ?? room.acceptsPets,
+                amenities: room.complex?.amenities ?? [],
+              }
+            : null,
+        host: toListingHost(room.host ?? room.complex?.host),
+        ...toRoomAttributes(room),
+      };
+    }),
+  complexes: protectedProcedure.query(async ({ ctx }) => {
+    const showAll = hasAnyRole(ctx.session.user.role, ["admin", "agent"]);
+    return ctx.db
+      .select({
         id: Complex.id,
         title: Complex.title,
         city: Complex.city,
@@ -10006,285 +11381,332 @@ const listingRouter = {
         latitude: Complex.latitude,
         longitude: Complex.longitude,
         petFriendly: Complex.petFriendly,
-        amenities: Complex.amenities
-      }).from(Complex).where(showAll ? void 0 : eq(Complex.hostId, ctx.session.user.id)).orderBy(asc(Complex.title));
-    }
-  ),
-  mine: protectedProcedure.query(
-    async ({
-      ctx
-    }) => {
-      const hostId = ctx.session.user.id;
-      const rooms = await ctx.db.query.Room.findMany({
-        where: eq(Room.hostId, hostId),
-        with: {
-          images: true,
-          complex: {
-            with: { images: true }
-          }
-        },
-        orderBy: [desc(Room.createdAt)]
-      });
-      const complexes = await ctx.db.query.Complex.findMany({
-        where: eq(Complex.hostId, hostId),
-        with: { images: true },
-        orderBy: [desc(Complex.createdAt)]
-      });
-      return {
-        rooms: rooms.map((room) => ({
-          id: room.id,
-          title: room.title,
-          neighborhood: room.neighborhood ?? room.complex?.neighborhood ?? "",
-          city: room.city ?? room.complex?.city ?? null,
-          coverUrl: room.images[0]?.url ?? room.complex?.images[0]?.url ?? null,
-          status: room.status
-        })),
-        complexes: complexes.map((complex) => ({
-          id: complex.id,
-          title: complex.title,
-          neighborhood: complex.neighborhood,
-          city: complex.city,
-          coverUrl: complex.images[0]?.url ?? null
-        }))
-      };
-    }
-  ),
-  roomForEdit: protectedProcedure.input(z$1.object({ id: z$1.uuid() })).query(async ({ ctx, input }) => {
-    const room = await ctx.db.query.Room.findFirst({
-      where: eq(Room.id, input.id),
+        amenities: Complex.amenities,
+      })
+      .from(Complex)
+      .where(showAll ? void 0 : eq(Complex.hostId, ctx.session.user.id))
+      .orderBy(asc(Complex.title));
+  }),
+  mine: protectedProcedure.query(async ({ ctx }) => {
+    const hostId = ctx.session.user.id;
+    const rooms = await ctx.db.query.Room.findMany({
+      where: eq(Room.hostId, hostId),
       with: {
         images: true,
-        complex: true
+        complex: {
+          with: { images: true },
+        },
+      },
+      orderBy: [desc(Room.createdAt)],
+    });
+    const complexes = await ctx.db.query.Complex.findMany({
+      where: eq(Complex.hostId, hostId),
+      with: { images: true },
+      orderBy: [desc(Complex.createdAt)],
+    });
+    return {
+      rooms: rooms.map((room) => ({
+        id: room.id,
+        title: room.title,
+        neighborhood: room.neighborhood ?? room.complex?.neighborhood ?? "",
+        city: room.city ?? room.complex?.city ?? null,
+        coverUrl: room.images[0]?.url ?? room.complex?.images[0]?.url ?? null,
+        status: room.status,
+      })),
+      complexes: complexes.map((complex) => ({
+        id: complex.id,
+        title: complex.title,
+        neighborhood: complex.neighborhood,
+        city: complex.city,
+        coverUrl: complex.images[0]?.url ?? null,
+      })),
+    };
+  }),
+  roomForEdit: protectedProcedure
+    .input(z$1.object({ id: z$1.uuid() }))
+    .query(async ({ ctx, input }) => {
+      const room = await ctx.db.query.Room.findFirst({
+        where: eq(Room.id, input.id),
+        with: {
+          images: true,
+          complex: true,
+        },
+      });
+      if (!room) {
+        throw new TRPCError({ code: "NOT_FOUND" });
       }
-    });
-    if (!room) {
-      throw new TRPCError({ code: "NOT_FOUND" });
-    }
-    assertCanManage(ctx.session.user, room.hostId);
-    const city = room.city ?? room.complex?.city;
-    const neighborhood = room.neighborhood ?? room.complex?.neighborhood ?? "";
-    const addressLine1 = room.addressLine1 ?? room.complex?.addressLine1 ?? "";
-    if (!city || neighborhood.length === 0 || addressLine1.length === 0) {
-      throw new TRPCError({
-        code: "PRECONDITION_FAILED",
-        message: "Room is missing location details"
+      assertCanManage(ctx.session.user, room.hostId);
+      const city = room.city ?? room.complex?.city;
+      const neighborhood =
+        room.neighborhood ?? room.complex?.neighborhood ?? "";
+      const addressLine1 =
+        room.addressLine1 ?? room.complex?.addressLine1 ?? "";
+      if (!city || neighborhood.length === 0 || addressLine1.length === 0) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "Room is missing location details",
+        });
+      }
+      return {
+        id: room.id,
+        complexId: room.complexId,
+        title: room.title,
+        description: room.description,
+        addressLine1,
+        city,
+        neighborhood,
+        latitude: room.latitude ?? room.complex?.latitude ?? null,
+        longitude: room.longitude ?? room.complex?.longitude ?? null,
+        rentPriceMxn: room.rentPriceCents / 100,
+        roomImageUrl: room.images[0]?.url ?? null,
+        ...toRoomAttributes({
+          ...room,
+          includes: toListingIncludes(room.includes),
+        }),
+      };
+    }),
+  complexForEdit: protectedProcedure
+    .input(z$1.object({ id: z$1.uuid() }))
+    .query(async ({ ctx, input }) => {
+      const complex = await ctx.db.query.Complex.findFirst({
+        where: eq(Complex.id, input.id),
+        with: { images: true },
       });
-    }
-    return {
-      id: room.id,
-      complexId: room.complexId,
-      title: room.title,
-      description: room.description,
-      addressLine1,
-      city,
-      neighborhood,
-      latitude: room.latitude ?? room.complex?.latitude ?? null,
-      longitude: room.longitude ?? room.complex?.longitude ?? null,
-      rentPriceMxn: room.rentPriceCents / 100,
-      roomImageUrl: room.images[0]?.url ?? null,
-      ...toRoomAttributes({
-        ...room,
-        includes: toListingIncludes(room.includes)
-      })
-    };
-  }),
-  complexForEdit: protectedProcedure.input(z$1.object({ id: z$1.uuid() })).query(async ({ ctx, input }) => {
-    const complex = await ctx.db.query.Complex.findFirst({
-      where: eq(Complex.id, input.id),
-      with: { images: true }
-    });
-    if (!complex) {
-      throw new TRPCError({ code: "NOT_FOUND" });
-    }
-    assertCanManage(ctx.session.user, complex.hostId);
-    return {
-      id: complex.id,
-      title: complex.title,
-      description: complex.description,
-      addressLine1: complex.addressLine1,
-      city: complex.city,
-      neighborhood: complex.neighborhood,
-      latitude: complex.latitude,
-      longitude: complex.longitude,
-      petFriendly: complex.petFriendly,
-      amenities: toComplexAmenities(complex.amenities),
-      imageUrl: complex.images[0]?.url ?? null
-    };
-  }),
-  create: protectedProcedure.input(CreateListingSchema).mutation(async ({ ctx, input }) => {
-    const hostId = ctx.session.user.id;
-    const selectedComplex = input.isComplex && input.complexId ? await ctx.db.query.Complex.findFirst({
-      where: eq(Complex.id, input.complexId)
-    }) : null;
-    const [room] = await ctx.db.insert(Room).values({
-      ...roomWriteValues(input, hostId, selectedComplex ?? null),
-      status: "listed"
-    }).returning();
-    if (!room) {
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Failed to create room"
+      if (!complex) {
+        throw new TRPCError({ code: "NOT_FOUND" });
+      }
+      assertCanManage(ctx.session.user, complex.hostId);
+      return {
+        id: complex.id,
+        title: complex.title,
+        description: complex.description,
+        addressLine1: complex.addressLine1,
+        city: complex.city,
+        neighborhood: complex.neighborhood,
+        latitude: complex.latitude,
+        longitude: complex.longitude,
+        petFriendly: complex.petFriendly,
+        amenities: toComplexAmenities(complex.amenities),
+        imageUrl: complex.images[0]?.url ?? null,
+      };
+    }),
+  create: protectedProcedure
+    .input(CreateListingSchema)
+    .mutation(async ({ ctx, input }) => {
+      const hostId = ctx.session.user.id;
+      const selectedComplex =
+        input.isComplex && input.complexId
+          ? await ctx.db.query.Complex.findFirst({
+              where: eq(Complex.id, input.complexId),
+            })
+          : null;
+      const [room] = await ctx.db
+        .insert(Room)
+        .values({
+          ...roomWriteValues(input, hostId, selectedComplex ?? null),
+          status: "listed",
+        })
+        .returning();
+      if (!room) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to create room",
+        });
+      }
+      const imageUrl = optionalImageUrl(input.roomImageUrl);
+      if (imageUrl) {
+        await ctx.db.insert(RoomImage).values({
+          roomId: room.id,
+          url: imageUrl,
+          alt: input.roomTitle,
+          kind: "room",
+          sortOrder: 0,
+        });
+      }
+      await ctx.db
+        .update(user)
+        .set({
+          role: withRole(ctx.session.user.role, "host"),
+        })
+        .where(eq(user.id, hostId));
+      return { complexId: room.complexId, roomId: room.id };
+    }),
+  update: protectedProcedure
+    .input(UpdateListingSchema)
+    .mutation(async ({ ctx, input }) => {
+      const existing = await ctx.db.query.Room.findFirst({
+        where: eq(Room.id, input.id),
       });
-    }
-    const imageUrl = optionalImageUrl(input.roomImageUrl);
-    if (imageUrl) {
-      await ctx.db.insert(RoomImage).values({
-        roomId: room.id,
-        url: imageUrl,
-        alt: input.roomTitle,
-        kind: "room",
-        sortOrder: 0
+      if (!existing) {
+        throw new TRPCError({ code: "NOT_FOUND" });
+      }
+      assertCanManage(ctx.session.user, existing.hostId);
+      const selectedComplex =
+        input.isComplex && input.complexId
+          ? await ctx.db.query.Complex.findFirst({
+              where: eq(Complex.id, input.complexId),
+            })
+          : null;
+      const [room] = await ctx.db
+        .update(Room)
+        .set(
+          roomWriteValues(
+            input,
+            existing.hostId ?? ctx.session.user.id,
+            selectedComplex ?? null,
+          ),
+        )
+        .where(eq(Room.id, input.id))
+        .returning();
+      if (!room) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to update room",
+        });
+      }
+      const imageUrl = optionalImageUrl(input.roomImageUrl);
+      if (imageUrl) {
+        await ctx.db.delete(RoomImage).where(eq(RoomImage.roomId, room.id));
+        await ctx.db.insert(RoomImage).values({
+          roomId: room.id,
+          url: imageUrl,
+          alt: input.roomTitle,
+          kind: "room",
+          sortOrder: 0,
+        });
+      }
+      return { complexId: room.complexId, roomId: room.id };
+    }),
+  createComplex: protectedProcedure
+    .input(CreateComplexSchema)
+    .mutation(async ({ ctx, input }) => {
+      const hostId = ctx.session.user.id;
+      const [complex] = await ctx.db
+        .insert(Complex)
+        .values({
+          hostId,
+          title: input.title,
+          description: input.description,
+          addressLine1: input.addressLine1,
+          city: input.city,
+          neighborhood: input.neighborhood,
+          country: "MX",
+          latitude: input.latitude ?? null,
+          longitude: input.longitude ?? null,
+          amenities: input.amenities,
+          petFriendly: input.petFriendly,
+        })
+        .returning();
+      if (!complex) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to create complex",
+        });
+      }
+      const imageUrl = optionalImageUrl(input.imageUrl);
+      if (imageUrl) {
+        await ctx.db.insert(ComplexImage).values({
+          complexId: complex.id,
+          url: imageUrl,
+          alt: input.title,
+          kind: "exterior",
+          sortOrder: 0,
+        });
+      }
+      await ctx.db
+        .update(user)
+        .set({
+          role: withRole(ctx.session.user.role, "host"),
+        })
+        .where(eq(user.id, hostId));
+      return { complexId: complex.id };
+    }),
+  updateComplex: protectedProcedure
+    .input(UpdateComplexSchema)
+    .mutation(async ({ ctx, input }) => {
+      const existing = await ctx.db.query.Complex.findFirst({
+        where: eq(Complex.id, input.id),
       });
-    }
-    await ctx.db.update(user).set({
-      role: withRole(ctx.session.user.role, "host")
-    }).where(eq(user.id, hostId));
-    return { complexId: room.complexId, roomId: room.id };
-  }),
-  update: protectedProcedure.input(UpdateListingSchema).mutation(async ({ ctx, input }) => {
-    const existing = await ctx.db.query.Room.findFirst({
-      where: eq(Room.id, input.id)
-    });
-    if (!existing) {
-      throw new TRPCError({ code: "NOT_FOUND" });
-    }
-    assertCanManage(ctx.session.user, existing.hostId);
-    const selectedComplex = input.isComplex && input.complexId ? await ctx.db.query.Complex.findFirst({
-      where: eq(Complex.id, input.complexId)
-    }) : null;
-    const [room] = await ctx.db.update(Room).set(
-      roomWriteValues(
-        input,
-        existing.hostId ?? ctx.session.user.id,
-        selectedComplex ?? null
-      )
-    ).where(eq(Room.id, input.id)).returning();
-    if (!room) {
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Failed to update room"
-      });
-    }
-    const imageUrl = optionalImageUrl(input.roomImageUrl);
-    if (imageUrl) {
-      await ctx.db.delete(RoomImage).where(eq(RoomImage.roomId, room.id));
-      await ctx.db.insert(RoomImage).values({
-        roomId: room.id,
-        url: imageUrl,
-        alt: input.roomTitle,
-        kind: "room",
-        sortOrder: 0
-      });
-    }
-    return { complexId: room.complexId, roomId: room.id };
-  }),
-  createComplex: protectedProcedure.input(CreateComplexSchema).mutation(async ({ ctx, input }) => {
-    const hostId = ctx.session.user.id;
-    const [complex] = await ctx.db.insert(Complex).values({
-      hostId,
-      title: input.title,
-      description: input.description,
-      addressLine1: input.addressLine1,
-      city: input.city,
-      neighborhood: input.neighborhood,
-      country: "MX",
-      latitude: input.latitude ?? null,
-      longitude: input.longitude ?? null,
-      amenities: input.amenities,
-      petFriendly: input.petFriendly
-    }).returning();
-    if (!complex) {
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Failed to create complex"
-      });
-    }
-    const imageUrl = optionalImageUrl(input.imageUrl);
-    if (imageUrl) {
-      await ctx.db.insert(ComplexImage).values({
-        complexId: complex.id,
-        url: imageUrl,
-        alt: input.title,
-        kind: "exterior",
-        sortOrder: 0
-      });
-    }
-    await ctx.db.update(user).set({
-      role: withRole(ctx.session.user.role, "host")
-    }).where(eq(user.id, hostId));
-    return { complexId: complex.id };
-  }),
-  updateComplex: protectedProcedure.input(UpdateComplexSchema).mutation(async ({ ctx, input }) => {
-    const existing = await ctx.db.query.Complex.findFirst({
-      where: eq(Complex.id, input.id)
-    });
-    if (!existing) {
-      throw new TRPCError({ code: "NOT_FOUND" });
-    }
-    assertCanManage(ctx.session.user, existing.hostId);
-    const [complex] = await ctx.db.update(Complex).set({
-      title: input.title,
-      description: input.description,
-      addressLine1: input.addressLine1,
-      city: input.city,
-      neighborhood: input.neighborhood,
-      latitude: input.latitude ?? null,
-      longitude: input.longitude ?? null,
-      amenities: input.amenities,
-      petFriendly: input.petFriendly
-    }).where(eq(Complex.id, input.id)).returning();
-    if (!complex) {
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Failed to update complex"
-      });
-    }
-    const imageUrl = optionalImageUrl(input.imageUrl);
-    if (imageUrl) {
-      await ctx.db.delete(ComplexImage).where(eq(ComplexImage.complexId, complex.id));
-      await ctx.db.insert(ComplexImage).values({
-        complexId: complex.id,
-        url: imageUrl,
-        alt: input.title,
-        kind: "exterior",
-        sortOrder: 0
-      });
-    }
-    return { complexId: complex.id };
-  }),
-  searchAddress: protectedProcedure.input(z$1.object({ query: z$1.string().trim().min(2).max(200) })).query(async ({ input }) => {
-    return searchAddresses(input.query);
-  }),
-  reverseGeocode: protectedProcedure.input(
-    z$1.object({
-      latitude: z$1.number().min(-90).max(90),
-      longitude: z$1.number().min(-180).max(180)
-    })
-  ).query(async ({ input }) => {
-    return reverseGeocode(input.latitude, input.longitude);
-  })
+      if (!existing) {
+        throw new TRPCError({ code: "NOT_FOUND" });
+      }
+      assertCanManage(ctx.session.user, existing.hostId);
+      const [complex] = await ctx.db
+        .update(Complex)
+        .set({
+          title: input.title,
+          description: input.description,
+          addressLine1: input.addressLine1,
+          city: input.city,
+          neighborhood: input.neighborhood,
+          latitude: input.latitude ?? null,
+          longitude: input.longitude ?? null,
+          amenities: input.amenities,
+          petFriendly: input.petFriendly,
+        })
+        .where(eq(Complex.id, input.id))
+        .returning();
+      if (!complex) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to update complex",
+        });
+      }
+      const imageUrl = optionalImageUrl(input.imageUrl);
+      if (imageUrl) {
+        await ctx.db
+          .delete(ComplexImage)
+          .where(eq(ComplexImage.complexId, complex.id));
+        await ctx.db.insert(ComplexImage).values({
+          complexId: complex.id,
+          url: imageUrl,
+          alt: input.title,
+          kind: "exterior",
+          sortOrder: 0,
+        });
+      }
+      return { complexId: complex.id };
+    }),
+  searchAddress: protectedProcedure
+    .input(z$1.object({ query: z$1.string().trim().min(2).max(200) }))
+    .query(async ({ input }) => {
+      return searchAddresses(input.query);
+    }),
+  reverseGeocode: protectedProcedure
+    .input(
+      z$1.object({
+        latitude: z$1.number().min(-90).max(90),
+        longitude: z$1.number().min(-180).max(180),
+      }),
+    )
+    .query(async ({ input }) => {
+      return reverseGeocode(input.latitude, input.longitude);
+    }),
 };
 const ratingRouter = {
-  byUser: publicProcedure.input(z$1.object({ userId: z$1.string() })).query(({ ctx, input }) => {
-    return ctx.db.query.RoommeRating.findMany({
-      where: eq(RoommeRating.rateeId, input.userId)
-    });
-  })
+  byUser: publicProcedure
+    .input(z$1.object({ userId: z$1.string() }))
+    .query(({ ctx, input }) => {
+      return ctx.db.query.RoommeRating.findMany({
+        where: eq(RoommeRating.rateeId, input.userId),
+      });
+    }),
 };
 const appRouter = createTRPCRouter({
   auth: authRouter,
   listing: listingRouter,
-  rating: ratingRouter
+  rating: ratingRouter,
 });
 const expo = (options) => {
   return {
     id: "expo",
     init: (ctx) => {
-      const trustedOrigins = process.env.NODE_ENV === "development" ? ["exp://"] : [];
+      const trustedOrigins =
+        process.env.NODE_ENV === "development" ? ["exp://"] : [];
       return {
         options: {
-          trustedOrigins
-        }
+          trustedOrigins,
+        },
       };
     },
     async onRequest(request, ctx) {
@@ -10296,7 +11718,10 @@ const expo = (options) => {
       after: [
         {
           matcher(context) {
-            return context.path?.startsWith("/callback") || context.path?.startsWith("/oauth2/callback");
+            return (
+              context.path?.startsWith("/callback") ||
+              context.path?.startsWith("/oauth2/callback")
+            );
           },
           handler: createAuthMiddleware(async (ctx) => {
             const headers = ctx.context.responseHeaders;
@@ -10309,10 +11734,10 @@ const expo = (options) => {
               return;
             }
             const trustedOrigins = ctx.context.trustedOrigins.filter(
-              (origin) => !origin.startsWith("http")
+              (origin) => !origin.startsWith("http"),
             );
-            const isTrustedOrigin = trustedOrigins.some(
-              (origin) => location?.startsWith(origin)
+            const isTrustedOrigin = trustedOrigins.some((origin) =>
+              location?.startsWith(origin),
             );
             if (!isTrustedOrigin) {
               return;
@@ -10324,9 +11749,9 @@ const expo = (options) => {
             const url = new URL(location);
             url.searchParams.set("cookie", cookie);
             ctx.setHeader("location", url.toString());
-          })
-        }
-      ]
+          }),
+        },
+      ],
     },
     endpoints: {
       expoAuthorizationProxy: createAuthEndpoint(
@@ -10334,11 +11759,11 @@ const expo = (options) => {
         {
           method: "GET",
           query: z$2.object({
-            authorizationURL: z$2.string()
+            authorizationURL: z$2.string(),
           }),
           metadata: {
-            isAction: false
-          }
+            isAction: false,
+          },
         },
         async (ctx) => {
           const { authorizationURL } = ctx.query;
@@ -10346,57 +11771,57 @@ const expo = (options) => {
           const state = url.searchParams.get("state");
           if (!state) {
             throw new APIError("BAD_REQUEST", {
-              message: "Unexpected error"
+              message: "Unexpected error",
             });
           }
           const stateCookie = ctx.context.createAuthCookie("state", {
-            maxAge: 5 * 60 * 1e3
+            maxAge: 5 * 60 * 1e3,
             // 5 minutes
           });
           await ctx.setSignedCookie(
             stateCookie.name,
             state,
             ctx.context.secret,
-            stateCookie.attributes
+            stateCookie.attributes,
           );
           return ctx.redirect(ctx.query.authorizationURL);
-        }
-      )
-    }
+        },
+      ),
+    },
   };
 };
 const statement = {
   ...defaultStatements,
   complex: ["create", "update", "delete", "list"],
   room: ["create", "update", "delete", "list"],
-  rating: ["create", "list"]
+  rating: ["create", "list"],
 };
 const ac = createAccessControl(statement);
 const roomie = ac.newRole({
-  rating: ["create", "list"]
+  rating: ["create", "list"],
 });
 const host = ac.newRole({
   complex: ["create", "update", "delete", "list"],
   room: ["create", "update", "delete", "list"],
-  rating: ["create", "list"]
+  rating: ["create", "list"],
 });
 const agent = ac.newRole({
   complex: ["create", "update", "list"],
   room: ["create", "update", "list"],
-  rating: ["list"]
+  rating: ["list"],
 });
 const admin = ac.newRole({
   ...adminAc.statements,
   complex: ["create", "update", "delete", "list"],
   room: ["create", "update", "delete", "list"],
-  rating: ["create", "list"]
+  rating: ["create", "list"],
 });
 const authRoles = { roomie, host, agent, admin };
 function initAuth(options) {
   const config = {
     appName: "RoomMe",
     database: drizzleAdapter(db, {
-      provider: "pg"
+      provider: "pg",
     }),
     baseURL: options.baseUrl,
     secret: options.secret,
@@ -10404,12 +11829,12 @@ function initAuth(options) {
       enabled: true,
       sendResetPassword: async ({ user: user2, url }) => {
         console.log("[auth] password reset", user2.email, url);
-      }
+      },
     },
     emailVerification: {
       sendVerificationEmail: async ({ user: user2, url }) => {
         console.log("[auth] verify email", user2.email, url);
-      }
+      },
     },
     plugins: [
       expo(),
@@ -10417,41 +11842,47 @@ function initAuth(options) {
         ac,
         roles: authRoles,
         defaultRole: "roomie",
-        adminRoles: ["admin"]
+        adminRoles: ["admin"],
       }),
-      ...options.extraPlugins ?? []
+      ...(options.extraPlugins ?? []),
     ],
     trustedOrigins: [options.productionUrl, "expo://", "exp://"],
     onAPIError: {
       onError(error, ctx) {
         console.error("BETTER AUTH API ERROR", error, ctx);
-      }
-    }
+      },
+    },
   };
   return betterAuth(config);
 }
 function authEnv() {
   return createEnv({
     server: {
-      AUTH_SECRET: process.env.NODE_ENV === "production" ? z$1.string().min(1) : z$1.string().min(1).optional(),
-      NODE_ENV: z$1.enum(["development", "production"]).optional()
+      AUTH_SECRET:
+        process.env.NODE_ENV === "production"
+          ? z$1.string().min(1)
+          : z$1.string().min(1).optional(),
+      NODE_ENV: z$1.enum(["development", "production"]).optional(),
     },
     runtimeEnv: process.env,
-    skipValidation: !!process.env.CI || process.env.npm_lifecycle_event === "lint"
+    skipValidation:
+      !!process.env.CI || process.env.npm_lifecycle_event === "lint",
   });
 }
 const env = createEnv({
   clientPrefix: "VITE_",
   extends: [authEnv(), vercel()],
   shared: {
-    NODE_ENV: z$1.enum(["development", "production", "test"]).default("development")
+    NODE_ENV: z$1
+      .enum(["development", "production", "test"])
+      .default("development"),
   },
   /**
    * Specify your server-side environment variables schema here.
    * This way you can ensure the app isn't built with invalid env vars.
    */
   server: {
-    POSTGRES_URL: z$1.url()
+    POSTGRES_URL: z$1.url(),
   },
   /**
    * Specify your client-side environment variables schema here.
@@ -10464,7 +11895,8 @@ const env = createEnv({
    * Destructure all variables from `process.env` to make sure they aren't tree-shaken away.
    */
   runtimeEnv: process.env,
-  skipValidation: !!process.env.CI || process.env.npm_lifecycle_event === "lint"
+  skipValidation:
+    !!process.env.CI || process.env.npm_lifecycle_event === "lint",
 });
 function getBaseUrl() {
   if (typeof window !== "undefined") {
@@ -10482,28 +11914,27 @@ const auth = initAuth({
   baseUrl: getBaseUrl(),
   productionUrl: `https://${env.VERCEL_PROJECT_PRODUCTION_URL ?? "roomme.app"}`,
   secret: env.AUTH_SECRET,
-  extraPlugins: [reactStartCookies()]
+  extraPlugins: [reactStartCookies()],
 });
 const makeTRPCClient = () => {
   return createTRPCClient({
-    links: [unstable_localLink({
-      router: appRouter,
-      transformer: SuperJSON,
-      createContext: () => {
-        const headers = new Headers(getRequestHeaders());
-        headers.set("x-trpc-source", "tanstack-start-server");
-        return createTRPCContext({
-          auth,
-          headers
-        });
-      }
-    })]
+    links: [
+      unstable_localLink({
+        router: appRouter,
+        transformer: SuperJSON,
+        createContext: () => {
+          const headers = new Headers(getRequestHeaders());
+          headers.set("x-trpc-source", "tanstack-start-server");
+          return createTRPCContext({
+            auth,
+            headers,
+          });
+        },
+      }),
+    ],
   });
 };
-const {
-  useTRPC,
-  TRPCProvider
-} = createTRPCContext$1();
+const { useTRPC, TRPCProvider } = createTRPCContext$1();
 function _objectWithoutPropertiesLoose(source, excluded) {
   if (source == null) return {};
   var target = {};
@@ -10517,111 +11948,177 @@ function _objectWithoutPropertiesLoose(source, excluded) {
   return target;
 }
 var _excluded$1B = ["color"];
-var DesktopIcon = /* @__PURE__ */ forwardRef(function(_ref, forwardedRef) {
-  var _ref$color = _ref.color, color = _ref$color === void 0 ? "currentColor" : _ref$color, props = _objectWithoutPropertiesLoose(_ref, _excluded$1B);
-  return createElement("svg", Object.assign({
-    width: "15",
-    height: "15",
-    viewBox: "0 0 15 15",
-    fill: "none",
-    xmlns: "http://www.w3.org/2000/svg"
-  }, props, {
-    ref: forwardedRef
-  }), createElement("path", {
-    d: "M1 3.25C1 3.11193 1.11193 3 1.25 3H13.75C13.8881 3 14 3.11193 14 3.25V10.75C14 10.8881 13.8881 11 13.75 11H1.25C1.11193 11 1 10.8881 1 10.75V3.25ZM1.25 2C0.559643 2 0 2.55964 0 3.25V10.75C0 11.4404 0.559644 12 1.25 12H5.07341L4.82991 13.2986C4.76645 13.6371 5.02612 13.95 5.37049 13.95H9.62951C9.97389 13.95 10.2336 13.6371 10.1701 13.2986L9.92659 12H13.75C14.4404 12 15 11.4404 15 10.75V3.25C15 2.55964 14.4404 2 13.75 2H1.25ZM9.01091 12H5.98909L5.79222 13.05H9.20778L9.01091 12Z",
-    fill: color,
-    fillRule: "evenodd",
-    clipRule: "evenodd"
-  }));
+var DesktopIcon = /* @__PURE__ */ forwardRef(function (_ref, forwardedRef) {
+  var _ref$color = _ref.color,
+    color = _ref$color === void 0 ? "currentColor" : _ref$color,
+    props = _objectWithoutPropertiesLoose(_ref, _excluded$1B);
+  return createElement(
+    "svg",
+    Object.assign(
+      {
+        width: "15",
+        height: "15",
+        viewBox: "0 0 15 15",
+        fill: "none",
+        xmlns: "http://www.w3.org/2000/svg",
+      },
+      props,
+      {
+        ref: forwardedRef,
+      },
+    ),
+    createElement("path", {
+      d: "M1 3.25C1 3.11193 1.11193 3 1.25 3H13.75C13.8881 3 14 3.11193 14 3.25V10.75C14 10.8881 13.8881 11 13.75 11H1.25C1.11193 11 1 10.8881 1 10.75V3.25ZM1.25 2C0.559643 2 0 2.55964 0 3.25V10.75C0 11.4404 0.559644 12 1.25 12H5.07341L4.82991 13.2986C4.76645 13.6371 5.02612 13.95 5.37049 13.95H9.62951C9.97389 13.95 10.2336 13.6371 10.1701 13.2986L9.92659 12H13.75C14.4404 12 15 11.4404 15 10.75V3.25C15 2.55964 14.4404 2 13.75 2H1.25ZM9.01091 12H5.98909L5.79222 13.05H9.20778L9.01091 12Z",
+      fill: color,
+      fillRule: "evenodd",
+      clipRule: "evenodd",
+    }),
+  );
 });
 var _excluded$3e = ["color"];
-var MoonIcon = /* @__PURE__ */ forwardRef(function(_ref, forwardedRef) {
-  var _ref$color = _ref.color, color = _ref$color === void 0 ? "currentColor" : _ref$color, props = _objectWithoutPropertiesLoose(_ref, _excluded$3e);
-  return createElement("svg", Object.assign({
-    width: "15",
-    height: "15",
-    viewBox: "0 0 15 15",
-    fill: "none",
-    xmlns: "http://www.w3.org/2000/svg"
-  }, props, {
-    ref: forwardedRef
-  }), createElement("path", {
-    d: "M2.89998 0.499976C2.89998 0.279062 2.72089 0.0999756 2.49998 0.0999756C2.27906 0.0999756 2.09998 0.279062 2.09998 0.499976V1.09998H1.49998C1.27906 1.09998 1.09998 1.27906 1.09998 1.49998C1.09998 1.72089 1.27906 1.89998 1.49998 1.89998H2.09998V2.49998C2.09998 2.72089 2.27906 2.89998 2.49998 2.89998C2.72089 2.89998 2.89998 2.72089 2.89998 2.49998V1.89998H3.49998C3.72089 1.89998 3.89998 1.72089 3.89998 1.49998C3.89998 1.27906 3.72089 1.09998 3.49998 1.09998H2.89998V0.499976ZM5.89998 3.49998C5.89998 3.27906 5.72089 3.09998 5.49998 3.09998C5.27906 3.09998 5.09998 3.27906 5.09998 3.49998V4.09998H4.49998C4.27906 4.09998 4.09998 4.27906 4.09998 4.49998C4.09998 4.72089 4.27906 4.89998 4.49998 4.89998H5.09998V5.49998C5.09998 5.72089 5.27906 5.89998 5.49998 5.89998C5.72089 5.89998 5.89998 5.72089 5.89998 5.49998V4.89998H6.49998C6.72089 4.89998 6.89998 4.72089 6.89998 4.49998C6.89998 4.27906 6.72089 4.09998 6.49998 4.09998H5.89998V3.49998ZM1.89998 6.49998C1.89998 6.27906 1.72089 6.09998 1.49998 6.09998C1.27906 6.09998 1.09998 6.27906 1.09998 6.49998V7.09998H0.499976C0.279062 7.09998 0.0999756 7.27906 0.0999756 7.49998C0.0999756 7.72089 0.279062 7.89998 0.499976 7.89998H1.09998V8.49998C1.09998 8.72089 1.27906 8.89997 1.49998 8.89997C1.72089 8.89997 1.89998 8.72089 1.89998 8.49998V7.89998H2.49998C2.72089 7.89998 2.89998 7.72089 2.89998 7.49998C2.89998 7.27906 2.72089 7.09998 2.49998 7.09998H1.89998V6.49998ZM8.54406 0.98184L8.24618 0.941586C8.03275 0.917676 7.90692 1.1655 8.02936 1.34194C8.17013 1.54479 8.29981 1.75592 8.41754 1.97445C8.91878 2.90485 9.20322 3.96932 9.20322 5.10022C9.20322 8.37201 6.82247 11.0878 3.69887 11.6097C3.45736 11.65 3.20988 11.6772 2.96008 11.6906C2.74563 11.702 2.62729 11.9535 2.77721 12.1072C2.84551 12.1773 2.91535 12.2458 2.98667 12.3128L3.05883 12.3795L3.31883 12.6045L3.50684 12.7532L3.62796 12.8433L3.81491 12.9742L3.99079 13.089C4.11175 13.1651 4.23536 13.2375 4.36157 13.3059L4.62496 13.4412L4.88553 13.5607L5.18837 13.6828L5.43169 13.7686C5.56564 13.8128 5.70149 13.8529 5.83857 13.8885C5.94262 13.9155 6.04767 13.9401 6.15405 13.9622C6.27993 13.9883 6.40713 14.0109 6.53544 14.0298L6.85241 14.0685L7.11934 14.0892C7.24637 14.0965 7.37436 14.1002 7.50322 14.1002C11.1483 14.1002 14.1032 11.1453 14.1032 7.50023C14.1032 7.25044 14.0893 7.00389 14.0623 6.76131L14.0255 6.48407C13.991 6.26083 13.9453 6.04129 13.8891 5.82642C13.8213 5.56709 13.7382 5.31398 13.6409 5.06881L13.5279 4.80132L13.4507 4.63542L13.3766 4.48666C13.2178 4.17773 13.0353 3.88295 12.8312 3.60423L12.6782 3.40352L12.4793 3.16432L12.3157 2.98361L12.1961 2.85951L12.0355 2.70246L11.8134 2.50184L11.4925 2.24191L11.2483 2.06498L10.9562 1.87446L10.6346 1.68894L10.3073 1.52378L10.1938 1.47176L9.95488 1.3706L9.67791 1.2669L9.42566 1.1846L9.10075 1.09489L8.83599 1.03486L8.54406 0.98184ZM10.4032 5.30023C10.4032 4.27588 10.2002 3.29829 9.83244 2.40604C11.7623 3.28995 13.1032 5.23862 13.1032 7.50023C13.1032 10.593 10.596 13.1002 7.50322 13.1002C6.63646 13.1002 5.81597 12.9036 5.08355 12.5522C6.5419 12.0941 7.81081 11.2082 8.74322 10.0416C8.87963 10.2284 9.10028 10.3497 9.34928 10.3497C9.76349 10.3497 10.0993 10.0139 10.0993 9.59971C10.0993 9.24256 9.84965 8.94373 9.51535 8.86816C9.57741 8.75165 9.63653 8.63334 9.6926 8.51332C9.88358 8.63163 10.1088 8.69993 10.35 8.69993C11.0403 8.69993 11.6 8.14028 11.6 7.44993C11.6 6.75976 11.0406 6.20024 10.3505 6.19993C10.3853 5.90487 10.4032 5.60464 10.4032 5.30023Z",
-    fill: color,
-    fillRule: "evenodd",
-    clipRule: "evenodd"
-  }));
+var MoonIcon = /* @__PURE__ */ forwardRef(function (_ref, forwardedRef) {
+  var _ref$color = _ref.color,
+    color = _ref$color === void 0 ? "currentColor" : _ref$color,
+    props = _objectWithoutPropertiesLoose(_ref, _excluded$3e);
+  return createElement(
+    "svg",
+    Object.assign(
+      {
+        width: "15",
+        height: "15",
+        viewBox: "0 0 15 15",
+        fill: "none",
+        xmlns: "http://www.w3.org/2000/svg",
+      },
+      props,
+      {
+        ref: forwardedRef,
+      },
+    ),
+    createElement("path", {
+      d: "M2.89998 0.499976C2.89998 0.279062 2.72089 0.0999756 2.49998 0.0999756C2.27906 0.0999756 2.09998 0.279062 2.09998 0.499976V1.09998H1.49998C1.27906 1.09998 1.09998 1.27906 1.09998 1.49998C1.09998 1.72089 1.27906 1.89998 1.49998 1.89998H2.09998V2.49998C2.09998 2.72089 2.27906 2.89998 2.49998 2.89998C2.72089 2.89998 2.89998 2.72089 2.89998 2.49998V1.89998H3.49998C3.72089 1.89998 3.89998 1.72089 3.89998 1.49998C3.89998 1.27906 3.72089 1.09998 3.49998 1.09998H2.89998V0.499976ZM5.89998 3.49998C5.89998 3.27906 5.72089 3.09998 5.49998 3.09998C5.27906 3.09998 5.09998 3.27906 5.09998 3.49998V4.09998H4.49998C4.27906 4.09998 4.09998 4.27906 4.09998 4.49998C4.09998 4.72089 4.27906 4.89998 4.49998 4.89998H5.09998V5.49998C5.09998 5.72089 5.27906 5.89998 5.49998 5.89998C5.72089 5.89998 5.89998 5.72089 5.89998 5.49998V4.89998H6.49998C6.72089 4.89998 6.89998 4.72089 6.89998 4.49998C6.89998 4.27906 6.72089 4.09998 6.49998 4.09998H5.89998V3.49998ZM1.89998 6.49998C1.89998 6.27906 1.72089 6.09998 1.49998 6.09998C1.27906 6.09998 1.09998 6.27906 1.09998 6.49998V7.09998H0.499976C0.279062 7.09998 0.0999756 7.27906 0.0999756 7.49998C0.0999756 7.72089 0.279062 7.89998 0.499976 7.89998H1.09998V8.49998C1.09998 8.72089 1.27906 8.89997 1.49998 8.89997C1.72089 8.89997 1.89998 8.72089 1.89998 8.49998V7.89998H2.49998C2.72089 7.89998 2.89998 7.72089 2.89998 7.49998C2.89998 7.27906 2.72089 7.09998 2.49998 7.09998H1.89998V6.49998ZM8.54406 0.98184L8.24618 0.941586C8.03275 0.917676 7.90692 1.1655 8.02936 1.34194C8.17013 1.54479 8.29981 1.75592 8.41754 1.97445C8.91878 2.90485 9.20322 3.96932 9.20322 5.10022C9.20322 8.37201 6.82247 11.0878 3.69887 11.6097C3.45736 11.65 3.20988 11.6772 2.96008 11.6906C2.74563 11.702 2.62729 11.9535 2.77721 12.1072C2.84551 12.1773 2.91535 12.2458 2.98667 12.3128L3.05883 12.3795L3.31883 12.6045L3.50684 12.7532L3.62796 12.8433L3.81491 12.9742L3.99079 13.089C4.11175 13.1651 4.23536 13.2375 4.36157 13.3059L4.62496 13.4412L4.88553 13.5607L5.18837 13.6828L5.43169 13.7686C5.56564 13.8128 5.70149 13.8529 5.83857 13.8885C5.94262 13.9155 6.04767 13.9401 6.15405 13.9622C6.27993 13.9883 6.40713 14.0109 6.53544 14.0298L6.85241 14.0685L7.11934 14.0892C7.24637 14.0965 7.37436 14.1002 7.50322 14.1002C11.1483 14.1002 14.1032 11.1453 14.1032 7.50023C14.1032 7.25044 14.0893 7.00389 14.0623 6.76131L14.0255 6.48407C13.991 6.26083 13.9453 6.04129 13.8891 5.82642C13.8213 5.56709 13.7382 5.31398 13.6409 5.06881L13.5279 4.80132L13.4507 4.63542L13.3766 4.48666C13.2178 4.17773 13.0353 3.88295 12.8312 3.60423L12.6782 3.40352L12.4793 3.16432L12.3157 2.98361L12.1961 2.85951L12.0355 2.70246L11.8134 2.50184L11.4925 2.24191L11.2483 2.06498L10.9562 1.87446L10.6346 1.68894L10.3073 1.52378L10.1938 1.47176L9.95488 1.3706L9.67791 1.2669L9.42566 1.1846L9.10075 1.09489L8.83599 1.03486L8.54406 0.98184ZM10.4032 5.30023C10.4032 4.27588 10.2002 3.29829 9.83244 2.40604C11.7623 3.28995 13.1032 5.23862 13.1032 7.50023C13.1032 10.593 10.596 13.1002 7.50322 13.1002C6.63646 13.1002 5.81597 12.9036 5.08355 12.5522C6.5419 12.0941 7.81081 11.2082 8.74322 10.0416C8.87963 10.2284 9.10028 10.3497 9.34928 10.3497C9.76349 10.3497 10.0993 10.0139 10.0993 9.59971C10.0993 9.24256 9.84965 8.94373 9.51535 8.86816C9.57741 8.75165 9.63653 8.63334 9.6926 8.51332C9.88358 8.63163 10.1088 8.69993 10.35 8.69993C11.0403 8.69993 11.6 8.14028 11.6 7.44993C11.6 6.75976 11.0406 6.20024 10.3505 6.19993C10.3853 5.90487 10.4032 5.60464 10.4032 5.30023Z",
+      fill: color,
+      fillRule: "evenodd",
+      clipRule: "evenodd",
+    }),
+  );
 });
 var _excluded$4i = ["color"];
-var SunIcon = /* @__PURE__ */ forwardRef(function(_ref, forwardedRef) {
-  var _ref$color = _ref.color, color = _ref$color === void 0 ? "currentColor" : _ref$color, props = _objectWithoutPropertiesLoose(_ref, _excluded$4i);
-  return createElement("svg", Object.assign({
-    width: "15",
-    height: "15",
-    viewBox: "0 0 15 15",
-    fill: "none",
-    xmlns: "http://www.w3.org/2000/svg"
-  }, props, {
-    ref: forwardedRef
-  }), createElement("path", {
-    d: "M7.5 0C7.77614 0 8 0.223858 8 0.5V2.5C8 2.77614 7.77614 3 7.5 3C7.22386 3 7 2.77614 7 2.5V0.5C7 0.223858 7.22386 0 7.5 0ZM2.1967 2.1967C2.39196 2.00144 2.70854 2.00144 2.90381 2.1967L4.31802 3.61091C4.51328 3.80617 4.51328 4.12276 4.31802 4.31802C4.12276 4.51328 3.80617 4.51328 3.61091 4.31802L2.1967 2.90381C2.00144 2.70854 2.00144 2.39196 2.1967 2.1967ZM0.5 7C0.223858 7 0 7.22386 0 7.5C0 7.77614 0.223858 8 0.5 8H2.5C2.77614 8 3 7.77614 3 7.5C3 7.22386 2.77614 7 2.5 7H0.5ZM2.1967 12.8033C2.00144 12.608 2.00144 12.2915 2.1967 12.0962L3.61091 10.682C3.80617 10.4867 4.12276 10.4867 4.31802 10.682C4.51328 10.8772 4.51328 11.1938 4.31802 11.3891L2.90381 12.8033C2.70854 12.9986 2.39196 12.9986 2.1967 12.8033ZM12.5 7C12.2239 7 12 7.22386 12 7.5C12 7.77614 12.2239 8 12.5 8H14.5C14.7761 8 15 7.77614 15 7.5C15 7.22386 14.7761 7 14.5 7H12.5ZM10.682 4.31802C10.4867 4.12276 10.4867 3.80617 10.682 3.61091L12.0962 2.1967C12.2915 2.00144 12.608 2.00144 12.8033 2.1967C12.9986 2.39196 12.9986 2.70854 12.8033 2.90381L11.3891 4.31802C11.1938 4.51328 10.8772 4.51328 10.682 4.31802ZM8 12.5C8 12.2239 7.77614 12 7.5 12C7.22386 12 7 12.2239 7 12.5V14.5C7 14.7761 7.22386 15 7.5 15C7.77614 15 8 14.7761 8 14.5V12.5ZM10.682 10.682C10.8772 10.4867 11.1938 10.4867 11.3891 10.682L12.8033 12.0962C12.9986 12.2915 12.9986 12.608 12.8033 12.8033C12.608 12.9986 12.2915 12.9986 12.0962 12.8033L10.682 11.3891C10.4867 11.1938 10.4867 10.8772 10.682 10.682ZM5.5 7.5C5.5 6.39543 6.39543 5.5 7.5 5.5C8.60457 5.5 9.5 6.39543 9.5 7.5C9.5 8.60457 8.60457 9.5 7.5 9.5C6.39543 9.5 5.5 8.60457 5.5 7.5ZM7.5 4.5C5.84315 4.5 4.5 5.84315 4.5 7.5C4.5 9.15685 5.84315 10.5 7.5 10.5C9.15685 10.5 10.5 9.15685 10.5 7.5C10.5 5.84315 9.15685 4.5 7.5 4.5Z",
-    fill: color,
-    fillRule: "evenodd",
-    clipRule: "evenodd"
-  }));
+var SunIcon = /* @__PURE__ */ forwardRef(function (_ref, forwardedRef) {
+  var _ref$color = _ref.color,
+    color = _ref$color === void 0 ? "currentColor" : _ref$color,
+    props = _objectWithoutPropertiesLoose(_ref, _excluded$4i);
+  return createElement(
+    "svg",
+    Object.assign(
+      {
+        width: "15",
+        height: "15",
+        viewBox: "0 0 15 15",
+        fill: "none",
+        xmlns: "http://www.w3.org/2000/svg",
+      },
+      props,
+      {
+        ref: forwardedRef,
+      },
+    ),
+    createElement("path", {
+      d: "M7.5 0C7.77614 0 8 0.223858 8 0.5V2.5C8 2.77614 7.77614 3 7.5 3C7.22386 3 7 2.77614 7 2.5V0.5C7 0.223858 7.22386 0 7.5 0ZM2.1967 2.1967C2.39196 2.00144 2.70854 2.00144 2.90381 2.1967L4.31802 3.61091C4.51328 3.80617 4.51328 4.12276 4.31802 4.31802C4.12276 4.51328 3.80617 4.51328 3.61091 4.31802L2.1967 2.90381C2.00144 2.70854 2.00144 2.39196 2.1967 2.1967ZM0.5 7C0.223858 7 0 7.22386 0 7.5C0 7.77614 0.223858 8 0.5 8H2.5C2.77614 8 3 7.77614 3 7.5C3 7.22386 2.77614 7 2.5 7H0.5ZM2.1967 12.8033C2.00144 12.608 2.00144 12.2915 2.1967 12.0962L3.61091 10.682C3.80617 10.4867 4.12276 10.4867 4.31802 10.682C4.51328 10.8772 4.51328 11.1938 4.31802 11.3891L2.90381 12.8033C2.70854 12.9986 2.39196 12.9986 2.1967 12.8033ZM12.5 7C12.2239 7 12 7.22386 12 7.5C12 7.77614 12.2239 8 12.5 8H14.5C14.7761 8 15 7.77614 15 7.5C15 7.22386 14.7761 7 14.5 7H12.5ZM10.682 4.31802C10.4867 4.12276 10.4867 3.80617 10.682 3.61091L12.0962 2.1967C12.2915 2.00144 12.608 2.00144 12.8033 2.1967C12.9986 2.39196 12.9986 2.70854 12.8033 2.90381L11.3891 4.31802C11.1938 4.51328 10.8772 4.51328 10.682 4.31802ZM8 12.5C8 12.2239 7.77614 12 7.5 12C7.22386 12 7 12.2239 7 12.5V14.5C7 14.7761 7.22386 15 7.5 15C7.77614 15 8 14.7761 8 14.5V12.5ZM10.682 10.682C10.8772 10.4867 11.1938 10.4867 11.3891 10.682L12.8033 12.0962C12.9986 12.2915 12.9986 12.608 12.8033 12.8033C12.608 12.9986 12.2915 12.9986 12.0962 12.8033L10.682 11.3891C10.4867 11.1938 10.4867 10.8772 10.682 10.682ZM5.5 7.5C5.5 6.39543 6.39543 5.5 7.5 5.5C8.60457 5.5 9.5 6.39543 9.5 7.5C9.5 8.60457 8.60457 9.5 7.5 9.5C6.39543 9.5 5.5 8.60457 5.5 7.5ZM7.5 4.5C5.84315 4.5 4.5 5.84315 4.5 7.5C4.5 9.15685 5.84315 10.5 7.5 10.5C9.15685 10.5 10.5 9.15685 10.5 7.5C10.5 5.84315 9.15685 4.5 7.5 4.5Z",
+      fill: color,
+      fillRule: "evenodd",
+      clipRule: "evenodd",
+    }),
+  );
 });
 function r(e) {
-  var t2, f, n = "";
+  var t2,
+    f,
+    n = "";
   if ("string" == typeof e || "number" == typeof e) n += e;
-  else if ("object" == typeof e) if (Array.isArray(e)) {
-    var o = e.length;
-    for (t2 = 0; t2 < o; t2++) e[t2] && (f = r(e[t2])) && (n && (n += " "), n += f);
-  } else for (f in e) e[f] && (n && (n += " "), n += f);
+  else if ("object" == typeof e)
+    if (Array.isArray(e)) {
+      var o = e.length;
+      for (t2 = 0; t2 < o; t2++)
+        e[t2] && (f = r(e[t2])) && (n && (n += " "), (n += f));
+    } else for (f in e) e[f] && (n && (n += " "), (n += f));
   return n;
 }
 function clsx() {
-  for (var e, t2, f = 0, n = "", o = arguments.length; f < o; f++) (e = arguments[f]) && (t2 = r(e)) && (n && (n += " "), n += t2);
+  for (var e, t2, f = 0, n = "", o = arguments.length; f < o; f++)
+    (e = arguments[f]) && (t2 = r(e)) && (n && (n += " "), (n += t2));
   return n;
 }
-const falsyToString = (value) => typeof value === "boolean" ? `${value}` : value === 0 ? "0" : value;
+const falsyToString = (value) =>
+  typeof value === "boolean" ? `${value}` : value === 0 ? "0" : value;
 const cx = clsx;
 const cva = (base, config) => (props) => {
   var _config_compoundVariants;
-  if ((config === null || config === void 0 ? void 0 : config.variants) == null) return cx(base, props === null || props === void 0 ? void 0 : props.class, props === null || props === void 0 ? void 0 : props.className);
+  if ((config === null || config === void 0 ? void 0 : config.variants) == null)
+    return cx(
+      base,
+      props === null || props === void 0 ? void 0 : props.class,
+      props === null || props === void 0 ? void 0 : props.className,
+    );
   const { variants, defaultVariants } = config;
   const getVariantClassNames = Object.keys(variants).map((variant) => {
-    const variantProp = props === null || props === void 0 ? void 0 : props[variant];
-    const defaultVariantProp = defaultVariants === null || defaultVariants === void 0 ? void 0 : defaultVariants[variant];
+    const variantProp =
+      props === null || props === void 0 ? void 0 : props[variant];
+    const defaultVariantProp =
+      defaultVariants === null || defaultVariants === void 0
+        ? void 0
+        : defaultVariants[variant];
     if (variantProp === null) return null;
-    const variantKey = falsyToString(variantProp) || falsyToString(defaultVariantProp);
+    const variantKey =
+      falsyToString(variantProp) || falsyToString(defaultVariantProp);
     return variants[variant][variantKey];
   });
-  const propsWithoutUndefined = props && Object.entries(props).reduce((acc, param) => {
-    let [key, value] = param;
-    if (value === void 0) {
+  const propsWithoutUndefined =
+    props &&
+    Object.entries(props).reduce((acc, param) => {
+      let [key, value] = param;
+      if (value === void 0) {
+        return acc;
+      }
+      acc[key] = value;
       return acc;
-    }
-    acc[key] = value;
-    return acc;
-  }, {});
-  const getCompoundVariantClassNames = config === null || config === void 0 ? void 0 : (_config_compoundVariants = config.compoundVariants) === null || _config_compoundVariants === void 0 ? void 0 : _config_compoundVariants.reduce((acc, param) => {
-    let { class: cvClass, className: cvClassName, ...compoundVariantOptions } = param;
-    return Object.entries(compoundVariantOptions).every((param2) => {
-      let [key, value] = param2;
-      return Array.isArray(value) ? value.includes({
-        ...defaultVariants,
-        ...propsWithoutUndefined
-      }[key]) : {
-        ...defaultVariants,
-        ...propsWithoutUndefined
-      }[key] === value;
-    }) ? [
-      ...acc,
-      cvClass,
-      cvClassName
-    ] : acc;
-  }, []);
-  return cx(base, getVariantClassNames, getCompoundVariantClassNames, props === null || props === void 0 ? void 0 : props.class, props === null || props === void 0 ? void 0 : props.className);
+    }, {});
+  const getCompoundVariantClassNames =
+    config === null || config === void 0
+      ? void 0
+      : (_config_compoundVariants = config.compoundVariants) === null ||
+          _config_compoundVariants === void 0
+        ? void 0
+        : _config_compoundVariants.reduce((acc, param) => {
+            let {
+              class: cvClass,
+              className: cvClassName,
+              ...compoundVariantOptions
+            } = param;
+            return Object.entries(compoundVariantOptions).every((param2) => {
+              let [key, value] = param2;
+              return Array.isArray(value)
+                ? value.includes(
+                    {
+                      ...defaultVariants,
+                      ...propsWithoutUndefined,
+                    }[key],
+                  )
+                : {
+                    ...defaultVariants,
+                    ...propsWithoutUndefined,
+                  }[key] === value;
+            })
+              ? [...acc, cvClass, cvClassName]
+              : acc;
+          }, []);
+  return cx(
+    base,
+    getVariantClassNames,
+    getCompoundVariantClassNames,
+    props === null || props === void 0 ? void 0 : props.class,
+    props === null || props === void 0 ? void 0 : props.className,
+  );
 };
 function setRef(ref, value) {
   if (typeof ref === "function") {
@@ -10668,15 +12165,28 @@ function createSlot(ownerName) {
       const newElement = slottable.props.children;
       const newChildren = childrenArray.map((child) => {
         if (child === slottable) {
-          if (React.Children.count(newElement) > 1) return React.Children.only(null);
-          return React.isValidElement(newElement) ? newElement.props.children : null;
+          if (React.Children.count(newElement) > 1)
+            return React.Children.only(null);
+          return React.isValidElement(newElement)
+            ? newElement.props.children
+            : null;
         } else {
           return child;
         }
       });
-      return /* @__PURE__ */ jsx(SlotClone, { ...slotProps, ref: forwardedRef, children: React.isValidElement(newElement) ? React.cloneElement(newElement, void 0, newChildren) : null });
+      return /* @__PURE__ */ jsx(SlotClone, {
+        ...slotProps,
+        ref: forwardedRef,
+        children: React.isValidElement(newElement)
+          ? React.cloneElement(newElement, void 0, newChildren)
+          : null,
+      });
     }
-    return /* @__PURE__ */ jsx(SlotClone, { ...slotProps, ref: forwardedRef, children });
+    return /* @__PURE__ */ jsx(SlotClone, {
+      ...slotProps,
+      ref: forwardedRef,
+      children,
+    });
   });
   Slot2.displayName = `${ownerName}.Slot`;
   return Slot2;
@@ -10690,18 +12200,27 @@ function createSlotClone(ownerName) {
       const childrenRef = getElementRef$1(children);
       const props2 = mergeProps(slotProps, children.props);
       if (children.type !== React.Fragment) {
-        props2.ref = forwardedRef ? composeRefs(forwardedRef, childrenRef) : childrenRef;
+        props2.ref = forwardedRef
+          ? composeRefs(forwardedRef, childrenRef)
+          : childrenRef;
       }
       return React.cloneElement(children, props2);
     }
-    return React.Children.count(children) > 1 ? React.Children.only(null) : null;
+    return React.Children.count(children) > 1
+      ? React.Children.only(null)
+      : null;
   });
   SlotClone.displayName = `${ownerName}.SlotClone`;
   return SlotClone;
 }
 var SLOTTABLE_IDENTIFIER = Symbol("radix.slottable");
 function isSlottable(child) {
-  return React.isValidElement(child) && typeof child.type === "function" && "__radixId" in child.type && child.type.__radixId === SLOTTABLE_IDENTIFIER;
+  return (
+    React.isValidElement(child) &&
+    typeof child.type === "function" &&
+    "__radixId" in child.type &&
+    child.type.__radixId === SLOTTABLE_IDENTIFIER
+  );
 }
 function mergeProps(slotProps, childProps) {
   const overrideProps = { ...childProps };
@@ -10722,7 +12241,9 @@ function mergeProps(slotProps, childProps) {
     } else if (propName === "style") {
       overrideProps[propName] = { ...slotPropValue, ...childPropValue };
     } else if (propName === "className") {
-      overrideProps[propName] = [slotPropValue, childPropValue].filter(Boolean).join(" ");
+      overrideProps[propName] = [slotPropValue, childPropValue]
+        .filter(Boolean)
+        .join(" ");
     }
   }
   return { ...slotProps, ...overrideProps };
@@ -10757,7 +12278,7 @@ var NODES = [
   "select",
   "span",
   "svg",
-  "ul"
+  "ul",
 ];
 var Primitive = NODES.reduce((primitive, node) => {
   const Slot2 = /* @__PURE__ */ createSlot(`Primitive.${node}`);
@@ -10793,7 +12314,9 @@ function createContextScope(scopeName, createContextScopeDeps = []) {
       const context = React.useContext(Context);
       if (context) return context;
       if (defaultContext !== void 0) return defaultContext;
-      throw new Error(`\`${consumerName}\` must be used within \`${rootComponentName}\``);
+      throw new Error(
+        `\`${consumerName}\` must be used within \`${rootComponentName}\``,
+      );
     }
     return [Provider, useContext2];
   }
@@ -10804,13 +12327,18 @@ function createContextScope(scopeName, createContextScopeDeps = []) {
     return function useScope(scope) {
       const contexts = scope?.[scopeName] || scopeContexts;
       return React.useMemo(
-        () => ({ [`__scope${scopeName}`]: { ...scope, [scopeName]: contexts } }),
-        [scope, contexts]
+        () => ({
+          [`__scope${scopeName}`]: { ...scope, [scopeName]: contexts },
+        }),
+        [scope, contexts],
       );
     };
   };
   createScope.scopeName = scopeName;
-  return [createContext3, composeContextScopes(createScope, ...createContextScopeDeps)];
+  return [
+    createContext3,
+    composeContextScopes(createScope, ...createContextScopeDeps),
+  ];
 }
 function composeContextScopes(...scopes) {
   const baseScope = scopes[0];
@@ -10818,15 +12346,21 @@ function composeContextScopes(...scopes) {
   const createScope = () => {
     const scopeHooks = scopes.map((createScope2) => ({
       useScope: createScope2(),
-      scopeName: createScope2.scopeName
+      scopeName: createScope2.scopeName,
     }));
     return function useComposedScopes(overrideScopes) {
-      const nextScopes = scopeHooks.reduce((nextScopes2, { useScope, scopeName }) => {
-        const scopeProps = useScope(overrideScopes);
-        const currentScope = scopeProps[`__scope${scopeName}`];
-        return { ...nextScopes2, ...currentScope };
-      }, {});
-      return React.useMemo(() => ({ [`__scope${baseScope.scopeName}`]: nextScopes }), [nextScopes]);
+      const nextScopes = scopeHooks.reduce(
+        (nextScopes2, { useScope, scopeName }) => {
+          const scopeProps = useScope(overrideScopes);
+          const currentScope = scopeProps[`__scope${scopeName}`];
+          return { ...nextScopes2, ...currentScope };
+        },
+        {},
+      );
+      return React.useMemo(
+        () => ({ [`__scope${baseScope.scopeName}`]: nextScopes }),
+        [nextScopes],
+      );
     };
   };
   createScope.scopeName = baseScope.scopeName;
@@ -10834,28 +12368,36 @@ function composeContextScopes(...scopes) {
 }
 function createCollection(name) {
   const PROVIDER_NAME = name + "CollectionProvider";
-  const [createCollectionContext, createCollectionScope2] = createContextScope(PROVIDER_NAME);
-  const [CollectionProviderImpl, useCollectionContext] = createCollectionContext(
-    PROVIDER_NAME,
-    { collectionRef: { current: null }, itemMap: /* @__PURE__ */ new Map() }
-  );
+  const [createCollectionContext, createCollectionScope2] =
+    createContextScope(PROVIDER_NAME);
+  const [CollectionProviderImpl, useCollectionContext] =
+    createCollectionContext(PROVIDER_NAME, {
+      collectionRef: { current: null },
+      itemMap: /* @__PURE__ */ new Map(),
+    });
   const CollectionProvider = (props) => {
     const { scope, children } = props;
     const ref = React__default.useRef(null);
     const itemMap = React__default.useRef(/* @__PURE__ */ new Map()).current;
-    return /* @__PURE__ */ jsx(CollectionProviderImpl, { scope, itemMap, collectionRef: ref, children });
+    return /* @__PURE__ */ jsx(CollectionProviderImpl, {
+      scope,
+      itemMap,
+      collectionRef: ref,
+      children,
+    });
   };
   CollectionProvider.displayName = PROVIDER_NAME;
   const COLLECTION_SLOT_NAME = name + "CollectionSlot";
   const CollectionSlotImpl = /* @__PURE__ */ createSlot(COLLECTION_SLOT_NAME);
-  const CollectionSlot = React__default.forwardRef(
-    (props, forwardedRef) => {
-      const { scope, children } = props;
-      const context = useCollectionContext(COLLECTION_SLOT_NAME, scope);
-      const composedRefs = useComposedRefs(forwardedRef, context.collectionRef);
-      return /* @__PURE__ */ jsx(CollectionSlotImpl, { ref: composedRefs, children });
-    }
-  );
+  const CollectionSlot = React__default.forwardRef((props, forwardedRef) => {
+    const { scope, children } = props;
+    const context = useCollectionContext(COLLECTION_SLOT_NAME, scope);
+    const composedRefs = useComposedRefs(forwardedRef, context.collectionRef);
+    return /* @__PURE__ */ jsx(CollectionSlotImpl, {
+      ref: composedRefs,
+      children,
+    });
+  });
   CollectionSlot.displayName = COLLECTION_SLOT_NAME;
   const ITEM_SLOT_NAME = name + "CollectionItemSlot";
   const ITEM_DATA_ATTR = "data-radix-collection-item";
@@ -10870,8 +12412,12 @@ function createCollection(name) {
         context.itemMap.set(ref, { ref, ...itemData });
         return () => void context.itemMap.delete(ref);
       });
-      return /* @__PURE__ */ jsx(CollectionItemSlotImpl, { ...{ [ITEM_DATA_ATTR]: "" }, ref: composedRefs, children });
-    }
+      return /* @__PURE__ */ jsx(CollectionItemSlotImpl, {
+        ...{ [ITEM_DATA_ATTR]: "" },
+        ref: composedRefs,
+        children,
+      });
+    },
   );
   CollectionItemSlot.displayName = ITEM_SLOT_NAME;
   function useCollection2(scope) {
@@ -10879,22 +12425,34 @@ function createCollection(name) {
     const getItems = React__default.useCallback(() => {
       const collectionNode = context.collectionRef.current;
       if (!collectionNode) return [];
-      const orderedNodes = Array.from(collectionNode.querySelectorAll(`[${ITEM_DATA_ATTR}]`));
+      const orderedNodes = Array.from(
+        collectionNode.querySelectorAll(`[${ITEM_DATA_ATTR}]`),
+      );
       const items = Array.from(context.itemMap.values());
       const orderedItems = items.sort(
-        (a, b2) => orderedNodes.indexOf(a.ref.current) - orderedNodes.indexOf(b2.ref.current)
+        (a, b2) =>
+          orderedNodes.indexOf(a.ref.current) -
+          orderedNodes.indexOf(b2.ref.current),
       );
       return orderedItems;
     }, [context.collectionRef, context.itemMap]);
     return getItems;
   }
   return [
-    { Provider: CollectionProvider, Slot: CollectionSlot, ItemSlot: CollectionItemSlot },
+    {
+      Provider: CollectionProvider,
+      Slot: CollectionSlot,
+      ItemSlot: CollectionItemSlot,
+    },
     useCollection2,
-    createCollectionScope2
+    createCollectionScope2,
   ];
 }
-function composeEventHandlers(originalEventHandler, ourEventHandler, { checkForDefaultPrevented = true } = {}) {
+function composeEventHandlers(
+  originalEventHandler,
+  ourEventHandler,
+  { checkForDefaultPrevented = true } = {},
+) {
   return function handleEvent(event) {
     originalEventHandler?.(event);
     if (checkForDefaultPrevented === false || !event.defaultPrevented) {
@@ -10902,20 +12460,20 @@ function composeEventHandlers(originalEventHandler, ourEventHandler, { checkForD
     }
   };
 }
-var useLayoutEffect2 = globalThis?.document ? React.useLayoutEffect : () => {
-};
-var useInsertionEffect = React[" useInsertionEffect ".trim().toString()] || useLayoutEffect2;
+var useLayoutEffect2 = globalThis?.document ? React.useLayoutEffect : () => {};
+var useInsertionEffect =
+  React[" useInsertionEffect ".trim().toString()] || useLayoutEffect2;
 function useControllableState({
   prop,
   defaultProp,
-  onChange = () => {
-  },
-  caller
+  onChange = () => {},
+  caller,
 }) {
-  const [uncontrolledProp, setUncontrolledProp, onChangeRef] = useUncontrolledState({
-    defaultProp,
-    onChange
-  });
+  const [uncontrolledProp, setUncontrolledProp, onChangeRef] =
+    useUncontrolledState({
+      defaultProp,
+      onChange,
+    });
   const isControlled = prop !== void 0;
   const value = isControlled ? prop : uncontrolledProp;
   {
@@ -10926,7 +12484,7 @@ function useControllableState({
         const from = wasControlled ? "controlled" : "uncontrolled";
         const to = isControlled ? "controlled" : "uncontrolled";
         console.warn(
-          `${caller} is changing from ${from} to ${to}. Components should not switch from controlled to uncontrolled (or vice versa). Decide between using a controlled or uncontrolled value for the lifetime of the component.`
+          `${caller} is changing from ${from} to ${to}. Components should not switch from controlled to uncontrolled (or vice versa). Decide between using a controlled or uncontrolled value for the lifetime of the component.`,
         );
       }
       isControlledRef.current = isControlled;
@@ -10943,14 +12501,11 @@ function useControllableState({
         setUncontrolledProp(nextValue);
       }
     },
-    [isControlled, prop, setUncontrolledProp, onChangeRef]
+    [isControlled, prop, setUncontrolledProp, onChangeRef],
   );
   return [value, setValue];
 }
-function useUncontrolledState({
-  defaultProp,
-  onChange
-}) {
+function useUncontrolledState({ defaultProp, onChange }) {
   const [value, setValue] = React.useState(defaultProp);
   const prevValueRef = React.useRef(value);
   const onChangeRef = React.useRef(onChange);
@@ -10977,10 +12532,15 @@ function useStateMachine(initialState, machine) {
 var Presence = (props) => {
   const { present, children } = props;
   const presence = usePresence(present);
-  const child = typeof children === "function" ? children({ present: presence.isPresent }) : React.Children.only(children);
+  const child =
+    typeof children === "function"
+      ? children({ present: presence.isPresent })
+      : React.Children.only(children);
   const ref = useComposedRefs(presence.ref, getElementRef(child));
   const forceMount = typeof children === "function";
-  return forceMount || presence.isPresent ? React.cloneElement(child, { ref }) : null;
+  return forceMount || presence.isPresent
+    ? React.cloneElement(child, { ref })
+    : null;
 };
 Presence.displayName = "Presence";
 function usePresence(present) {
@@ -10992,19 +12552,20 @@ function usePresence(present) {
   const [state, send] = useStateMachine(initialState, {
     mounted: {
       UNMOUNT: "unmounted",
-      ANIMATION_OUT: "unmountSuspended"
+      ANIMATION_OUT: "unmountSuspended",
     },
     unmountSuspended: {
       MOUNT: "mounted",
-      ANIMATION_END: "unmounted"
+      ANIMATION_END: "unmounted",
     },
     unmounted: {
-      MOUNT: "mounted"
-    }
+      MOUNT: "mounted",
+    },
   });
   React.useEffect(() => {
     const currentAnimationName = getAnimationName(stylesRef.current);
-    prevAnimationNameRef.current = state === "mounted" ? currentAnimationName : "none";
+    prevAnimationNameRef.current =
+      state === "mounted" ? currentAnimationName : "none";
   }, [state]);
   useLayoutEffect2(() => {
     const styles = stylesRef.current;
@@ -11015,7 +12576,10 @@ function usePresence(present) {
       const currentAnimationName = getAnimationName(styles);
       if (present) {
         send("MOUNT");
-      } else if (currentAnimationName === "none" || styles?.display === "none") {
+      } else if (
+        currentAnimationName === "none" ||
+        styles?.display === "none"
+      ) {
         send("UNMOUNT");
       } else {
         const isAnimating = prevAnimationName !== currentAnimationName;
@@ -11034,7 +12598,9 @@ function usePresence(present) {
       const ownerWindow = node.ownerDocument.defaultView ?? window;
       const handleAnimationEnd = (event) => {
         const currentAnimationName = getAnimationName(stylesRef.current);
-        const isCurrentAnimation = currentAnimationName.includes(CSS.escape(event.animationName));
+        const isCurrentAnimation = currentAnimationName.includes(
+          CSS.escape(event.animationName),
+        );
         if (event.target === node && isCurrentAnimation) {
           send("ANIMATION_END");
           if (!prevPresentRef.current) {
@@ -11071,7 +12637,7 @@ function usePresence(present) {
     ref: React.useCallback((node2) => {
       stylesRef.current = node2 ? getComputedStyle(node2) : null;
       setNode(node2);
-    }, [])
+    }, []),
   };
 }
 function getAnimationName(styles) {
@@ -11109,9 +12675,17 @@ function useCallbackRef$1(callback) {
   React.useEffect(() => {
     callbackRef.current = callback;
   });
-  return React.useMemo(() => (...args) => callbackRef.current?.(...args), []);
+  return React.useMemo(
+    () =>
+      (...args) =>
+        callbackRef.current?.(...args),
+    [],
+  );
 }
-function useEscapeKeydown(onEscapeKeyDownProp, ownerDocument = globalThis?.document) {
+function useEscapeKeydown(
+  onEscapeKeyDownProp,
+  ownerDocument = globalThis?.document,
+) {
   const onEscapeKeyDown = useCallbackRef$1(onEscapeKeyDownProp);
   React.useEffect(() => {
     const handleKeyDown = (event) => {
@@ -11120,7 +12694,10 @@ function useEscapeKeydown(onEscapeKeyDownProp, ownerDocument = globalThis?.docum
       }
     };
     ownerDocument.addEventListener("keydown", handleKeyDown, { capture: true });
-    return () => ownerDocument.removeEventListener("keydown", handleKeyDown, { capture: true });
+    return () =>
+      ownerDocument.removeEventListener("keydown", handleKeyDown, {
+        capture: true,
+      });
   }, [onEscapeKeyDown, ownerDocument]);
 }
 var DISMISSABLE_LAYER_NAME = "DismissableLayer";
@@ -11131,104 +12708,122 @@ var originalBodyPointerEvents;
 var DismissableLayerContext = React.createContext({
   layers: /* @__PURE__ */ new Set(),
   layersWithOutsidePointerEventsDisabled: /* @__PURE__ */ new Set(),
-  branches: /* @__PURE__ */ new Set()
+  branches: /* @__PURE__ */ new Set(),
 });
-var DismissableLayer = React.forwardRef(
-  (props, forwardedRef) => {
-    const {
-      disableOutsidePointerEvents = false,
-      onEscapeKeyDown,
-      onPointerDownOutside,
-      onFocusOutside,
-      onInteractOutside,
-      onDismiss,
-      ...layerProps
-    } = props;
-    const context = React.useContext(DismissableLayerContext);
-    const [node, setNode] = React.useState(null);
-    const ownerDocument = node?.ownerDocument ?? globalThis?.document;
-    const [, force] = React.useState({});
-    const composedRefs = useComposedRefs(forwardedRef, (node2) => setNode(node2));
-    const layers = Array.from(context.layers);
-    const [highestLayerWithOutsidePointerEventsDisabled] = [...context.layersWithOutsidePointerEventsDisabled].slice(-1);
-    const highestLayerWithOutsidePointerEventsDisabledIndex = layers.indexOf(highestLayerWithOutsidePointerEventsDisabled);
-    const index2 = node ? layers.indexOf(node) : -1;
-    const isBodyPointerEventsDisabled = context.layersWithOutsidePointerEventsDisabled.size > 0;
-    const isPointerEventsEnabled = index2 >= highestLayerWithOutsidePointerEventsDisabledIndex;
-    const pointerDownOutside = usePointerDownOutside((event) => {
-      const target = event.target;
-      const isPointerDownOnBranch = [...context.branches].some((branch) => branch.contains(target));
-      if (!isPointerEventsEnabled || isPointerDownOnBranch) return;
-      onPointerDownOutside?.(event);
-      onInteractOutside?.(event);
-      if (!event.defaultPrevented) onDismiss?.();
-    }, ownerDocument);
-    const focusOutside = useFocusOutside((event) => {
-      const target = event.target;
-      const isFocusInBranch = [...context.branches].some((branch) => branch.contains(target));
-      if (isFocusInBranch) return;
-      onFocusOutside?.(event);
-      onInteractOutside?.(event);
-      if (!event.defaultPrevented) onDismiss?.();
-    }, ownerDocument);
-    useEscapeKeydown((event) => {
-      const isHighestLayer = index2 === context.layers.size - 1;
-      if (!isHighestLayer) return;
-      onEscapeKeyDown?.(event);
-      if (!event.defaultPrevented && onDismiss) {
-        event.preventDefault();
-        onDismiss();
-      }
-    }, ownerDocument);
-    React.useEffect(() => {
-      if (!node) return;
-      if (disableOutsidePointerEvents) {
-        if (context.layersWithOutsidePointerEventsDisabled.size === 0) {
-          originalBodyPointerEvents = ownerDocument.body.style.pointerEvents;
-          ownerDocument.body.style.pointerEvents = "none";
-        }
-        context.layersWithOutsidePointerEventsDisabled.add(node);
-      }
-      context.layers.add(node);
-      dispatchUpdate();
-      return () => {
-        if (disableOutsidePointerEvents && context.layersWithOutsidePointerEventsDisabled.size === 1) {
-          ownerDocument.body.style.pointerEvents = originalBodyPointerEvents;
-        }
-      };
-    }, [node, ownerDocument, disableOutsidePointerEvents, context]);
-    React.useEffect(() => {
-      return () => {
-        if (!node) return;
-        context.layers.delete(node);
-        context.layersWithOutsidePointerEventsDisabled.delete(node);
-        dispatchUpdate();
-      };
-    }, [node, context]);
-    React.useEffect(() => {
-      const handleUpdate = () => force({});
-      document.addEventListener(CONTEXT_UPDATE, handleUpdate);
-      return () => document.removeEventListener(CONTEXT_UPDATE, handleUpdate);
-    }, []);
-    return /* @__PURE__ */ jsx(
-      Primitive.div,
-      {
-        ...layerProps,
-        ref: composedRefs,
-        style: {
-          pointerEvents: isBodyPointerEventsDisabled ? isPointerEventsEnabled ? "auto" : "none" : void 0,
-          ...props.style
-        },
-        onFocusCapture: composeEventHandlers(props.onFocusCapture, focusOutside.onFocusCapture),
-        onBlurCapture: composeEventHandlers(props.onBlurCapture, focusOutside.onBlurCapture),
-        onPointerDownCapture: composeEventHandlers(
-          props.onPointerDownCapture,
-          pointerDownOutside.onPointerDownCapture
-        )
-      }
+var DismissableLayer = React.forwardRef((props, forwardedRef) => {
+  const {
+    disableOutsidePointerEvents = false,
+    onEscapeKeyDown,
+    onPointerDownOutside,
+    onFocusOutside,
+    onInteractOutside,
+    onDismiss,
+    ...layerProps
+  } = props;
+  const context = React.useContext(DismissableLayerContext);
+  const [node, setNode] = React.useState(null);
+  const ownerDocument = node?.ownerDocument ?? globalThis?.document;
+  const [, force] = React.useState({});
+  const composedRefs = useComposedRefs(forwardedRef, (node2) => setNode(node2));
+  const layers = Array.from(context.layers);
+  const [highestLayerWithOutsidePointerEventsDisabled] = [
+    ...context.layersWithOutsidePointerEventsDisabled,
+  ].slice(-1);
+  const highestLayerWithOutsidePointerEventsDisabledIndex = layers.indexOf(
+    highestLayerWithOutsidePointerEventsDisabled,
+  );
+  const index2 = node ? layers.indexOf(node) : -1;
+  const isBodyPointerEventsDisabled =
+    context.layersWithOutsidePointerEventsDisabled.size > 0;
+  const isPointerEventsEnabled =
+    index2 >= highestLayerWithOutsidePointerEventsDisabledIndex;
+  const pointerDownOutside = usePointerDownOutside((event) => {
+    const target = event.target;
+    const isPointerDownOnBranch = [...context.branches].some((branch) =>
+      branch.contains(target),
     );
-  }
-);
+    if (!isPointerEventsEnabled || isPointerDownOnBranch) return;
+    onPointerDownOutside?.(event);
+    onInteractOutside?.(event);
+    if (!event.defaultPrevented) onDismiss?.();
+  }, ownerDocument);
+  const focusOutside = useFocusOutside((event) => {
+    const target = event.target;
+    const isFocusInBranch = [...context.branches].some((branch) =>
+      branch.contains(target),
+    );
+    if (isFocusInBranch) return;
+    onFocusOutside?.(event);
+    onInteractOutside?.(event);
+    if (!event.defaultPrevented) onDismiss?.();
+  }, ownerDocument);
+  useEscapeKeydown((event) => {
+    const isHighestLayer = index2 === context.layers.size - 1;
+    if (!isHighestLayer) return;
+    onEscapeKeyDown?.(event);
+    if (!event.defaultPrevented && onDismiss) {
+      event.preventDefault();
+      onDismiss();
+    }
+  }, ownerDocument);
+  React.useEffect(() => {
+    if (!node) return;
+    if (disableOutsidePointerEvents) {
+      if (context.layersWithOutsidePointerEventsDisabled.size === 0) {
+        originalBodyPointerEvents = ownerDocument.body.style.pointerEvents;
+        ownerDocument.body.style.pointerEvents = "none";
+      }
+      context.layersWithOutsidePointerEventsDisabled.add(node);
+    }
+    context.layers.add(node);
+    dispatchUpdate();
+    return () => {
+      if (
+        disableOutsidePointerEvents &&
+        context.layersWithOutsidePointerEventsDisabled.size === 1
+      ) {
+        ownerDocument.body.style.pointerEvents = originalBodyPointerEvents;
+      }
+    };
+  }, [node, ownerDocument, disableOutsidePointerEvents, context]);
+  React.useEffect(() => {
+    return () => {
+      if (!node) return;
+      context.layers.delete(node);
+      context.layersWithOutsidePointerEventsDisabled.delete(node);
+      dispatchUpdate();
+    };
+  }, [node, context]);
+  React.useEffect(() => {
+    const handleUpdate = () => force({});
+    document.addEventListener(CONTEXT_UPDATE, handleUpdate);
+    return () => document.removeEventListener(CONTEXT_UPDATE, handleUpdate);
+  }, []);
+  return /* @__PURE__ */ jsx(Primitive.div, {
+    ...layerProps,
+    ref: composedRefs,
+    style: {
+      pointerEvents: isBodyPointerEventsDisabled
+        ? isPointerEventsEnabled
+          ? "auto"
+          : "none"
+        : void 0,
+      ...props.style,
+    },
+    onFocusCapture: composeEventHandlers(
+      props.onFocusCapture,
+      focusOutside.onFocusCapture,
+    ),
+    onBlurCapture: composeEventHandlers(
+      props.onBlurCapture,
+      focusOutside.onBlurCapture,
+    ),
+    onPointerDownCapture: composeEventHandlers(
+      props.onPointerDownCapture,
+      pointerDownOutside.onPointerDownCapture,
+    ),
+  });
+});
 DismissableLayer.displayName = DISMISSABLE_LAYER_NAME;
 var BRANCH_NAME = "DismissableLayerBranch";
 var DismissableLayerBranch = React.forwardRef((props, forwardedRef) => {
@@ -11247,27 +12842,31 @@ var DismissableLayerBranch = React.forwardRef((props, forwardedRef) => {
   return /* @__PURE__ */ jsx(Primitive.div, { ...props, ref: composedRefs });
 });
 DismissableLayerBranch.displayName = BRANCH_NAME;
-function usePointerDownOutside(onPointerDownOutside, ownerDocument = globalThis?.document) {
+function usePointerDownOutside(
+  onPointerDownOutside,
+  ownerDocument = globalThis?.document,
+) {
   const handlePointerDownOutside = useCallbackRef$1(onPointerDownOutside);
   const isPointerInsideReactTreeRef = React.useRef(false);
-  const handleClickRef = React.useRef(() => {
-  });
+  const handleClickRef = React.useRef(() => {});
   React.useEffect(() => {
     const handlePointerDown = (event) => {
       if (event.target && !isPointerInsideReactTreeRef.current) {
-        let handleAndDispatchPointerDownOutsideEvent2 = function() {
+        let handleAndDispatchPointerDownOutsideEvent2 = function () {
           handleAndDispatchCustomEvent(
             POINTER_DOWN_OUTSIDE,
             handlePointerDownOutside,
             eventDetail,
-            { discrete: true }
+            { discrete: true },
           );
         };
         const eventDetail = { originalEvent: event };
         if (event.pointerType === "touch") {
           ownerDocument.removeEventListener("click", handleClickRef.current);
           handleClickRef.current = handleAndDispatchPointerDownOutsideEvent2;
-          ownerDocument.addEventListener("click", handleClickRef.current, { once: true });
+          ownerDocument.addEventListener("click", handleClickRef.current, {
+            once: true,
+          });
         } else {
           handleAndDispatchPointerDownOutsideEvent2();
         }
@@ -11287,7 +12886,7 @@ function usePointerDownOutside(onPointerDownOutside, ownerDocument = globalThis?
   }, [ownerDocument, handlePointerDownOutside]);
   return {
     // ensures we check React component tree (not just DOM tree)
-    onPointerDownCapture: () => isPointerInsideReactTreeRef.current = true
+    onPointerDownCapture: () => (isPointerInsideReactTreeRef.current = true),
   };
 }
 function useFocusOutside(onFocusOutside, ownerDocument = globalThis?.document) {
@@ -11297,17 +12896,22 @@ function useFocusOutside(onFocusOutside, ownerDocument = globalThis?.document) {
     const handleFocus = (event) => {
       if (event.target && !isFocusInsideReactTreeRef.current) {
         const eventDetail = { originalEvent: event };
-        handleAndDispatchCustomEvent(FOCUS_OUTSIDE, handleFocusOutside, eventDetail, {
-          discrete: false
-        });
+        handleAndDispatchCustomEvent(
+          FOCUS_OUTSIDE,
+          handleFocusOutside,
+          eventDetail,
+          {
+            discrete: false,
+          },
+        );
       }
     };
     ownerDocument.addEventListener("focusin", handleFocus);
     return () => ownerDocument.removeEventListener("focusin", handleFocus);
   }, [ownerDocument, handleFocusOutside]);
   return {
-    onFocusCapture: () => isFocusInsideReactTreeRef.current = true,
-    onBlurCapture: () => isFocusInsideReactTreeRef.current = false
+    onFocusCapture: () => (isFocusInsideReactTreeRef.current = true),
+    onBlurCapture: () => (isFocusInsideReactTreeRef.current = false),
   };
 }
 function dispatchUpdate() {
@@ -11316,7 +12920,11 @@ function dispatchUpdate() {
 }
 function handleAndDispatchCustomEvent(name, handler2, detail, { discrete }) {
   const target = detail.originalEvent.target;
-  const event = new CustomEvent(name, { bubbles: false, cancelable: true, detail });
+  const event = new CustomEvent(name, {
+    bubbles: false,
+    cancelable: true,
+    detail,
+  });
   if (handler2) target.addEventListener(name, handler2, { once: true });
   if (discrete) {
     dispatchDiscreteCustomEvent(target, event);
@@ -11340,7 +12948,9 @@ var FocusScope = React.forwardRef((props, forwardedRef) => {
   const onMountAutoFocus = useCallbackRef$1(onMountAutoFocusProp);
   const onUnmountAutoFocus = useCallbackRef$1(onUnmountAutoFocusProp);
   const lastFocusedElementRef = React.useRef(null);
-  const composedRefs = useComposedRefs(forwardedRef, (node) => setContainer(node));
+  const composedRefs = useComposedRefs(forwardedRef, (node) =>
+    setContainer(node),
+  );
   const focusScope = React.useRef({
     paused: false,
     pause() {
@@ -11348,36 +12958,39 @@ var FocusScope = React.forwardRef((props, forwardedRef) => {
     },
     resume() {
       this.paused = false;
-    }
+    },
   }).current;
   React.useEffect(() => {
     if (trapped) {
-      let handleFocusIn2 = function(event) {
-        if (focusScope.paused || !container) return;
-        const target = event.target;
-        if (container.contains(target)) {
-          lastFocusedElementRef.current = target;
-        } else {
-          focus(lastFocusedElementRef.current, { select: true });
-        }
-      }, handleFocusOut2 = function(event) {
-        if (focusScope.paused || !container) return;
-        const relatedTarget = event.relatedTarget;
-        if (relatedTarget === null) return;
-        if (!container.contains(relatedTarget)) {
-          focus(lastFocusedElementRef.current, { select: true });
-        }
-      }, handleMutations2 = function(mutations) {
-        const focusedElement = document.activeElement;
-        if (focusedElement !== document.body) return;
-        for (const mutation of mutations) {
-          if (mutation.removedNodes.length > 0) focus(container);
-        }
-      };
+      let handleFocusIn2 = function (event) {
+          if (focusScope.paused || !container) return;
+          const target = event.target;
+          if (container.contains(target)) {
+            lastFocusedElementRef.current = target;
+          } else {
+            focus(lastFocusedElementRef.current, { select: true });
+          }
+        },
+        handleFocusOut2 = function (event) {
+          if (focusScope.paused || !container) return;
+          const relatedTarget = event.relatedTarget;
+          if (relatedTarget === null) return;
+          if (!container.contains(relatedTarget)) {
+            focus(lastFocusedElementRef.current, { select: true });
+          }
+        },
+        handleMutations2 = function (mutations) {
+          const focusedElement = document.activeElement;
+          if (focusedElement !== document.body) return;
+          for (const mutation of mutations) {
+            if (mutation.removedNodes.length > 0) focus(container);
+          }
+        };
       document.addEventListener("focusin", handleFocusIn2);
       document.addEventListener("focusout", handleFocusOut2);
       const mutationObserver = new MutationObserver(handleMutations2);
-      if (container) mutationObserver.observe(container, { childList: true, subtree: true });
+      if (container)
+        mutationObserver.observe(container, { childList: true, subtree: true });
       return () => {
         document.removeEventListener("focusin", handleFocusIn2);
         document.removeEventListener("focusout", handleFocusOut2);
@@ -11395,7 +13008,9 @@ var FocusScope = React.forwardRef((props, forwardedRef) => {
         container.addEventListener(AUTOFOCUS_ON_MOUNT, onMountAutoFocus);
         container.dispatchEvent(mountEvent);
         if (!mountEvent.defaultPrevented) {
-          focusFirst$2(removeLinks(getTabbableCandidates(container)), { select: true });
+          focusFirst$2(removeLinks(getTabbableCandidates(container)), {
+            select: true,
+          });
           if (document.activeElement === previouslyFocusedElement) {
             focus(container);
           }
@@ -11404,13 +13019,19 @@ var FocusScope = React.forwardRef((props, forwardedRef) => {
       return () => {
         container.removeEventListener(AUTOFOCUS_ON_MOUNT, onMountAutoFocus);
         setTimeout(() => {
-          const unmountEvent = new CustomEvent(AUTOFOCUS_ON_UNMOUNT, EVENT_OPTIONS$1);
+          const unmountEvent = new CustomEvent(
+            AUTOFOCUS_ON_UNMOUNT,
+            EVENT_OPTIONS$1,
+          );
           container.addEventListener(AUTOFOCUS_ON_UNMOUNT, onUnmountAutoFocus);
           container.dispatchEvent(unmountEvent);
           if (!unmountEvent.defaultPrevented) {
             focus(previouslyFocusedElement ?? document.body, { select: true });
           }
-          container.removeEventListener(AUTOFOCUS_ON_UNMOUNT, onUnmountAutoFocus);
+          container.removeEventListener(
+            AUTOFOCUS_ON_UNMOUNT,
+            onUnmountAutoFocus,
+          );
           focusScopesStack.remove(focusScope);
         }, 0);
       };
@@ -11420,7 +13041,11 @@ var FocusScope = React.forwardRef((props, forwardedRef) => {
     (event) => {
       if (!loop && !trapped) return;
       if (focusScope.paused) return;
-      const isTabKey = event.key === "Tab" && !event.altKey && !event.ctrlKey && !event.metaKey;
+      const isTabKey =
+        event.key === "Tab" &&
+        !event.altKey &&
+        !event.ctrlKey &&
+        !event.metaKey;
       const focusedElement = document.activeElement;
       if (isTabKey && focusedElement) {
         const container2 = event.currentTarget;
@@ -11439,9 +13064,14 @@ var FocusScope = React.forwardRef((props, forwardedRef) => {
         }
       }
     },
-    [loop, trapped, focusScope.paused]
+    [loop, trapped, focusScope.paused],
   );
-  return /* @__PURE__ */ jsx(Primitive.div, { tabIndex: -1, ...scopeProps, ref: composedRefs, onKeyDown: handleKeyDown });
+  return /* @__PURE__ */ jsx(Primitive.div, {
+    tabIndex: -1,
+    ...scopeProps,
+    ref: composedRefs,
+    onKeyDown: handleKeyDown,
+  });
 });
 FocusScope.displayName = FOCUS_SCOPE_NAME;
 function focusFirst$2(candidates, { select: select2 = false } = {}) {
@@ -11462,9 +13092,12 @@ function getTabbableCandidates(container) {
   const walker = document.createTreeWalker(container, NodeFilter.SHOW_ELEMENT, {
     acceptNode: (node) => {
       const isHiddenInput = node.tagName === "INPUT" && node.type === "hidden";
-      if (node.disabled || node.hidden || isHiddenInput) return NodeFilter.FILTER_SKIP;
-      return node.tabIndex >= 0 ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
-    }
+      if (node.disabled || node.hidden || isHiddenInput)
+        return NodeFilter.FILTER_SKIP;
+      return node.tabIndex >= 0
+        ? NodeFilter.FILTER_ACCEPT
+        : NodeFilter.FILTER_SKIP;
+    },
   });
   while (walker.nextNode()) nodes.push(walker.currentNode);
   return nodes;
@@ -11490,7 +13123,11 @@ function focus(element, { select: select2 = false } = {}) {
   if (element && element.focus) {
     const previouslyFocusedElement = document.activeElement;
     element.focus({ preventScroll: true });
-    if (element !== previouslyFocusedElement && isSelectableInput(element) && select2)
+    if (
+      element !== previouslyFocusedElement &&
+      isSelectableInput(element) &&
+      select2
+    )
       element.select();
   }
 }
@@ -11509,7 +13146,7 @@ function createFocusScopesStack() {
     remove(focusScope) {
       stack = arrayRemove(stack, focusScope);
       stack[0]?.resume();
-    }
+    },
   };
 }
 function arrayRemove(array, item) {
@@ -11528,20 +13165,36 @@ var Portal$1 = React.forwardRef((props, forwardedRef) => {
   const { container: containerProp, ...portalProps } = props;
   const [mounted, setMounted] = React.useState(false);
   useLayoutEffect2(() => setMounted(true), []);
-  const container = containerProp || mounted && globalThis?.document?.body;
-  return container ? ReactDOM__default.createPortal(/* @__PURE__ */ jsx(Primitive.div, { ...portalProps, ref: forwardedRef }), container) : null;
+  const container = containerProp || (mounted && globalThis?.document?.body);
+  return container
+    ? ReactDOM__default.createPortal(
+        /* @__PURE__ */ jsx(Primitive.div, {
+          ...portalProps,
+          ref: forwardedRef,
+        }),
+        container,
+      )
+    : null;
 });
 Portal$1.displayName = PORTAL_NAME$2;
 var count = 0;
 function useFocusGuards() {
   React.useEffect(() => {
     const edgeGuards = document.querySelectorAll("[data-radix-focus-guard]");
-    document.body.insertAdjacentElement("afterbegin", edgeGuards[0] ?? createFocusGuard());
-    document.body.insertAdjacentElement("beforeend", edgeGuards[1] ?? createFocusGuard());
+    document.body.insertAdjacentElement(
+      "afterbegin",
+      edgeGuards[0] ?? createFocusGuard(),
+    );
+    document.body.insertAdjacentElement(
+      "beforeend",
+      edgeGuards[1] ?? createFocusGuard(),
+    );
     count++;
     return () => {
       if (count === 1) {
-        document.querySelectorAll("[data-radix-focus-guard]").forEach((node) => node.remove());
+        document
+          .querySelectorAll("[data-radix-focus-guard]")
+          .forEach((node) => node.remove());
       }
       count--;
     };
@@ -11557,16 +13210,27 @@ function createFocusGuard() {
   element.style.pointerEvents = "none";
   return element;
 }
-var commonjsGlobal = typeof globalThis !== "undefined" ? globalThis : typeof window !== "undefined" ? window : typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : {};
+var commonjsGlobal =
+  typeof globalThis !== "undefined"
+    ? globalThis
+    : typeof window !== "undefined"
+      ? window
+      : typeof global !== "undefined"
+        ? global
+        : typeof self !== "undefined"
+          ? self
+          : {};
 function getDefaultExportFromCjs(x) {
-  return x && x.__esModule && Object.prototype.hasOwnProperty.call(x, "default") ? x["default"] : x;
+  return x && x.__esModule && Object.prototype.hasOwnProperty.call(x, "default")
+    ? x["default"]
+    : x;
 }
 var tslib$1 = { exports: {} };
 var hasRequiredTslib;
 function requireTslib() {
   if (hasRequiredTslib) return tslib$1.exports;
   hasRequiredTslib = 1;
-  (function(module) {
+  (function (module) {
     var __extends2;
     var __assign2;
     var __rest2;
@@ -11599,8 +13263,15 @@ function requireTslib() {
     var __addDisposableResource2;
     var __disposeResources2;
     var __rewriteRelativeImportExtension2;
-    (function(factory) {
-      var root = typeof commonjsGlobal === "object" ? commonjsGlobal : typeof self === "object" ? self : typeof this === "object" ? this : {};
+    (function (factory) {
+      var root =
+        typeof commonjsGlobal === "object"
+          ? commonjsGlobal
+          : typeof self === "object"
+            ? self
+            : typeof this === "object"
+              ? this
+              : {};
       {
         factory(createExporter(root, createExporter(module.exports)));
       }
@@ -11612,79 +13283,148 @@ function requireTslib() {
             exports.__esModule = true;
           }
         }
-        return function(id, v) {
-          return exports[id] = previous ? previous(id, v) : v;
+        return function (id, v) {
+          return (exports[id] = previous ? previous(id, v) : v);
         };
       }
-    })(function(exporter) {
-      var extendStatics = Object.setPrototypeOf || { __proto__: [] } instanceof Array && function(d, b2) {
-        d.__proto__ = b2;
-      } || function(d, b2) {
-        for (var p in b2) if (Object.prototype.hasOwnProperty.call(b2, p)) d[p] = b2[p];
-      };
-      __extends2 = function(d, b2) {
+    })(function (exporter) {
+      var extendStatics =
+        Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array &&
+          function (d, b2) {
+            d.__proto__ = b2;
+          }) ||
+        function (d, b2) {
+          for (var p in b2)
+            if (Object.prototype.hasOwnProperty.call(b2, p)) d[p] = b2[p];
+        };
+      __extends2 = function (d, b2) {
         if (typeof b2 !== "function" && b2 !== null)
-          throw new TypeError("Class extends value " + String(b2) + " is not a constructor or null");
+          throw new TypeError(
+            "Class extends value " +
+              String(b2) +
+              " is not a constructor or null",
+          );
         extendStatics(d, b2);
         function __() {
           this.constructor = d;
         }
-        d.prototype = b2 === null ? Object.create(b2) : (__.prototype = b2.prototype, new __());
+        d.prototype =
+          b2 === null
+            ? Object.create(b2)
+            : ((__.prototype = b2.prototype), new __());
       };
-      __assign2 = Object.assign || function(t2) {
-        for (var s, i = 1, n = arguments.length; i < n; i++) {
-          s = arguments[i];
-          for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t2[p] = s[p];
-        }
-        return t2;
-      };
-      __rest2 = function(s, e) {
+      __assign2 =
+        Object.assign ||
+        function (t2) {
+          for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s)
+              if (Object.prototype.hasOwnProperty.call(s, p)) t2[p] = s[p];
+          }
+          return t2;
+        };
+      __rest2 = function (s, e) {
         var t2 = {};
-        for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
-          t2[p] = s[p];
+        for (var p in s)
+          if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+            t2[p] = s[p];
         if (s != null && typeof Object.getOwnPropertySymbols === "function")
-          for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
-            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+          for (
+            var i = 0, p = Object.getOwnPropertySymbols(s);
+            i < p.length;
+            i++
+          ) {
+            if (
+              e.indexOf(p[i]) < 0 &&
+              Object.prototype.propertyIsEnumerable.call(s, p[i])
+            )
               t2[p[i]] = s[p[i]];
           }
         return t2;
       };
-      __decorate2 = function(decorators, target, key, desc2) {
-        var c = arguments.length, r2 = c < 3 ? target : desc2 === null ? desc2 = Object.getOwnPropertyDescriptor(target, key) : desc2, d;
-        if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r2 = Reflect.decorate(decorators, target, key, desc2);
-        else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r2 = (c < 3 ? d(r2) : c > 3 ? d(target, key, r2) : d(target, key)) || r2;
-        return c > 3 && r2 && Object.defineProperty(target, key, r2), r2;
+      __decorate2 = function (decorators, target, key, desc2) {
+        var c = arguments.length,
+          r2 =
+            c < 3
+              ? target
+              : desc2 === null
+                ? (desc2 = Object.getOwnPropertyDescriptor(target, key))
+                : desc2,
+          d;
+        if (
+          typeof Reflect === "object" &&
+          typeof Reflect.decorate === "function"
+        )
+          r2 = Reflect.decorate(decorators, target, key, desc2);
+        else
+          for (var i = decorators.length - 1; i >= 0; i--)
+            if ((d = decorators[i]))
+              r2 =
+                (c < 3 ? d(r2) : c > 3 ? d(target, key, r2) : d(target, key)) ||
+                r2;
+        return (c > 3 && r2 && Object.defineProperty(target, key, r2), r2);
       };
-      __param2 = function(paramIndex, decorator) {
-        return function(target, key) {
+      __param2 = function (paramIndex, decorator) {
+        return function (target, key) {
           decorator(target, key, paramIndex);
         };
       };
-      __esDecorate2 = function(ctor, descriptorIn, decorators, contextIn, initializers, extraInitializers) {
+      __esDecorate2 = function (
+        ctor,
+        descriptorIn,
+        decorators,
+        contextIn,
+        initializers,
+        extraInitializers,
+      ) {
         function accept(f) {
-          if (f !== void 0 && typeof f !== "function") throw new TypeError("Function expected");
+          if (f !== void 0 && typeof f !== "function")
+            throw new TypeError("Function expected");
           return f;
         }
-        var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
-        var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
-        var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
-        var _, done = false;
+        var kind = contextIn.kind,
+          key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
+        var target =
+          !descriptorIn && ctor
+            ? contextIn["static"]
+              ? ctor
+              : ctor.prototype
+            : null;
+        var descriptor =
+          descriptorIn ||
+          (target
+            ? Object.getOwnPropertyDescriptor(target, contextIn.name)
+            : {});
+        var _,
+          done = false;
         for (var i = decorators.length - 1; i >= 0; i--) {
           var context = {};
-          for (var p in contextIn) context[p] = p === "access" ? {} : contextIn[p];
-          for (var p in contextIn.access) context.access[p] = contextIn.access[p];
-          context.addInitializer = function(f) {
-            if (done) throw new TypeError("Cannot add initializers after decoration has completed");
+          for (var p in contextIn)
+            context[p] = p === "access" ? {} : contextIn[p];
+          for (var p in contextIn.access)
+            context.access[p] = contextIn.access[p];
+          context.addInitializer = function (f) {
+            if (done)
+              throw new TypeError(
+                "Cannot add initializers after decoration has completed",
+              );
             extraInitializers.push(accept(f || null));
           };
-          var result = (0, decorators[i])(kind === "accessor" ? { get: descriptor.get, set: descriptor.set } : descriptor[key], context);
+          var result = (0, decorators[i])(
+            kind === "accessor"
+              ? { get: descriptor.get, set: descriptor.set }
+              : descriptor[key],
+            context,
+          );
           if (kind === "accessor") {
             if (result === void 0) continue;
-            if (result === null || typeof result !== "object") throw new TypeError("Object expected");
-            if (_ = accept(result.get)) descriptor.get = _;
-            if (_ = accept(result.set)) descriptor.set = _;
-            if (_ = accept(result.init)) initializers.unshift(_);
-          } else if (_ = accept(result)) {
+            if (result === null || typeof result !== "object")
+              throw new TypeError("Object expected");
+            if ((_ = accept(result.get))) descriptor.get = _;
+            if ((_ = accept(result.set))) descriptor.set = _;
+            if ((_ = accept(result.init))) initializers.unshift(_);
+          } else if ((_ = accept(result))) {
             if (kind === "field") initializers.unshift(_);
             else descriptor[key] = _;
           }
@@ -11692,30 +13432,42 @@ function requireTslib() {
         if (target) Object.defineProperty(target, contextIn.name, descriptor);
         done = true;
       };
-      __runInitializers2 = function(thisArg, initializers, value) {
+      __runInitializers2 = function (thisArg, initializers, value) {
         var useValue = arguments.length > 2;
         for (var i = 0; i < initializers.length; i++) {
-          value = useValue ? initializers[i].call(thisArg, value) : initializers[i].call(thisArg);
+          value = useValue
+            ? initializers[i].call(thisArg, value)
+            : initializers[i].call(thisArg);
         }
         return useValue ? value : void 0;
       };
-      __propKey2 = function(x) {
+      __propKey2 = function (x) {
         return typeof x === "symbol" ? x : "".concat(x);
       };
-      __setFunctionName2 = function(f, name, prefix) {
-        if (typeof name === "symbol") name = name.description ? "[".concat(name.description, "]") : "";
-        return Object.defineProperty(f, "name", { configurable: true, value: prefix ? "".concat(prefix, " ", name) : name });
+      __setFunctionName2 = function (f, name, prefix) {
+        if (typeof name === "symbol")
+          name = name.description ? "[".concat(name.description, "]") : "";
+        return Object.defineProperty(f, "name", {
+          configurable: true,
+          value: prefix ? "".concat(prefix, " ", name) : name,
+        });
       };
-      __metadata2 = function(metadataKey, metadataValue) {
-        if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(metadataKey, metadataValue);
+      __metadata2 = function (metadataKey, metadataValue) {
+        if (
+          typeof Reflect === "object" &&
+          typeof Reflect.metadata === "function"
+        )
+          return Reflect.metadata(metadataKey, metadataValue);
       };
-      __awaiter2 = function(thisArg, _arguments, P, generator) {
+      __awaiter2 = function (thisArg, _arguments, P, generator) {
         function adopt(value) {
-          return value instanceof P ? value : new P(function(resolve) {
-            resolve(value);
-          });
+          return value instanceof P
+            ? value
+            : new P(function (resolve) {
+                resolve(value);
+              });
         }
-        return new (P || (P = Promise))(function(resolve, reject) {
+        return new (P || (P = Promise))(function (resolve, reject) {
           function fulfilled(value) {
             try {
               step(generator.next(value));
@@ -11731,113 +13483,173 @@ function requireTslib() {
             }
           }
           function step(result) {
-            result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected);
+            result.done
+              ? resolve(result.value)
+              : adopt(result.value).then(fulfilled, rejected);
           }
           step((generator = generator.apply(thisArg, _arguments || [])).next());
         });
       };
-      __generator2 = function(thisArg, body) {
-        var _ = { label: 0, sent: function() {
-          if (t2[0] & 1) throw t2[1];
-          return t2[1];
-        }, trys: [], ops: [] }, f, y, t2, g = Object.create((typeof Iterator === "function" ? Iterator : Object).prototype);
-        return g.next = verb(0), g["throw"] = verb(1), g["return"] = verb(2), typeof Symbol === "function" && (g[Symbol.iterator] = function() {
-          return this;
-        }), g;
+      __generator2 = function (thisArg, body) {
+        var _ = {
+            label: 0,
+            sent: function () {
+              if (t2[0] & 1) throw t2[1];
+              return t2[1];
+            },
+            trys: [],
+            ops: [],
+          },
+          f,
+          y,
+          t2,
+          g = Object.create(
+            (typeof Iterator === "function" ? Iterator : Object).prototype,
+          );
+        return (
+          (g.next = verb(0)),
+          (g["throw"] = verb(1)),
+          (g["return"] = verb(2)),
+          typeof Symbol === "function" &&
+            (g[Symbol.iterator] = function () {
+              return this;
+            }),
+          g
+        );
         function verb(n) {
-          return function(v) {
+          return function (v) {
             return step([n, v]);
           };
         }
         function step(op) {
           if (f) throw new TypeError("Generator is already executing.");
-          while (g && (g = 0, op[0] && (_ = 0)), _) try {
-            if (f = 1, y && (t2 = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t2 = y["return"]) && t2.call(y), 0) : y.next) && !(t2 = t2.call(y, op[1])).done) return t2;
-            if (y = 0, t2) op = [op[0] & 2, t2.value];
-            switch (op[0]) {
-              case 0:
-              case 1:
-                t2 = op;
-                break;
-              case 4:
-                _.label++;
-                return { value: op[1], done: false };
-              case 5:
-                _.label++;
-                y = op[1];
-                op = [0];
-                continue;
-              case 7:
-                op = _.ops.pop();
-                _.trys.pop();
-                continue;
-              default:
-                if (!(t2 = _.trys, t2 = t2.length > 0 && t2[t2.length - 1]) && (op[0] === 6 || op[0] === 2)) {
-                  _ = 0;
-                  continue;
-                }
-                if (op[0] === 3 && (!t2 || op[1] > t2[0] && op[1] < t2[3])) {
-                  _.label = op[1];
-                  break;
-                }
-                if (op[0] === 6 && _.label < t2[1]) {
-                  _.label = t2[1];
+          while ((g && ((g = 0), op[0] && (_ = 0)), _))
+            try {
+              if (
+                ((f = 1),
+                y &&
+                  (t2 =
+                    op[0] & 2
+                      ? y["return"]
+                      : op[0]
+                        ? y["throw"] || ((t2 = y["return"]) && t2.call(y), 0)
+                        : y.next) &&
+                  !(t2 = t2.call(y, op[1])).done)
+              )
+                return t2;
+              if (((y = 0), t2)) op = [op[0] & 2, t2.value];
+              switch (op[0]) {
+                case 0:
+                case 1:
                   t2 = op;
                   break;
-                }
-                if (t2 && _.label < t2[2]) {
-                  _.label = t2[2];
-                  _.ops.push(op);
-                  break;
-                }
-                if (t2[2]) _.ops.pop();
-                _.trys.pop();
-                continue;
+                case 4:
+                  _.label++;
+                  return { value: op[1], done: false };
+                case 5:
+                  _.label++;
+                  y = op[1];
+                  op = [0];
+                  continue;
+                case 7:
+                  op = _.ops.pop();
+                  _.trys.pop();
+                  continue;
+                default:
+                  if (
+                    !((t2 = _.trys),
+                    (t2 = t2.length > 0 && t2[t2.length - 1])) &&
+                    (op[0] === 6 || op[0] === 2)
+                  ) {
+                    _ = 0;
+                    continue;
+                  }
+                  if (
+                    op[0] === 3 &&
+                    (!t2 || (op[1] > t2[0] && op[1] < t2[3]))
+                  ) {
+                    _.label = op[1];
+                    break;
+                  }
+                  if (op[0] === 6 && _.label < t2[1]) {
+                    _.label = t2[1];
+                    t2 = op;
+                    break;
+                  }
+                  if (t2 && _.label < t2[2]) {
+                    _.label = t2[2];
+                    _.ops.push(op);
+                    break;
+                  }
+                  if (t2[2]) _.ops.pop();
+                  _.trys.pop();
+                  continue;
+              }
+              op = body.call(thisArg, _);
+            } catch (e) {
+              op = [6, e];
+              y = 0;
+            } finally {
+              f = t2 = 0;
             }
-            op = body.call(thisArg, _);
-          } catch (e) {
-            op = [6, e];
-            y = 0;
-          } finally {
-            f = t2 = 0;
-          }
           if (op[0] & 5) throw op[1];
           return { value: op[0] ? op[1] : void 0, done: true };
         }
       };
-      __exportStar2 = function(m, o) {
-        for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(o, p)) __createBinding2(o, m, p);
+      __exportStar2 = function (m, o) {
+        for (var p in m)
+          if (p !== "default" && !Object.prototype.hasOwnProperty.call(o, p))
+            __createBinding2(o, m, p);
       };
-      __createBinding2 = Object.create ? (function(o, m, k, k2) {
-        if (k2 === void 0) k2 = k;
-        var desc2 = Object.getOwnPropertyDescriptor(m, k);
-        if (!desc2 || ("get" in desc2 ? !m.__esModule : desc2.writable || desc2.configurable)) {
-          desc2 = { enumerable: true, get: function() {
-            return m[k];
-          } };
-        }
-        Object.defineProperty(o, k2, desc2);
-      }) : (function(o, m, k, k2) {
-        if (k2 === void 0) k2 = k;
-        o[k2] = m[k];
-      });
-      __values2 = function(o) {
-        var s = typeof Symbol === "function" && Symbol.iterator, m = s && o[s], i = 0;
-        if (m) return m.call(o);
-        if (o && typeof o.length === "number") return {
-          next: function() {
-            if (o && i >= o.length) o = void 0;
-            return { value: o && o[i++], done: !o };
+      __createBinding2 = Object.create
+        ? function (o, m, k, k2) {
+            if (k2 === void 0) k2 = k;
+            var desc2 = Object.getOwnPropertyDescriptor(m, k);
+            if (
+              !desc2 ||
+              ("get" in desc2
+                ? !m.__esModule
+                : desc2.writable || desc2.configurable)
+            ) {
+              desc2 = {
+                enumerable: true,
+                get: function () {
+                  return m[k];
+                },
+              };
+            }
+            Object.defineProperty(o, k2, desc2);
           }
-        };
-        throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
+        : function (o, m, k, k2) {
+            if (k2 === void 0) k2 = k;
+            o[k2] = m[k];
+          };
+      __values2 = function (o) {
+        var s = typeof Symbol === "function" && Symbol.iterator,
+          m = s && o[s],
+          i = 0;
+        if (m) return m.call(o);
+        if (o && typeof o.length === "number")
+          return {
+            next: function () {
+              if (o && i >= o.length) o = void 0;
+              return { value: o && o[i++], done: !o };
+            },
+          };
+        throw new TypeError(
+          s ? "Object is not iterable." : "Symbol.iterator is not defined.",
+        );
       };
-      __read2 = function(o, n) {
+      __read2 = function (o, n) {
         var m = typeof Symbol === "function" && o[Symbol.iterator];
         if (!m) return o;
-        var i = m.call(o), r2, ar = [], e;
+        var i = m.call(o),
+          r2,
+          ar = [],
+          e;
         try {
-          while ((n === void 0 || n-- > 0) && !(r2 = i.next()).done) ar.push(r2.value);
+          while ((n === void 0 || n-- > 0) && !(r2 = i.next()).done)
+            ar.push(r2.value);
         } catch (error) {
           e = { error };
         } finally {
@@ -11849,45 +13661,62 @@ function requireTslib() {
         }
         return ar;
       };
-      __spread2 = function() {
+      __spread2 = function () {
         for (var ar = [], i = 0; i < arguments.length; i++)
           ar = ar.concat(__read2(arguments[i]));
         return ar;
       };
-      __spreadArrays2 = function() {
-        for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
+      __spreadArrays2 = function () {
+        for (var s = 0, i = 0, il = arguments.length; i < il; i++)
+          s += arguments[i].length;
         for (var r2 = Array(s), k = 0, i = 0; i < il; i++)
           for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
             r2[k] = a[j];
         return r2;
       };
-      __spreadArray2 = function(to, from, pack) {
-        if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
-          if (ar || !(i in from)) {
-            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
-            ar[i] = from[i];
+      __spreadArray2 = function (to, from, pack) {
+        if (pack || arguments.length === 2)
+          for (var i = 0, l = from.length, ar; i < l; i++) {
+            if (ar || !(i in from)) {
+              if (!ar) ar = Array.prototype.slice.call(from, 0, i);
+              ar[i] = from[i];
+            }
           }
-        }
         return to.concat(ar || Array.prototype.slice.call(from));
       };
-      __await2 = function(v) {
-        return this instanceof __await2 ? (this.v = v, this) : new __await2(v);
+      __await2 = function (v) {
+        return this instanceof __await2
+          ? ((this.v = v), this)
+          : new __await2(v);
       };
-      __asyncGenerator2 = function(thisArg, _arguments, generator) {
-        if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
-        var g = generator.apply(thisArg, _arguments || []), i, q = [];
-        return i = Object.create((typeof AsyncIterator === "function" ? AsyncIterator : Object).prototype), verb("next"), verb("throw"), verb("return", awaitReturn), i[Symbol.asyncIterator] = function() {
-          return this;
-        }, i;
+      __asyncGenerator2 = function (thisArg, _arguments, generator) {
+        if (!Symbol.asyncIterator)
+          throw new TypeError("Symbol.asyncIterator is not defined.");
+        var g = generator.apply(thisArg, _arguments || []),
+          i,
+          q = [];
+        return (
+          (i = Object.create(
+            (typeof AsyncIterator === "function" ? AsyncIterator : Object)
+              .prototype,
+          )),
+          verb("next"),
+          verb("throw"),
+          verb("return", awaitReturn),
+          (i[Symbol.asyncIterator] = function () {
+            return this;
+          }),
+          i
+        );
         function awaitReturn(f) {
-          return function(v) {
+          return function (v) {
             return Promise.resolve(v).then(f, reject);
           };
         }
         function verb(n, f) {
           if (g[n]) {
-            i[n] = function(v) {
-              return new Promise(function(a, b2) {
+            i[n] = function (v) {
+              return new Promise(function (a, b2) {
                 q.push([n, v, a, b2]) > 1 || resume(n, v);
               });
             };
@@ -11902,7 +13731,9 @@ function requireTslib() {
           }
         }
         function step(r2) {
-          r2.value instanceof __await2 ? Promise.resolve(r2.value.v).then(fulfill, reject) : settle(q[0][2], r2);
+          r2.value instanceof __await2
+            ? Promise.resolve(r2.value.v).then(fulfill, reject)
+            : settle(q[0][2], r2);
         }
         function fulfill(value) {
           resume("next", value);
@@ -11911,42 +13742,70 @@ function requireTslib() {
           resume("throw", value);
         }
         function settle(f, v) {
-          if (f(v), q.shift(), q.length) resume(q[0][0], q[0][1]);
+          if ((f(v), q.shift(), q.length)) resume(q[0][0], q[0][1]);
         }
       };
-      __asyncDelegator2 = function(o) {
+      __asyncDelegator2 = function (o) {
         var i, p;
-        return i = {}, verb("next"), verb("throw", function(e) {
-          throw e;
-        }), verb("return"), i[Symbol.iterator] = function() {
-          return this;
-        }, i;
+        return (
+          (i = {}),
+          verb("next"),
+          verb("throw", function (e) {
+            throw e;
+          }),
+          verb("return"),
+          (i[Symbol.iterator] = function () {
+            return this;
+          }),
+          i
+        );
         function verb(n, f) {
-          i[n] = o[n] ? function(v) {
-            return (p = !p) ? { value: __await2(o[n](v)), done: false } : f ? f(v) : v;
-          } : f;
+          i[n] = o[n]
+            ? function (v) {
+                return (p = !p)
+                  ? { value: __await2(o[n](v)), done: false }
+                  : f
+                    ? f(v)
+                    : v;
+              }
+            : f;
         }
       };
-      __asyncValues2 = function(o) {
-        if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
-        var m = o[Symbol.asyncIterator], i;
-        return m ? m.call(o) : (o = typeof __values2 === "function" ? __values2(o) : o[Symbol.iterator](), i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function() {
-          return this;
-        }, i);
+      __asyncValues2 = function (o) {
+        if (!Symbol.asyncIterator)
+          throw new TypeError("Symbol.asyncIterator is not defined.");
+        var m = o[Symbol.asyncIterator],
+          i;
+        return m
+          ? m.call(o)
+          : ((o =
+              typeof __values2 === "function"
+                ? __values2(o)
+                : o[Symbol.iterator]()),
+            (i = {}),
+            verb("next"),
+            verb("throw"),
+            verb("return"),
+            (i[Symbol.asyncIterator] = function () {
+              return this;
+            }),
+            i);
         function verb(n) {
-          i[n] = o[n] && function(v) {
-            return new Promise(function(resolve, reject) {
-              v = o[n](v), settle(resolve, reject, v.done, v.value);
-            });
-          };
+          i[n] =
+            o[n] &&
+            function (v) {
+              return new Promise(function (resolve, reject) {
+                ((v = o[n](v)), settle(resolve, reject, v.done, v.value));
+              });
+            };
         }
         function settle(resolve, reject, d, v) {
-          Promise.resolve(v).then(function(v2) {
+          Promise.resolve(v).then(function (v2) {
             resolve({ value: v2, done: d });
           }, reject);
         }
       };
-      __makeTemplateObject2 = function(cooked, raw) {
+      __makeTemplateObject2 = function (cooked, raw) {
         if (Object.defineProperty) {
           Object.defineProperty(cooked, "raw", { value: raw });
         } else {
@@ -11954,108 +13813,191 @@ function requireTslib() {
         }
         return cooked;
       };
-      var __setModuleDefault = Object.create ? (function(o, v) {
-        Object.defineProperty(o, "default", { enumerable: true, value: v });
-      }) : function(o, v) {
-        o["default"] = v;
-      };
-      var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function(o2) {
-          var ar = [];
-          for (var k in o2) if (Object.prototype.hasOwnProperty.call(o2, k)) ar[ar.length] = k;
-          return ar;
-        };
+      var __setModuleDefault = Object.create
+        ? function (o, v) {
+            Object.defineProperty(o, "default", { enumerable: true, value: v });
+          }
+        : function (o, v) {
+            o["default"] = v;
+          };
+      var ownKeys = function (o) {
+        ownKeys =
+          Object.getOwnPropertyNames ||
+          function (o2) {
+            var ar = [];
+            for (var k in o2)
+              if (Object.prototype.hasOwnProperty.call(o2, k))
+                ar[ar.length] = k;
+            return ar;
+          };
         return ownKeys(o);
       };
-      __importStar2 = function(mod) {
+      __importStar2 = function (mod) {
         if (mod && mod.__esModule) return mod;
         var result = {};
         if (mod != null) {
-          for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding2(result, mod, k[i]);
+          for (var k = ownKeys(mod), i = 0; i < k.length; i++)
+            if (k[i] !== "default") __createBinding2(result, mod, k[i]);
         }
         __setModuleDefault(result, mod);
         return result;
       };
-      __importDefault2 = function(mod) {
-        return mod && mod.__esModule ? mod : { "default": mod };
+      __importDefault2 = function (mod) {
+        return mod && mod.__esModule ? mod : { default: mod };
       };
-      __classPrivateFieldGet2 = function(receiver, state, kind, f) {
-        if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
-        if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
-        return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
+      __classPrivateFieldGet2 = function (receiver, state, kind, f) {
+        if (kind === "a" && !f)
+          throw new TypeError("Private accessor was defined without a getter");
+        if (
+          typeof state === "function"
+            ? receiver !== state || !f
+            : !state.has(receiver)
+        )
+          throw new TypeError(
+            "Cannot read private member from an object whose class did not declare it",
+          );
+        return kind === "m"
+          ? f
+          : kind === "a"
+            ? f.call(receiver)
+            : f
+              ? f.value
+              : state.get(receiver);
       };
-      __classPrivateFieldSet2 = function(receiver, state, value, kind, f) {
+      __classPrivateFieldSet2 = function (receiver, state, value, kind, f) {
         if (kind === "m") throw new TypeError("Private method is not writable");
-        if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a setter");
-        if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
-        return kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value), value;
+        if (kind === "a" && !f)
+          throw new TypeError("Private accessor was defined without a setter");
+        if (
+          typeof state === "function"
+            ? receiver !== state || !f
+            : !state.has(receiver)
+        )
+          throw new TypeError(
+            "Cannot write private member to an object whose class did not declare it",
+          );
+        return (
+          kind === "a"
+            ? f.call(receiver, value)
+            : f
+              ? (f.value = value)
+              : state.set(receiver, value),
+          value
+        );
       };
-      __classPrivateFieldIn2 = function(state, receiver) {
-        if (receiver === null || typeof receiver !== "object" && typeof receiver !== "function") throw new TypeError("Cannot use 'in' operator on non-object");
-        return typeof state === "function" ? receiver === state : state.has(receiver);
+      __classPrivateFieldIn2 = function (state, receiver) {
+        if (
+          receiver === null ||
+          (typeof receiver !== "object" && typeof receiver !== "function")
+        )
+          throw new TypeError("Cannot use 'in' operator on non-object");
+        return typeof state === "function"
+          ? receiver === state
+          : state.has(receiver);
       };
-      __addDisposableResource2 = function(env2, value, async) {
+      __addDisposableResource2 = function (env2, value, async) {
         if (value !== null && value !== void 0) {
-          if (typeof value !== "object" && typeof value !== "function") throw new TypeError("Object expected.");
+          if (typeof value !== "object" && typeof value !== "function")
+            throw new TypeError("Object expected.");
           var dispose, inner;
           if (async) {
-            if (!Symbol.asyncDispose) throw new TypeError("Symbol.asyncDispose is not defined.");
+            if (!Symbol.asyncDispose)
+              throw new TypeError("Symbol.asyncDispose is not defined.");
             dispose = value[Symbol.asyncDispose];
           }
           if (dispose === void 0) {
-            if (!Symbol.dispose) throw new TypeError("Symbol.dispose is not defined.");
+            if (!Symbol.dispose)
+              throw new TypeError("Symbol.dispose is not defined.");
             dispose = value[Symbol.dispose];
             if (async) inner = dispose;
           }
-          if (typeof dispose !== "function") throw new TypeError("Object not disposable.");
-          if (inner) dispose = function() {
-            try {
-              inner.call(this);
-            } catch (e) {
-              return Promise.reject(e);
-            }
-          };
+          if (typeof dispose !== "function")
+            throw new TypeError("Object not disposable.");
+          if (inner)
+            dispose = function () {
+              try {
+                inner.call(this);
+              } catch (e) {
+                return Promise.reject(e);
+              }
+            };
           env2.stack.push({ value, dispose, async });
         } else if (async) {
           env2.stack.push({ async: true });
         }
         return value;
       };
-      var _SuppressedError = typeof SuppressedError === "function" ? SuppressedError : function(error, suppressed, message) {
-        var e = new Error(message);
-        return e.name = "SuppressedError", e.error = error, e.suppressed = suppressed, e;
-      };
-      __disposeResources2 = function(env2) {
+      var _SuppressedError =
+        typeof SuppressedError === "function"
+          ? SuppressedError
+          : function (error, suppressed, message) {
+              var e = new Error(message);
+              return (
+                (e.name = "SuppressedError"),
+                (e.error = error),
+                (e.suppressed = suppressed),
+                e
+              );
+            };
+      __disposeResources2 = function (env2) {
         function fail(e) {
-          env2.error = env2.hasError ? new _SuppressedError(e, env2.error, "An error was suppressed during disposal.") : e;
+          env2.error = env2.hasError
+            ? new _SuppressedError(
+                e,
+                env2.error,
+                "An error was suppressed during disposal.",
+              )
+            : e;
           env2.hasError = true;
         }
-        var r2, s = 0;
+        var r2,
+          s = 0;
         function next() {
-          while (r2 = env2.stack.pop()) {
+          while ((r2 = env2.stack.pop())) {
             try {
-              if (!r2.async && s === 1) return s = 0, env2.stack.push(r2), Promise.resolve().then(next);
+              if (!r2.async && s === 1)
+                return (
+                  (s = 0),
+                  env2.stack.push(r2),
+                  Promise.resolve().then(next)
+                );
               if (r2.dispose) {
                 var result = r2.dispose.call(r2.value);
-                if (r2.async) return s |= 2, Promise.resolve(result).then(next, function(e) {
-                  fail(e);
-                  return next();
-                });
+                if (r2.async)
+                  return (
+                    (s |= 2),
+                    Promise.resolve(result).then(next, function (e) {
+                      fail(e);
+                      return next();
+                    })
+                  );
               } else s |= 1;
             } catch (e) {
               fail(e);
             }
           }
-          if (s === 1) return env2.hasError ? Promise.reject(env2.error) : Promise.resolve();
+          if (s === 1)
+            return env2.hasError
+              ? Promise.reject(env2.error)
+              : Promise.resolve();
           if (env2.hasError) throw env2.error;
         }
         return next();
       };
-      __rewriteRelativeImportExtension2 = function(path, preserveJsx) {
+      __rewriteRelativeImportExtension2 = function (path, preserveJsx) {
         if (typeof path === "string" && /^\.\.?\//.test(path)) {
-          return path.replace(/\.(tsx)$|((?:\.d)?)((?:\.[^./]+?)?)\.([cm]?)ts$/i, function(m, tsx, d, ext, cm) {
-            return tsx ? preserveJsx ? ".jsx" : ".js" : d && (!ext || !cm) ? m : d + ext + "." + cm.toLowerCase() + "js";
-          });
+          return path.replace(
+            /\.(tsx)$|((?:\.d)?)((?:\.[^./]+?)?)\.([cm]?)ts$/i,
+            function (m, tsx, d, ext, cm) {
+              return tsx
+                ? preserveJsx
+                  ? ".jsx"
+                  : ".js"
+                : d && (!ext || !cm)
+                  ? m
+                  : d + ext + "." + cm.toLowerCase() + "js";
+            },
+          );
         }
         return path;
       };
@@ -12090,7 +14032,10 @@ function requireTslib() {
       exporter("__classPrivateFieldIn", __classPrivateFieldIn2);
       exporter("__addDisposableResource", __addDisposableResource2);
       exporter("__disposeResources", __disposeResources2);
-      exporter("__rewriteRelativeImportExtension", __rewriteRelativeImportExtension2);
+      exporter(
+        "__rewriteRelativeImportExtension",
+        __rewriteRelativeImportExtension2,
+      );
     });
   })(tslib$1);
   return tslib$1.exports;
@@ -12129,7 +14074,7 @@ const {
   __classPrivateFieldIn,
   __addDisposableResource,
   __disposeResources,
-  __rewriteRelativeImportExtension
+  __rewriteRelativeImportExtension,
 } = tslib;
 var zeroRightClassName = "right-scroll-bar-position";
 var fullWidthClassName = "width-before-scroll-bar";
@@ -12144,7 +14089,7 @@ function assignRef(ref, value) {
   return ref;
 }
 function useCallbackRef(initialValue, callback) {
-  var ref = useState(function() {
+  var ref = useState(function () {
     return {
       // value
       value: initialValue,
@@ -12161,40 +14106,44 @@ function useCallbackRef(initialValue, callback) {
             ref.value = value;
             ref.callback(value, last);
           }
-        }
-      }
+        },
+      },
     };
   })[0];
   ref.callback = callback;
   return ref.facade;
 }
-var useIsomorphicLayoutEffect = typeof window !== "undefined" ? React.useLayoutEffect : React.useEffect;
+var useIsomorphicLayoutEffect =
+  typeof window !== "undefined" ? React.useLayoutEffect : React.useEffect;
 var currentValues = /* @__PURE__ */ new WeakMap();
 function useMergeRefs(refs, defaultValue) {
-  var callbackRef = useCallbackRef(null, function(newValue) {
-    return refs.forEach(function(ref) {
+  var callbackRef = useCallbackRef(null, function (newValue) {
+    return refs.forEach(function (ref) {
       return assignRef(ref, newValue);
     });
   });
-  useIsomorphicLayoutEffect(function() {
-    var oldValue = currentValues.get(callbackRef);
-    if (oldValue) {
-      var prevRefs_1 = new Set(oldValue);
-      var nextRefs_1 = new Set(refs);
-      var current_1 = callbackRef.current;
-      prevRefs_1.forEach(function(ref) {
-        if (!nextRefs_1.has(ref)) {
-          assignRef(ref, null);
-        }
-      });
-      nextRefs_1.forEach(function(ref) {
-        if (!prevRefs_1.has(ref)) {
-          assignRef(ref, current_1);
-        }
-      });
-    }
-    currentValues.set(callbackRef, refs);
-  }, [refs]);
+  useIsomorphicLayoutEffect(
+    function () {
+      var oldValue = currentValues.get(callbackRef);
+      if (oldValue) {
+        var prevRefs_1 = new Set(oldValue);
+        var nextRefs_1 = new Set(refs);
+        var current_1 = callbackRef.current;
+        prevRefs_1.forEach(function (ref) {
+          if (!nextRefs_1.has(ref)) {
+            assignRef(ref, null);
+          }
+        });
+        nextRefs_1.forEach(function (ref) {
+          if (!prevRefs_1.has(ref)) {
+            assignRef(ref, current_1);
+          }
+        });
+      }
+      currentValues.set(callbackRef, refs);
+    },
+    [refs],
+  );
   return callbackRef;
 }
 function ItoI(a) {
@@ -12207,25 +14156,27 @@ function innerCreateMedium(defaults, middleware) {
   var buffer2 = [];
   var assigned = false;
   var medium = {
-    read: function() {
+    read: function () {
       if (assigned) {
-        throw new Error("Sidecar: could not `read` from an `assigned` medium. `read` could be used only with `useMedium`.");
+        throw new Error(
+          "Sidecar: could not `read` from an `assigned` medium. `read` could be used only with `useMedium`.",
+        );
       }
       if (buffer2.length) {
         return buffer2[buffer2.length - 1];
       }
       return defaults;
     },
-    useMedium: function(data) {
+    useMedium: function (data) {
       var item = middleware(data, assigned);
       buffer2.push(item);
-      return function() {
-        buffer2 = buffer2.filter(function(x) {
+      return function () {
+        buffer2 = buffer2.filter(function (x) {
           return x !== item;
         });
       };
     },
-    assignSyncMedium: function(cb) {
+    assignSyncMedium: function (cb) {
       assigned = true;
       while (buffer2.length) {
         var cbs = buffer2;
@@ -12233,15 +14184,15 @@ function innerCreateMedium(defaults, middleware) {
         cbs.forEach(cb);
       }
       buffer2 = {
-        push: function(x) {
+        push: function (x) {
           return cb(x);
         },
-        filter: function() {
+        filter: function () {
           return buffer2;
-        }
+        },
       };
     },
-    assignMedium: function(cb) {
+    assignMedium: function (cb) {
       assigned = true;
       var pendingQueue = [];
       if (buffer2.length) {
@@ -12250,26 +14201,26 @@ function innerCreateMedium(defaults, middleware) {
         cbs.forEach(cb);
         pendingQueue = buffer2;
       }
-      var executeQueue = function() {
+      var executeQueue = function () {
         var cbs2 = pendingQueue;
         pendingQueue = [];
         cbs2.forEach(cb);
       };
-      var cycle = function() {
+      var cycle = function () {
         return Promise.resolve().then(executeQueue);
       };
       cycle();
       buffer2 = {
-        push: function(x) {
+        push: function (x) {
           pendingQueue.push(x);
           cycle();
         },
-        filter: function(filter) {
+        filter: function (filter) {
           pendingQueue = pendingQueue.filter(filter);
           return buffer2;
-        }
+        },
       };
-    }
+    },
   };
   return medium;
 }
@@ -12281,10 +14232,13 @@ function createSidecarMedium(options) {
   medium.options = __assign({ async: true, ssr: false }, options);
   return medium;
 }
-var SideCar$1 = function(_a) {
-  var sideCar = _a.sideCar, rest = __rest(_a, ["sideCar"]);
+var SideCar$1 = function (_a) {
+  var sideCar = _a.sideCar,
+    rest = __rest(_a, ["sideCar"]);
   if (!sideCar) {
-    throw new Error("Sidecar: please provide `sideCar` property to import the right car");
+    throw new Error(
+      "Sidecar: please provide `sideCar` property to import the right car",
+    );
   }
   var Target = sideCar.read();
   if (!Target) {
@@ -12298,45 +14252,95 @@ function exportSidecar(medium, exported) {
   return SideCar$1;
 }
 var effectCar = createSidecarMedium();
-var nothing = function() {
+var nothing = function () {
   return;
 };
-var RemoveScroll = React.forwardRef(function(props, parentRef) {
+var RemoveScroll = React.forwardRef(function (props, parentRef) {
   var ref = React.useRef(null);
   var _a = React.useState({
-    onScrollCapture: nothing,
-    onWheelCapture: nothing,
-    onTouchMoveCapture: nothing
-  }), callbacks = _a[0], setCallbacks = _a[1];
-  var forwardProps = props.forwardProps, children = props.children, className = props.className, removeScrollBar = props.removeScrollBar, enabled = props.enabled, shards = props.shards, sideCar = props.sideCar, noRelative = props.noRelative, noIsolation = props.noIsolation, inert = props.inert, allowPinchZoom = props.allowPinchZoom, _b = props.as, Container = _b === void 0 ? "div" : _b, gapMode = props.gapMode, rest = __rest(props, ["forwardProps", "children", "className", "removeScrollBar", "enabled", "shards", "sideCar", "noRelative", "noIsolation", "inert", "allowPinchZoom", "as", "gapMode"]);
+      onScrollCapture: nothing,
+      onWheelCapture: nothing,
+      onTouchMoveCapture: nothing,
+    }),
+    callbacks = _a[0],
+    setCallbacks = _a[1];
+  var forwardProps = props.forwardProps,
+    children = props.children,
+    className = props.className,
+    removeScrollBar = props.removeScrollBar,
+    enabled = props.enabled,
+    shards = props.shards,
+    sideCar = props.sideCar,
+    noRelative = props.noRelative,
+    noIsolation = props.noIsolation,
+    inert = props.inert,
+    allowPinchZoom = props.allowPinchZoom,
+    _b = props.as,
+    Container = _b === void 0 ? "div" : _b,
+    gapMode = props.gapMode,
+    rest = __rest(props, [
+      "forwardProps",
+      "children",
+      "className",
+      "removeScrollBar",
+      "enabled",
+      "shards",
+      "sideCar",
+      "noRelative",
+      "noIsolation",
+      "inert",
+      "allowPinchZoom",
+      "as",
+      "gapMode",
+    ]);
   var SideCar2 = sideCar;
   var containerRef = useMergeRefs([ref, parentRef]);
   var containerProps = __assign(__assign({}, rest), callbacks);
   return React.createElement(
     React.Fragment,
     null,
-    enabled && React.createElement(SideCar2, { sideCar: effectCar, removeScrollBar, shards, noRelative, noIsolation, inert, setCallbacks, allowPinchZoom: !!allowPinchZoom, lockRef: ref, gapMode }),
-    forwardProps ? React.cloneElement(React.Children.only(children), __assign(__assign({}, containerProps), { ref: containerRef })) : React.createElement(Container, __assign({}, containerProps, { className, ref: containerRef }), children)
+    enabled &&
+      React.createElement(SideCar2, {
+        sideCar: effectCar,
+        removeScrollBar,
+        shards,
+        noRelative,
+        noIsolation,
+        inert,
+        setCallbacks,
+        allowPinchZoom: !!allowPinchZoom,
+        lockRef: ref,
+        gapMode,
+      }),
+    forwardProps
+      ? React.cloneElement(
+          React.Children.only(children),
+          __assign(__assign({}, containerProps), { ref: containerRef }),
+        )
+      : React.createElement(
+          Container,
+          __assign({}, containerProps, { className, ref: containerRef }),
+          children,
+        ),
   );
 });
 RemoveScroll.defaultProps = {
   enabled: true,
   removeScrollBar: true,
-  inert: false
+  inert: false,
 };
 RemoveScroll.classNames = {
   fullWidth: fullWidthClassName,
-  zeroRight: zeroRightClassName
+  zeroRight: zeroRightClassName,
 };
-var getNonce = function() {
+var getNonce = function () {
   if (typeof __webpack_nonce__ !== "undefined") {
     return __webpack_nonce__;
   }
   return void 0;
 };
 function makeStyleTag() {
-  if (!document)
-    return null;
+  if (!document) return null;
   var tag = document.createElement("style");
   tag.type = "text/css";
   var nonce = getNonce();
@@ -12356,43 +14360,47 @@ function insertStyleTag(tag) {
   var head = document.head || document.getElementsByTagName("head")[0];
   head.appendChild(tag);
 }
-var stylesheetSingleton = function() {
+var stylesheetSingleton = function () {
   var counter = 0;
   var stylesheet = null;
   return {
-    add: function(style) {
+    add: function (style) {
       if (counter == 0) {
-        if (stylesheet = makeStyleTag()) {
+        if ((stylesheet = makeStyleTag())) {
           injectStyles(stylesheet, style);
           insertStyleTag(stylesheet);
         }
       }
       counter++;
     },
-    remove: function() {
+    remove: function () {
       counter--;
       if (!counter && stylesheet) {
         stylesheet.parentNode && stylesheet.parentNode.removeChild(stylesheet);
         stylesheet = null;
       }
-    }
+    },
   };
 };
-var styleHookSingleton = function() {
+var styleHookSingleton = function () {
   var sheet = stylesheetSingleton();
-  return function(styles, isDynamic) {
-    React.useEffect(function() {
-      sheet.add(styles);
-      return function() {
-        sheet.remove();
-      };
-    }, [styles && isDynamic]);
+  return function (styles, isDynamic) {
+    React.useEffect(
+      function () {
+        sheet.add(styles);
+        return function () {
+          sheet.remove();
+        };
+      },
+      [styles && isDynamic],
+    );
   };
 };
-var styleSingleton = function() {
+var styleSingleton = function () {
   var useStyle = styleHookSingleton();
-  var Sheet = function(_a) {
-    var styles = _a.styles, dynamic = _a.dynamic;
+  var Sheet = function (_a) {
+    var styles = _a.styles,
+      dynamic = _a.dynamic;
     useStyle(styles, dynamic);
     return null;
   };
@@ -12402,19 +14410,19 @@ var zeroGap = {
   left: 0,
   top: 0,
   right: 0,
-  gap: 0
+  gap: 0,
 };
-var parse = function(x) {
+var parse = function (x) {
   return parseInt(x || "", 10) || 0;
 };
-var getOffset = function(gapMode) {
+var getOffset = function (gapMode) {
   var cs = window.getComputedStyle(document.body);
   var left = cs[gapMode === "padding" ? "paddingLeft" : "marginLeft"];
   var top = cs[gapMode === "padding" ? "paddingTop" : "marginTop"];
   var right = cs[gapMode === "padding" ? "paddingRight" : "marginRight"];
   return [parse(left), parse(top), parse(right)];
 };
-var getGapWidth = function(gapMode) {
+var getGapWidth = function (gapMode) {
   if (gapMode === void 0) {
     gapMode = "margin";
   }
@@ -12428,30 +14436,73 @@ var getGapWidth = function(gapMode) {
     left: offsets[0],
     top: offsets[1],
     right: offsets[2],
-    gap: Math.max(0, windowWidth - documentWidth + offsets[2] - offsets[0])
+    gap: Math.max(0, windowWidth - documentWidth + offsets[2] - offsets[0]),
   };
 };
 var Style = styleSingleton();
 var lockAttribute = "data-scroll-locked";
-var getStyles = function(_a, allowRelative, gapMode, important) {
-  var left = _a.left, top = _a.top, right = _a.right, gap = _a.gap;
+var getStyles = function (_a, allowRelative, gapMode, important) {
+  var left = _a.left,
+    top = _a.top,
+    right = _a.right,
+    gap = _a.gap;
   if (gapMode === void 0) {
     gapMode = "margin";
   }
-  return "\n  .".concat(noScrollbarsClassName, " {\n   overflow: hidden ").concat(important, ";\n   padding-right: ").concat(gap, "px ").concat(important, ";\n  }\n  body[").concat(lockAttribute, "] {\n    overflow: hidden ").concat(important, ";\n    overscroll-behavior: contain;\n    ").concat([
-    allowRelative && "position: relative ".concat(important, ";"),
-    gapMode === "margin" && "\n    padding-left: ".concat(left, "px;\n    padding-top: ").concat(top, "px;\n    padding-right: ").concat(right, "px;\n    margin-left:0;\n    margin-top:0;\n    margin-right: ").concat(gap, "px ").concat(important, ";\n    "),
-    gapMode === "padding" && "padding-right: ".concat(gap, "px ").concat(important, ";")
-  ].filter(Boolean).join(""), "\n  }\n  \n  .").concat(zeroRightClassName, " {\n    right: ").concat(gap, "px ").concat(important, ";\n  }\n  \n  .").concat(fullWidthClassName, " {\n    margin-right: ").concat(gap, "px ").concat(important, ";\n  }\n  \n  .").concat(zeroRightClassName, " .").concat(zeroRightClassName, " {\n    right: 0 ").concat(important, ";\n  }\n  \n  .").concat(fullWidthClassName, " .").concat(fullWidthClassName, " {\n    margin-right: 0 ").concat(important, ";\n  }\n  \n  body[").concat(lockAttribute, "] {\n    ").concat(removedBarSizeVariable, ": ").concat(gap, "px;\n  }\n");
+  return "\n  ."
+    .concat(noScrollbarsClassName, " {\n   overflow: hidden ")
+    .concat(important, ";\n   padding-right: ")
+    .concat(gap, "px ")
+    .concat(important, ";\n  }\n  body[")
+    .concat(lockAttribute, "] {\n    overflow: hidden ")
+    .concat(important, ";\n    overscroll-behavior: contain;\n    ")
+    .concat(
+      [
+        allowRelative && "position: relative ".concat(important, ";"),
+        gapMode === "margin" &&
+          "\n    padding-left: "
+            .concat(left, "px;\n    padding-top: ")
+            .concat(top, "px;\n    padding-right: ")
+            .concat(
+              right,
+              "px;\n    margin-left:0;\n    margin-top:0;\n    margin-right: ",
+            )
+            .concat(gap, "px ")
+            .concat(important, ";\n    "),
+        gapMode === "padding" &&
+          "padding-right: ".concat(gap, "px ").concat(important, ";"),
+      ]
+        .filter(Boolean)
+        .join(""),
+      "\n  }\n  \n  .",
+    )
+    .concat(zeroRightClassName, " {\n    right: ")
+    .concat(gap, "px ")
+    .concat(important, ";\n  }\n  \n  .")
+    .concat(fullWidthClassName, " {\n    margin-right: ")
+    .concat(gap, "px ")
+    .concat(important, ";\n  }\n  \n  .")
+    .concat(zeroRightClassName, " .")
+    .concat(zeroRightClassName, " {\n    right: 0 ")
+    .concat(important, ";\n  }\n  \n  .")
+    .concat(fullWidthClassName, " .")
+    .concat(fullWidthClassName, " {\n    margin-right: 0 ")
+    .concat(important, ";\n  }\n  \n  body[")
+    .concat(lockAttribute, "] {\n    ")
+    .concat(removedBarSizeVariable, ": ")
+    .concat(gap, "px;\n  }\n");
 };
-var getCurrentUseCounter = function() {
+var getCurrentUseCounter = function () {
   var counter = parseInt(document.body.getAttribute(lockAttribute) || "0", 10);
   return isFinite(counter) ? counter : 0;
 };
-var useLockAttribute = function() {
-  React.useEffect(function() {
-    document.body.setAttribute(lockAttribute, (getCurrentUseCounter() + 1).toString());
-    return function() {
+var useLockAttribute = function () {
+  React.useEffect(function () {
+    document.body.setAttribute(
+      lockAttribute,
+      (getCurrentUseCounter() + 1).toString(),
+    );
+    return function () {
       var newCounter = getCurrentUseCounter() - 1;
       if (newCounter <= 0) {
         document.body.removeAttribute(lockAttribute);
@@ -12461,22 +14512,35 @@ var useLockAttribute = function() {
     };
   }, []);
 };
-var RemoveScrollBar = function(_a) {
-  var noRelative = _a.noRelative, noImportant = _a.noImportant, _b = _a.gapMode, gapMode = _b === void 0 ? "margin" : _b;
+var RemoveScrollBar = function (_a) {
+  var noRelative = _a.noRelative,
+    noImportant = _a.noImportant,
+    _b = _a.gapMode,
+    gapMode = _b === void 0 ? "margin" : _b;
   useLockAttribute();
-  var gap = React.useMemo(function() {
-    return getGapWidth(gapMode);
-  }, [gapMode]);
-  return React.createElement(Style, { styles: getStyles(gap, !noRelative, gapMode, !noImportant ? "!important" : "") });
+  var gap = React.useMemo(
+    function () {
+      return getGapWidth(gapMode);
+    },
+    [gapMode],
+  );
+  return React.createElement(Style, {
+    styles: getStyles(
+      gap,
+      !noRelative,
+      gapMode,
+      !noImportant ? "!important" : "",
+    ),
+  });
 };
 var passiveSupported = false;
 if (typeof window !== "undefined") {
   try {
     var options = Object.defineProperty({}, "passive", {
-      get: function() {
+      get: function () {
         passiveSupported = true;
         return true;
-      }
+      },
     });
     window.addEventListener("test", options, options);
     window.removeEventListener("test", options, options);
@@ -12485,10 +14549,10 @@ if (typeof window !== "undefined") {
   }
 }
 var nonPassive = passiveSupported ? { passive: false } : false;
-var alwaysContainsScroll = function(node) {
+var alwaysContainsScroll = function (node) {
   return node.tagName === "TEXTAREA";
 };
-var elementCanBeScrolled = function(node, overflow) {
+var elementCanBeScrolled = function (node, overflow) {
   if (!(node instanceof Element)) {
     return false;
   }
@@ -12496,16 +14560,20 @@ var elementCanBeScrolled = function(node, overflow) {
   return (
     // not-not-scrollable
     styles[overflow] !== "hidden" && // contains scroll inside self
-    !(styles.overflowY === styles.overflowX && !alwaysContainsScroll(node) && styles[overflow] === "visible")
+    !(
+      styles.overflowY === styles.overflowX &&
+      !alwaysContainsScroll(node) &&
+      styles[overflow] === "visible"
+    )
   );
 };
-var elementCouldBeVScrolled = function(node) {
+var elementCouldBeVScrolled = function (node) {
   return elementCanBeScrolled(node, "overflowY");
 };
-var elementCouldBeHScrolled = function(node) {
+var elementCouldBeHScrolled = function (node) {
   return elementCanBeScrolled(node, "overflowX");
 };
-var locationCouldBeScrolled = function(axis, node) {
+var locationCouldBeScrolled = function (axis, node) {
   var ownerDocument = node.ownerDocument;
   var current = node;
   do {
@@ -12514,7 +14582,9 @@ var locationCouldBeScrolled = function(axis, node) {
     }
     var isScrollable = elementCouldBeScrolled(axis, current);
     if (isScrollable) {
-      var _a = getScrollVariables(axis, current), scrollHeight = _a[1], clientHeight = _a[2];
+      var _a = getScrollVariables(axis, current),
+        scrollHeight = _a[1],
+        clientHeight = _a[2];
       if (scrollHeight > clientHeight) {
         return true;
       }
@@ -12523,33 +14593,40 @@ var locationCouldBeScrolled = function(axis, node) {
   } while (current && current !== ownerDocument.body);
   return false;
 };
-var getVScrollVariables = function(_a) {
-  var scrollTop = _a.scrollTop, scrollHeight = _a.scrollHeight, clientHeight = _a.clientHeight;
-  return [
-    scrollTop,
-    scrollHeight,
-    clientHeight
-  ];
+var getVScrollVariables = function (_a) {
+  var scrollTop = _a.scrollTop,
+    scrollHeight = _a.scrollHeight,
+    clientHeight = _a.clientHeight;
+  return [scrollTop, scrollHeight, clientHeight];
 };
-var getHScrollVariables = function(_a) {
-  var scrollLeft = _a.scrollLeft, scrollWidth = _a.scrollWidth, clientWidth = _a.clientWidth;
-  return [
-    scrollLeft,
-    scrollWidth,
-    clientWidth
-  ];
+var getHScrollVariables = function (_a) {
+  var scrollLeft = _a.scrollLeft,
+    scrollWidth = _a.scrollWidth,
+    clientWidth = _a.clientWidth;
+  return [scrollLeft, scrollWidth, clientWidth];
 };
-var elementCouldBeScrolled = function(axis, node) {
-  return axis === "v" ? elementCouldBeVScrolled(node) : elementCouldBeHScrolled(node);
+var elementCouldBeScrolled = function (axis, node) {
+  return axis === "v"
+    ? elementCouldBeVScrolled(node)
+    : elementCouldBeHScrolled(node);
 };
-var getScrollVariables = function(axis, node) {
+var getScrollVariables = function (axis, node) {
   return axis === "v" ? getVScrollVariables(node) : getHScrollVariables(node);
 };
-var getDirectionFactor = function(axis, direction) {
+var getDirectionFactor = function (axis, direction) {
   return axis === "h" && direction === "rtl" ? -1 : 1;
 };
-var handleScroll = function(axis, endTarget, event, sourceDelta, noOverscroll) {
-  var directionFactor = getDirectionFactor(axis, window.getComputedStyle(endTarget).direction);
+var handleScroll = function (
+  axis,
+  endTarget,
+  event,
+  sourceDelta,
+  noOverscroll,
+) {
+  var directionFactor = getDirectionFactor(
+    axis,
+    window.getComputedStyle(endTarget).direction,
+  );
   var delta = directionFactor * sourceDelta;
   var target = event.target;
   var targetInLock = endTarget.contains(target);
@@ -12561,7 +14638,10 @@ var handleScroll = function(axis, endTarget, event, sourceDelta, noOverscroll) {
     if (!target) {
       break;
     }
-    var _a = getScrollVariables(axis, target), position = _a[0], scroll_1 = _a[1], capacity = _a[2];
+    var _a = getScrollVariables(axis, target),
+      position = _a[0],
+      scroll_1 = _a[1],
+      capacity = _a[2];
     var elementScroll = scroll_1 - capacity - directionFactor * position;
     if (position || elementScroll) {
       if (elementCouldBeScrolled(axis, target)) {
@@ -12570,11 +14650,14 @@ var handleScroll = function(axis, endTarget, event, sourceDelta, noOverscroll) {
       }
     }
     var parent_1 = target.parentNode;
-    target = parent_1 && parent_1.nodeType === Node.DOCUMENT_FRAGMENT_NODE ? parent_1.host : parent_1;
+    target =
+      parent_1 && parent_1.nodeType === Node.DOCUMENT_FRAGMENT_NODE
+        ? parent_1.host
+        : parent_1;
   } while (
     // portaled content
-    !targetInLock && target !== document.body || // self content
-    targetInLock && (endTarget.contains(target) || endTarget === target)
+    (!targetInLock && target !== document.body) || // self content
+    (targetInLock && (endTarget.contains(target) || endTarget === target))
   );
   if (isDeltaPositive && (Math.abs(availableScroll) < 1 || false)) {
     shouldCancelScroll = true;
@@ -12583,20 +14666,24 @@ var handleScroll = function(axis, endTarget, event, sourceDelta, noOverscroll) {
   }
   return shouldCancelScroll;
 };
-var getTouchXY = function(event) {
-  return "changedTouches" in event ? [event.changedTouches[0].clientX, event.changedTouches[0].clientY] : [0, 0];
+var getTouchXY = function (event) {
+  return "changedTouches" in event
+    ? [event.changedTouches[0].clientX, event.changedTouches[0].clientY]
+    : [0, 0];
 };
-var getDeltaXY = function(event) {
+var getDeltaXY = function (event) {
   return [event.deltaX, event.deltaY];
 };
-var extractRef = function(ref) {
+var extractRef = function (ref) {
   return ref && "current" in ref ? ref.current : ref;
 };
-var deltaCompare = function(x, y) {
+var deltaCompare = function (x, y) {
   return x[0] === y[0] && x[1] === y[1];
 };
-var generateStyle = function(id) {
-  return "\n  .block-interactivity-".concat(id, " {pointer-events: none;}\n  .allow-interactivity-").concat(id, " {pointer-events: all;}\n");
+var generateStyle = function (id) {
+  return "\n  .block-interactivity-"
+    .concat(id, " {pointer-events: none;}\n  .allow-interactivity-")
+    .concat(id, " {pointer-events: all;}\n");
 };
 var idCounter = 0;
 var lockStack = [];
@@ -12607,27 +14694,40 @@ function RemoveScrollSideCar(props) {
   var id = React.useState(idCounter++)[0];
   var Style2 = React.useState(styleSingleton)[0];
   var lastProps = React.useRef(props);
-  React.useEffect(function() {
-    lastProps.current = props;
-  }, [props]);
-  React.useEffect(function() {
-    if (props.inert) {
-      document.body.classList.add("block-interactivity-".concat(id));
-      var allow_1 = __spreadArray([props.lockRef.current], (props.shards || []).map(extractRef), true).filter(Boolean);
-      allow_1.forEach(function(el) {
-        return el.classList.add("allow-interactivity-".concat(id));
-      });
-      return function() {
-        document.body.classList.remove("block-interactivity-".concat(id));
-        allow_1.forEach(function(el) {
-          return el.classList.remove("allow-interactivity-".concat(id));
+  React.useEffect(
+    function () {
+      lastProps.current = props;
+    },
+    [props],
+  );
+  React.useEffect(
+    function () {
+      if (props.inert) {
+        document.body.classList.add("block-interactivity-".concat(id));
+        var allow_1 = __spreadArray(
+          [props.lockRef.current],
+          (props.shards || []).map(extractRef),
+          true,
+        ).filter(Boolean);
+        allow_1.forEach(function (el) {
+          return el.classList.add("allow-interactivity-".concat(id));
         });
-      };
-    }
-    return;
-  }, [props.inert, props.lockRef.current, props.shards]);
-  var shouldCancelEvent = React.useCallback(function(event, parent) {
-    if ("touches" in event && event.touches.length === 2 || event.type === "wheel" && event.ctrlKey) {
+        return function () {
+          document.body.classList.remove("block-interactivity-".concat(id));
+          allow_1.forEach(function (el) {
+            return el.classList.remove("allow-interactivity-".concat(id));
+          });
+        };
+      }
+      return;
+    },
+    [props.inert, props.lockRef.current, props.shards],
+  );
+  var shouldCancelEvent = React.useCallback(function (event, parent) {
+    if (
+      ("touches" in event && event.touches.length === 2) ||
+      (event.type === "wheel" && event.ctrlKey)
+    ) {
       return !lastProps.current.allowPinchZoom;
     }
     var touch = getTouchXY(event);
@@ -12637,10 +14737,17 @@ function RemoveScrollSideCar(props) {
     var currentAxis;
     var target = event.target;
     var moveDirection = Math.abs(deltaX) > Math.abs(deltaY) ? "h" : "v";
-    if ("touches" in event && moveDirection === "h" && target.type === "range") {
+    if (
+      "touches" in event &&
+      moveDirection === "h" &&
+      target.type === "range"
+    ) {
       return false;
     }
-    var canBeScrolledInMainDirection = locationCouldBeScrolled(moveDirection, target);
+    var canBeScrolledInMainDirection = locationCouldBeScrolled(
+      moveDirection,
+      target,
+    );
     if (!canBeScrolledInMainDirection) {
       return true;
     }
@@ -12648,28 +14755,44 @@ function RemoveScrollSideCar(props) {
       currentAxis = moveDirection;
     } else {
       currentAxis = moveDirection === "v" ? "h" : "v";
-      canBeScrolledInMainDirection = locationCouldBeScrolled(moveDirection, target);
+      canBeScrolledInMainDirection = locationCouldBeScrolled(
+        moveDirection,
+        target,
+      );
     }
     if (!canBeScrolledInMainDirection) {
       return false;
     }
-    if (!activeAxis.current && "changedTouches" in event && (deltaX || deltaY)) {
+    if (
+      !activeAxis.current &&
+      "changedTouches" in event &&
+      (deltaX || deltaY)
+    ) {
       activeAxis.current = currentAxis;
     }
     if (!currentAxis) {
       return true;
     }
     var cancelingAxis = activeAxis.current || currentAxis;
-    return handleScroll(cancelingAxis, parent, event, cancelingAxis === "h" ? deltaX : deltaY);
+    return handleScroll(
+      cancelingAxis,
+      parent,
+      event,
+      cancelingAxis === "h" ? deltaX : deltaY,
+    );
   }, []);
-  var shouldPrevent = React.useCallback(function(_event) {
+  var shouldPrevent = React.useCallback(function (_event) {
     var event = _event;
     if (!lockStack.length || lockStack[lockStack.length - 1] !== Style2) {
       return;
     }
     var delta = "deltaY" in event ? getDeltaXY(event) : getTouchXY(event);
-    var sourceEvent = shouldPreventQueue.current.filter(function(e) {
-      return e.name === event.type && (e.target === event.target || event.target === e.shadowParent) && deltaCompare(e.delta, delta);
+    var sourceEvent = shouldPreventQueue.current.filter(function (e) {
+      return (
+        e.name === event.type &&
+        (e.target === event.target || event.target === e.shadowParent) &&
+        deltaCompare(e.delta, delta)
+      );
     })[0];
     if (sourceEvent && sourceEvent.should) {
       if (event.cancelable) {
@@ -12678,10 +14801,16 @@ function RemoveScrollSideCar(props) {
       return;
     }
     if (!sourceEvent) {
-      var shardNodes = (lastProps.current.shards || []).map(extractRef).filter(Boolean).filter(function(node) {
-        return node.contains(event.target);
-      });
-      var shouldStop = shardNodes.length > 0 ? shouldCancelEvent(event, shardNodes[0]) : !lastProps.current.noIsolation;
+      var shardNodes = (lastProps.current.shards || [])
+        .map(extractRef)
+        .filter(Boolean)
+        .filter(function (node) {
+          return node.contains(event.target);
+        });
+      var shouldStop =
+        shardNodes.length > 0
+          ? shouldCancelEvent(event, shardNodes[0])
+          : !lastProps.current.noIsolation;
       if (shouldStop) {
         if (event.cancelable) {
           event.preventDefault();
@@ -12689,37 +14818,55 @@ function RemoveScrollSideCar(props) {
       }
     }
   }, []);
-  var shouldCancel = React.useCallback(function(name, delta, target, should) {
-    var event = { name, delta, target, should, shadowParent: getOutermostShadowParent(target) };
+  var shouldCancel = React.useCallback(function (name, delta, target, should) {
+    var event = {
+      name,
+      delta,
+      target,
+      should,
+      shadowParent: getOutermostShadowParent(target),
+    };
     shouldPreventQueue.current.push(event);
-    setTimeout(function() {
-      shouldPreventQueue.current = shouldPreventQueue.current.filter(function(e) {
-        return e !== event;
-      });
+    setTimeout(function () {
+      shouldPreventQueue.current = shouldPreventQueue.current.filter(
+        function (e) {
+          return e !== event;
+        },
+      );
     }, 1);
   }, []);
-  var scrollTouchStart = React.useCallback(function(event) {
+  var scrollTouchStart = React.useCallback(function (event) {
     touchStartRef.current = getTouchXY(event);
     activeAxis.current = void 0;
   }, []);
-  var scrollWheel = React.useCallback(function(event) {
-    shouldCancel(event.type, getDeltaXY(event), event.target, shouldCancelEvent(event, props.lockRef.current));
+  var scrollWheel = React.useCallback(function (event) {
+    shouldCancel(
+      event.type,
+      getDeltaXY(event),
+      event.target,
+      shouldCancelEvent(event, props.lockRef.current),
+    );
   }, []);
-  var scrollTouchMove = React.useCallback(function(event) {
-    shouldCancel(event.type, getTouchXY(event), event.target, shouldCancelEvent(event, props.lockRef.current));
+  var scrollTouchMove = React.useCallback(function (event) {
+    shouldCancel(
+      event.type,
+      getTouchXY(event),
+      event.target,
+      shouldCancelEvent(event, props.lockRef.current),
+    );
   }, []);
-  React.useEffect(function() {
+  React.useEffect(function () {
     lockStack.push(Style2);
     props.setCallbacks({
       onScrollCapture: scrollWheel,
       onWheelCapture: scrollWheel,
-      onTouchMoveCapture: scrollTouchMove
+      onTouchMoveCapture: scrollTouchMove,
     });
     document.addEventListener("wheel", shouldPrevent, nonPassive);
     document.addEventListener("touchmove", shouldPrevent, nonPassive);
     document.addEventListener("touchstart", scrollTouchStart, nonPassive);
-    return function() {
-      lockStack = lockStack.filter(function(inst) {
+    return function () {
+      lockStack = lockStack.filter(function (inst) {
         return inst !== Style2;
       });
       document.removeEventListener("wheel", shouldPrevent, nonPassive);
@@ -12727,12 +14874,18 @@ function RemoveScrollSideCar(props) {
       document.removeEventListener("touchstart", scrollTouchStart, nonPassive);
     };
   }, []);
-  var removeScrollBar = props.removeScrollBar, inert = props.inert;
+  var removeScrollBar = props.removeScrollBar,
+    inert = props.inert;
   return React.createElement(
     React.Fragment,
     null,
     inert ? React.createElement(Style2, { styles: generateStyle(id) }) : null,
-    removeScrollBar ? React.createElement(RemoveScrollBar, { noRelative: props.noRelative, gapMode: props.gapMode }) : null
+    removeScrollBar
+      ? React.createElement(RemoveScrollBar, {
+          noRelative: props.noRelative,
+          gapMode: props.gapMode,
+        })
+      : null,
   );
 }
 function getOutermostShadowParent(node) {
@@ -12747,41 +14900,62 @@ function getOutermostShadowParent(node) {
   return shadowParent;
 }
 const SideCar = exportSidecar(effectCar, RemoveScrollSideCar);
-var ReactRemoveScroll = React.forwardRef(function(props, ref) {
-  return React.createElement(RemoveScroll, __assign({}, props, { ref, sideCar: SideCar }));
+var ReactRemoveScroll = React.forwardRef(function (props, ref) {
+  return React.createElement(
+    RemoveScroll,
+    __assign({}, props, { ref, sideCar: SideCar }),
+  );
 });
 ReactRemoveScroll.classNames = RemoveScroll.classNames;
-var getDefaultParent = function(originalTarget) {
+var getDefaultParent = function (originalTarget) {
   if (typeof document === "undefined") {
     return null;
   }
-  var sampleTarget = Array.isArray(originalTarget) ? originalTarget[0] : originalTarget;
+  var sampleTarget = Array.isArray(originalTarget)
+    ? originalTarget[0]
+    : originalTarget;
   return sampleTarget.ownerDocument.body;
 };
 var counterMap = /* @__PURE__ */ new WeakMap();
 var uncontrolledNodes = /* @__PURE__ */ new WeakMap();
 var markerMap = {};
 var lockCount = 0;
-var unwrapHost = function(node) {
+var unwrapHost = function (node) {
   return node && (node.host || unwrapHost(node.parentNode));
 };
-var correctTargets = function(parent, targets) {
-  return targets.map(function(target) {
-    if (parent.contains(target)) {
-      return target;
-    }
-    var correctedTarget = unwrapHost(target);
-    if (correctedTarget && parent.contains(correctedTarget)) {
-      return correctedTarget;
-    }
-    console.error("aria-hidden", target, "in not contained inside", parent, ". Doing nothing");
-    return null;
-  }).filter(function(x) {
-    return Boolean(x);
-  });
+var correctTargets = function (parent, targets) {
+  return targets
+    .map(function (target) {
+      if (parent.contains(target)) {
+        return target;
+      }
+      var correctedTarget = unwrapHost(target);
+      if (correctedTarget && parent.contains(correctedTarget)) {
+        return correctedTarget;
+      }
+      console.error(
+        "aria-hidden",
+        target,
+        "in not contained inside",
+        parent,
+        ". Doing nothing",
+      );
+      return null;
+    })
+    .filter(function (x) {
+      return Boolean(x);
+    });
 };
-var applyAttributeToOthers = function(originalTarget, parentNode, markerName, controlAttribute) {
-  var targets = correctTargets(parentNode, Array.isArray(originalTarget) ? originalTarget : [originalTarget]);
+var applyAttributeToOthers = function (
+  originalTarget,
+  parentNode,
+  markerName,
+  controlAttribute,
+) {
+  var targets = correctTargets(
+    parentNode,
+    Array.isArray(originalTarget) ? originalTarget : [originalTarget],
+  );
   if (!markerMap[markerName]) {
     markerMap[markerName] = /* @__PURE__ */ new WeakMap();
   }
@@ -12789,7 +14963,7 @@ var applyAttributeToOthers = function(originalTarget, parentNode, markerName, co
   var hiddenNodes = [];
   var elementsToKeep = /* @__PURE__ */ new Set();
   var elementsToStop = new Set(targets);
-  var keep = function(el) {
+  var keep = function (el) {
     if (!el || elementsToKeep.has(el)) {
       return;
     }
@@ -12797,11 +14971,11 @@ var applyAttributeToOthers = function(originalTarget, parentNode, markerName, co
     keep(el.parentNode);
   };
   targets.forEach(keep);
-  var deep = function(parent) {
+  var deep = function (parent) {
     if (!parent || elementsToStop.has(parent)) {
       return;
     }
-    Array.prototype.forEach.call(parent.children, function(node) {
+    Array.prototype.forEach.call(parent.children, function (node) {
       if (elementsToKeep.has(node)) {
         deep(node);
       } else {
@@ -12831,8 +15005,8 @@ var applyAttributeToOthers = function(originalTarget, parentNode, markerName, co
   deep(parentNode);
   elementsToKeep.clear();
   lockCount++;
-  return function() {
-    hiddenNodes.forEach(function(node) {
+  return function () {
+    hiddenNodes.forEach(function (node) {
       var counterValue = counterMap.get(node) - 1;
       var markerValue = markerCounter.get(node) - 1;
       counterMap.set(node, counterValue);
@@ -12856,19 +15030,29 @@ var applyAttributeToOthers = function(originalTarget, parentNode, markerName, co
     }
   };
 };
-var hideOthers = function(originalTarget, parentNode, markerName) {
+var hideOthers = function (originalTarget, parentNode, markerName) {
   if (markerName === void 0) {
     markerName = "data-aria-hidden";
   }
-  var targets = Array.from(Array.isArray(originalTarget) ? originalTarget : [originalTarget]);
+  var targets = Array.from(
+    Array.isArray(originalTarget) ? originalTarget : [originalTarget],
+  );
   var activeParentNode = getDefaultParent(originalTarget);
   if (!activeParentNode) {
-    return function() {
+    return function () {
       return null;
     };
   }
-  targets.push.apply(targets, Array.from(activeParentNode.querySelectorAll("[aria-live], script")));
-  return applyAttributeToOthers(targets, activeParentNode, markerName, "aria-hidden");
+  targets.push.apply(
+    targets,
+    Array.from(activeParentNode.querySelectorAll("[aria-live], script")),
+  );
+  return applyAttributeToOthers(
+    targets,
+    activeParentNode,
+    markerName,
+    "aria-hidden",
+  );
 };
 function useSize(element) {
   const [size2, setSize] = React.useState(void 0);
@@ -12887,7 +15071,9 @@ function useSize(element) {
         let height;
         if ("borderBoxSize" in entry) {
           const borderSizeEntry = entry["borderBoxSize"];
-          const borderSize = Array.isArray(borderSizeEntry) ? borderSizeEntry[0] : borderSizeEntry;
+          const borderSize = Array.isArray(borderSizeEntry)
+            ? borderSizeEntry[0]
+            : borderSizeEntry;
           width = borderSize["inlineSize"];
           height = borderSize["blockSize"];
         } else {
@@ -12911,17 +15097,17 @@ const round = Math.round;
 const floor = Math.floor;
 const createCoords = (v) => ({
   x: v,
-  y: v
+  y: v,
 });
 const oppositeSideMap = {
   left: "right",
   right: "left",
   bottom: "top",
-  top: "bottom"
+  top: "bottom",
 };
 const oppositeAlignmentMap = {
   start: "end",
-  end: "start"
+  end: "start",
 };
 function clamp(start, value, end) {
   return max(start, min(value, end));
@@ -12955,7 +15141,14 @@ function getAlignmentSides(placement, rects, rtl) {
   const alignment = getAlignment(placement);
   const alignmentAxis = getAlignmentAxis(placement);
   const length = getAxisLength(alignmentAxis);
-  let mainAlignmentSide = alignmentAxis === "x" ? alignment === (rtl ? "end" : "start") ? "right" : "left" : alignment === "start" ? "bottom" : "top";
+  let mainAlignmentSide =
+    alignmentAxis === "x"
+      ? alignment === (rtl ? "end" : "start")
+        ? "right"
+        : "left"
+      : alignment === "start"
+        ? "bottom"
+        : "top";
   if (rects.reference[length] > rects.floating[length]) {
     mainAlignmentSide = getOppositePlacement(mainAlignmentSide);
   }
@@ -12963,10 +15156,17 @@ function getAlignmentSides(placement, rects, rtl) {
 }
 function getExpandedPlacements(placement) {
   const oppositePlacement = getOppositePlacement(placement);
-  return [getOppositeAlignmentPlacement(placement), oppositePlacement, getOppositeAlignmentPlacement(oppositePlacement)];
+  return [
+    getOppositeAlignmentPlacement(placement),
+    oppositePlacement,
+    getOppositeAlignmentPlacement(oppositePlacement),
+  ];
 }
 function getOppositeAlignmentPlacement(placement) {
-  return placement.replace(/start|end/g, (alignment) => oppositeAlignmentMap[alignment]);
+  return placement.replace(
+    /start|end/g,
+    (alignment) => oppositeAlignmentMap[alignment],
+  );
 }
 const lrPlacement = ["left", "right"];
 const rlPlacement = ["right", "left"];
@@ -12997,7 +15197,10 @@ function getOppositeAxisPlacements(placement, flipAlignment, direction, rtl) {
   return list;
 }
 function getOppositePlacement(placement) {
-  return placement.replace(/left|right|bottom|top/g, (side) => oppositeSideMap[side]);
+  return placement.replace(
+    /left|right|bottom|top/g,
+    (side) => oppositeSideMap[side],
+  );
 }
 function expandPaddingObject(padding) {
   return {
@@ -13005,24 +15208,21 @@ function expandPaddingObject(padding) {
     right: 0,
     bottom: 0,
     left: 0,
-    ...padding
+    ...padding,
   };
 }
 function getPaddingObject(padding) {
-  return typeof padding !== "number" ? expandPaddingObject(padding) : {
-    top: padding,
-    right: padding,
-    bottom: padding,
-    left: padding
-  };
+  return typeof padding !== "number"
+    ? expandPaddingObject(padding)
+    : {
+        top: padding,
+        right: padding,
+        bottom: padding,
+        left: padding,
+      };
 }
 function rectToClientRect(rect) {
-  const {
-    x,
-    y,
-    width,
-    height
-  } = rect;
+  const { x, y, width, height } = rect;
   return {
     width,
     height,
@@ -13031,14 +15231,11 @@ function rectToClientRect(rect) {
     right: x + width,
     bottom: y + height,
     x,
-    y
+    y,
   };
 }
 function computeCoordsFromPlacement(_ref, placement, rtl) {
-  let {
-    reference,
-    floating
-  } = _ref;
+  let { reference, floating } = _ref;
   const sideAxis = getSideAxis(placement);
   const alignmentAxis = getAlignmentAxis(placement);
   const alignLength = getAxisLength(alignmentAxis);
@@ -13052,31 +15249,31 @@ function computeCoordsFromPlacement(_ref, placement, rtl) {
     case "top":
       coords = {
         x: commonX,
-        y: reference.y - floating.height
+        y: reference.y - floating.height,
       };
       break;
     case "bottom":
       coords = {
         x: commonX,
-        y: reference.y + reference.height
+        y: reference.y + reference.height,
       };
       break;
     case "right":
       coords = {
         x: reference.x + reference.width,
-        y: commonY
+        y: commonY,
       };
       break;
     case "left":
       coords = {
         x: reference.x - floating.width,
-        y: commonY
+        y: commonY,
       };
       break;
     default:
       coords = {
         x: reference.x,
-        y: reference.y
+        y: reference.y,
       };
   }
   switch (getAlignment(placement)) {
@@ -13094,32 +15291,28 @@ const computePosition$1 = async (reference, floating, config) => {
     placement = "bottom",
     strategy = "absolute",
     middleware = [],
-    platform: platform2
+    platform: platform2,
   } = config;
   const validMiddleware = middleware.filter(Boolean);
-  const rtl = await (platform2.isRTL == null ? void 0 : platform2.isRTL(floating));
+  const rtl = await (platform2.isRTL == null
+    ? void 0
+    : platform2.isRTL(floating));
   let rects = await platform2.getElementRects({
     reference,
     floating,
-    strategy
+    strategy,
   });
-  let {
-    x,
-    y
-  } = computeCoordsFromPlacement(rects, placement, rtl);
+  let { x, y } = computeCoordsFromPlacement(rects, placement, rtl);
   let statefulPlacement = placement;
   let middlewareData = {};
   let resetCount = 0;
   for (let i = 0; i < validMiddleware.length; i++) {
-    const {
-      name,
-      fn
-    } = validMiddleware[i];
+    const { name, fn } = validMiddleware[i];
     const {
       x: nextX,
       y: nextY,
       data,
-      reset: reset2
+      reset: reset2,
     } = await fn({
       x,
       y,
@@ -13131,8 +15324,8 @@ const computePosition$1 = async (reference, floating, config) => {
       platform: platform2,
       elements: {
         reference,
-        floating
-      }
+        floating,
+      },
     });
     x = nextX != null ? nextX : x;
     y = nextY != null ? nextY : y;
@@ -13140,8 +15333,8 @@ const computePosition$1 = async (reference, floating, config) => {
       ...middlewareData,
       [name]: {
         ...middlewareData[name],
-        ...data
-      }
+        ...data,
+      },
     };
     if (reset2 && resetCount <= 50) {
       resetCount++;
@@ -13150,16 +15343,16 @@ const computePosition$1 = async (reference, floating, config) => {
           statefulPlacement = reset2.placement;
         }
         if (reset2.rects) {
-          rects = reset2.rects === true ? await platform2.getElementRects({
-            reference,
-            floating,
-            strategy
-          }) : reset2.rects;
+          rects =
+            reset2.rects === true
+              ? await platform2.getElementRects({
+                  reference,
+                  floating,
+                  strategy,
+                })
+              : reset2.rects;
         }
-        ({
-          x,
-          y
-        } = computeCoordsFromPlacement(rects, statefulPlacement, rtl));
+        ({ x, y } = computeCoordsFromPlacement(rects, statefulPlacement, rtl));
       }
       i = -1;
     }
@@ -13169,7 +15362,7 @@ const computePosition$1 = async (reference, floating, config) => {
     y,
     placement: statefulPlacement,
     strategy,
-    middlewareData
+    middlewareData,
   };
 };
 async function detectOverflow(state, options) {
@@ -13177,55 +15370,88 @@ async function detectOverflow(state, options) {
   if (options === void 0) {
     options = {};
   }
-  const {
-    x,
-    y,
-    platform: platform2,
-    rects,
-    elements,
-    strategy
-  } = state;
+  const { x, y, platform: platform2, rects, elements, strategy } = state;
   const {
     boundary = "clippingAncestors",
     rootBoundary = "viewport",
     elementContext = "floating",
     altBoundary = false,
-    padding = 0
+    padding = 0,
   } = evaluate(options, state);
   const paddingObject = getPaddingObject(padding);
   const altContext = elementContext === "floating" ? "reference" : "floating";
   const element = elements[altBoundary ? altContext : elementContext];
-  const clippingClientRect = rectToClientRect(await platform2.getClippingRect({
-    element: ((_await$platform$isEle = await (platform2.isElement == null ? void 0 : platform2.isElement(element))) != null ? _await$platform$isEle : true) ? element : element.contextElement || await (platform2.getDocumentElement == null ? void 0 : platform2.getDocumentElement(elements.floating)),
-    boundary,
-    rootBoundary,
-    strategy
-  }));
-  const rect = elementContext === "floating" ? {
-    x,
-    y,
-    width: rects.floating.width,
-    height: rects.floating.height
-  } : rects.reference;
-  const offsetParent = await (platform2.getOffsetParent == null ? void 0 : platform2.getOffsetParent(elements.floating));
-  const offsetScale = await (platform2.isElement == null ? void 0 : platform2.isElement(offsetParent)) ? await (platform2.getScale == null ? void 0 : platform2.getScale(offsetParent)) || {
-    x: 1,
-    y: 1
-  } : {
-    x: 1,
-    y: 1
-  };
-  const elementClientRect = rectToClientRect(platform2.convertOffsetParentRelativeRectToViewportRelativeRect ? await platform2.convertOffsetParentRelativeRectToViewportRelativeRect({
-    elements,
-    rect,
-    offsetParent,
-    strategy
-  }) : rect);
+  const clippingClientRect = rectToClientRect(
+    await platform2.getClippingRect({
+      element: (
+        (_await$platform$isEle = await (platform2.isElement == null
+          ? void 0
+          : platform2.isElement(element))) != null
+          ? _await$platform$isEle
+          : true
+      )
+        ? element
+        : element.contextElement ||
+          (await (platform2.getDocumentElement == null
+            ? void 0
+            : platform2.getDocumentElement(elements.floating))),
+      boundary,
+      rootBoundary,
+      strategy,
+    }),
+  );
+  const rect =
+    elementContext === "floating"
+      ? {
+          x,
+          y,
+          width: rects.floating.width,
+          height: rects.floating.height,
+        }
+      : rects.reference;
+  const offsetParent = await (platform2.getOffsetParent == null
+    ? void 0
+    : platform2.getOffsetParent(elements.floating));
+  const offsetScale = (await (platform2.isElement == null
+    ? void 0
+    : platform2.isElement(offsetParent)))
+    ? (await (platform2.getScale == null
+        ? void 0
+        : platform2.getScale(offsetParent))) || {
+        x: 1,
+        y: 1,
+      }
+    : {
+        x: 1,
+        y: 1,
+      };
+  const elementClientRect = rectToClientRect(
+    platform2.convertOffsetParentRelativeRectToViewportRelativeRect
+      ? await platform2.convertOffsetParentRelativeRectToViewportRelativeRect({
+          elements,
+          rect,
+          offsetParent,
+          strategy,
+        })
+      : rect,
+  );
   return {
-    top: (clippingClientRect.top - elementClientRect.top + paddingObject.top) / offsetScale.y,
-    bottom: (elementClientRect.bottom - clippingClientRect.bottom + paddingObject.bottom) / offsetScale.y,
-    left: (clippingClientRect.left - elementClientRect.left + paddingObject.left) / offsetScale.x,
-    right: (elementClientRect.right - clippingClientRect.right + paddingObject.right) / offsetScale.x
+    top:
+      (clippingClientRect.top - elementClientRect.top + paddingObject.top) /
+      offsetScale.y,
+    bottom:
+      (elementClientRect.bottom -
+        clippingClientRect.bottom +
+        paddingObject.bottom) /
+      offsetScale.y,
+    left:
+      (clippingClientRect.left - elementClientRect.left + paddingObject.left) /
+      offsetScale.x,
+    right:
+      (elementClientRect.right -
+        clippingClientRect.right +
+        paddingObject.right) /
+      offsetScale.x,
   };
 }
 const arrow$3 = (options) => ({
@@ -13239,19 +15465,16 @@ const arrow$3 = (options) => ({
       rects,
       platform: platform2,
       elements,
-      middlewareData
+      middlewareData,
     } = state;
-    const {
-      element,
-      padding = 0
-    } = evaluate(options, state) || {};
+    const { element, padding = 0 } = evaluate(options, state) || {};
     if (element == null) {
       return {};
     }
     const paddingObject = getPaddingObject(padding);
     const coords = {
       x,
-      y
+      y,
     };
     const axis = getAlignmentAxis(placement);
     const length = getAxisLength(axis);
@@ -13260,37 +15483,61 @@ const arrow$3 = (options) => ({
     const minProp = isYAxis ? "top" : "left";
     const maxProp = isYAxis ? "bottom" : "right";
     const clientProp = isYAxis ? "clientHeight" : "clientWidth";
-    const endDiff = rects.reference[length] + rects.reference[axis] - coords[axis] - rects.floating[length];
+    const endDiff =
+      rects.reference[length] +
+      rects.reference[axis] -
+      coords[axis] -
+      rects.floating[length];
     const startDiff = coords[axis] - rects.reference[axis];
-    const arrowOffsetParent = await (platform2.getOffsetParent == null ? void 0 : platform2.getOffsetParent(element));
+    const arrowOffsetParent = await (platform2.getOffsetParent == null
+      ? void 0
+      : platform2.getOffsetParent(element));
     let clientSize = arrowOffsetParent ? arrowOffsetParent[clientProp] : 0;
-    if (!clientSize || !await (platform2.isElement == null ? void 0 : platform2.isElement(arrowOffsetParent))) {
+    if (
+      !clientSize ||
+      !(await (platform2.isElement == null
+        ? void 0
+        : platform2.isElement(arrowOffsetParent)))
+    ) {
       clientSize = elements.floating[clientProp] || rects.floating[length];
     }
     const centerToReference = endDiff / 2 - startDiff / 2;
-    const largestPossiblePadding = clientSize / 2 - arrowDimensions[length] / 2 - 1;
+    const largestPossiblePadding =
+      clientSize / 2 - arrowDimensions[length] / 2 - 1;
     const minPadding = min(paddingObject[minProp], largestPossiblePadding);
     const maxPadding = min(paddingObject[maxProp], largestPossiblePadding);
     const min$1 = minPadding;
     const max2 = clientSize - arrowDimensions[length] - maxPadding;
-    const center = clientSize / 2 - arrowDimensions[length] / 2 + centerToReference;
+    const center =
+      clientSize / 2 - arrowDimensions[length] / 2 + centerToReference;
     const offset2 = clamp(min$1, center, max2);
-    const shouldAddOffset = !middlewareData.arrow && getAlignment(placement) != null && center !== offset2 && rects.reference[length] / 2 - (center < min$1 ? minPadding : maxPadding) - arrowDimensions[length] / 2 < 0;
-    const alignmentOffset = shouldAddOffset ? center < min$1 ? center - min$1 : center - max2 : 0;
+    const shouldAddOffset =
+      !middlewareData.arrow &&
+      getAlignment(placement) != null &&
+      center !== offset2 &&
+      rects.reference[length] / 2 -
+        (center < min$1 ? minPadding : maxPadding) -
+        arrowDimensions[length] / 2 <
+        0;
+    const alignmentOffset = shouldAddOffset
+      ? center < min$1
+        ? center - min$1
+        : center - max2
+      : 0;
     return {
       [axis]: coords[axis] + alignmentOffset,
       data: {
         [axis]: offset2,
         centerOffset: center - offset2 - alignmentOffset,
-        ...shouldAddOffset && {
-          alignmentOffset
-        }
+        ...(shouldAddOffset && {
+          alignmentOffset,
+        }),
       },
-      reset: shouldAddOffset
+      reset: shouldAddOffset,
     };
-  }
+  },
 });
-const flip$2 = function(options) {
+const flip$2 = function (options) {
   if (options === void 0) {
     options = {};
   }
@@ -13305,7 +15552,7 @@ const flip$2 = function(options) {
         rects,
         initialPlacement,
         platform: platform2,
-        elements
+        elements,
       } = state;
       const {
         mainAxis: checkMainAxis = true,
@@ -13316,22 +15563,41 @@ const flip$2 = function(options) {
         flipAlignment = true,
         ...detectOverflowOptions
       } = evaluate(options, state);
-      if ((_middlewareData$arrow = middlewareData.arrow) != null && _middlewareData$arrow.alignmentOffset) {
+      if (
+        (_middlewareData$arrow = middlewareData.arrow) != null &&
+        _middlewareData$arrow.alignmentOffset
+      ) {
         return {};
       }
       const side = getSide(placement);
       const initialSideAxis = getSideAxis(initialPlacement);
       const isBasePlacement = getSide(initialPlacement) === initialPlacement;
-      const rtl = await (platform2.isRTL == null ? void 0 : platform2.isRTL(elements.floating));
-      const fallbackPlacements = specifiedFallbackPlacements || (isBasePlacement || !flipAlignment ? [getOppositePlacement(initialPlacement)] : getExpandedPlacements(initialPlacement));
+      const rtl = await (platform2.isRTL == null
+        ? void 0
+        : platform2.isRTL(elements.floating));
+      const fallbackPlacements =
+        specifiedFallbackPlacements ||
+        (isBasePlacement || !flipAlignment
+          ? [getOppositePlacement(initialPlacement)]
+          : getExpandedPlacements(initialPlacement));
       const hasFallbackAxisSideDirection = fallbackAxisSideDirection !== "none";
       if (!specifiedFallbackPlacements && hasFallbackAxisSideDirection) {
-        fallbackPlacements.push(...getOppositeAxisPlacements(initialPlacement, flipAlignment, fallbackAxisSideDirection, rtl));
+        fallbackPlacements.push(
+          ...getOppositeAxisPlacements(
+            initialPlacement,
+            flipAlignment,
+            fallbackAxisSideDirection,
+            rtl,
+          ),
+        );
       }
       const placements = [initialPlacement, ...fallbackPlacements];
       const overflow = await detectOverflow(state, detectOverflowOptions);
       const overflows = [];
-      let overflowsData = ((_middlewareData$flip = middlewareData.flip) == null ? void 0 : _middlewareData$flip.overflows) || [];
+      let overflowsData =
+        ((_middlewareData$flip = middlewareData.flip) == null
+          ? void 0
+          : _middlewareData$flip.overflows) || [];
       if (checkMainAxis) {
         overflows.push(overflow[side]);
       }
@@ -13339,44 +15605,77 @@ const flip$2 = function(options) {
         const sides2 = getAlignmentSides(placement, rects, rtl);
         overflows.push(overflow[sides2[0]], overflow[sides2[1]]);
       }
-      overflowsData = [...overflowsData, {
-        placement,
-        overflows
-      }];
+      overflowsData = [
+        ...overflowsData,
+        {
+          placement,
+          overflows,
+        },
+      ];
       if (!overflows.every((side2) => side2 <= 0)) {
         var _middlewareData$flip2, _overflowsData$filter;
-        const nextIndex = (((_middlewareData$flip2 = middlewareData.flip) == null ? void 0 : _middlewareData$flip2.index) || 0) + 1;
+        const nextIndex =
+          (((_middlewareData$flip2 = middlewareData.flip) == null
+            ? void 0
+            : _middlewareData$flip2.index) || 0) + 1;
         const nextPlacement = placements[nextIndex];
         if (nextPlacement) {
-          const ignoreCrossAxisOverflow = checkCrossAxis === "alignment" ? initialSideAxis !== getSideAxis(nextPlacement) : false;
-          if (!ignoreCrossAxisOverflow || // We leave the current main axis only if every placement on that axis
-          // overflows the main axis.
-          overflowsData.every((d) => getSideAxis(d.placement) === initialSideAxis ? d.overflows[0] > 0 : true)) {
+          const ignoreCrossAxisOverflow =
+            checkCrossAxis === "alignment"
+              ? initialSideAxis !== getSideAxis(nextPlacement)
+              : false;
+          if (
+            !ignoreCrossAxisOverflow || // We leave the current main axis only if every placement on that axis
+            // overflows the main axis.
+            overflowsData.every((d) =>
+              getSideAxis(d.placement) === initialSideAxis
+                ? d.overflows[0] > 0
+                : true,
+            )
+          ) {
             return {
               data: {
                 index: nextIndex,
-                overflows: overflowsData
+                overflows: overflowsData,
               },
               reset: {
-                placement: nextPlacement
-              }
+                placement: nextPlacement,
+              },
             };
           }
         }
-        let resetPlacement = (_overflowsData$filter = overflowsData.filter((d) => d.overflows[0] <= 0).sort((a, b2) => a.overflows[1] - b2.overflows[1])[0]) == null ? void 0 : _overflowsData$filter.placement;
+        let resetPlacement =
+          (_overflowsData$filter = overflowsData
+            .filter((d) => d.overflows[0] <= 0)
+            .sort((a, b2) => a.overflows[1] - b2.overflows[1])[0]) == null
+            ? void 0
+            : _overflowsData$filter.placement;
         if (!resetPlacement) {
           switch (fallbackStrategy) {
             case "bestFit": {
               var _overflowsData$filter2;
-              const placement2 = (_overflowsData$filter2 = overflowsData.filter((d) => {
-                if (hasFallbackAxisSideDirection) {
-                  const currentSideAxis = getSideAxis(d.placement);
-                  return currentSideAxis === initialSideAxis || // Create a bias to the `y` side axis due to horizontal
-                  // reading directions favoring greater width.
-                  currentSideAxis === "y";
-                }
-                return true;
-              }).map((d) => [d.placement, d.overflows.filter((overflow2) => overflow2 > 0).reduce((acc, overflow2) => acc + overflow2, 0)]).sort((a, b2) => a[1] - b2[1])[0]) == null ? void 0 : _overflowsData$filter2[0];
+              const placement2 =
+                (_overflowsData$filter2 = overflowsData
+                  .filter((d) => {
+                    if (hasFallbackAxisSideDirection) {
+                      const currentSideAxis = getSideAxis(d.placement);
+                      return (
+                        currentSideAxis === initialSideAxis || // Create a bias to the `y` side axis due to horizontal
+                        // reading directions favoring greater width.
+                        currentSideAxis === "y"
+                      );
+                    }
+                    return true;
+                  })
+                  .map((d) => [
+                    d.placement,
+                    d.overflows
+                      .filter((overflow2) => overflow2 > 0)
+                      .reduce((acc, overflow2) => acc + overflow2, 0),
+                  ])
+                  .sort((a, b2) => a[1] - b2[1])[0]) == null
+                  ? void 0
+                  : _overflowsData$filter2[0];
               if (placement2) {
                 resetPlacement = placement2;
               }
@@ -13390,13 +15689,13 @@ const flip$2 = function(options) {
         if (placement !== resetPlacement) {
           return {
             reset: {
-              placement: resetPlacement
-            }
+              placement: resetPlacement,
+            },
           };
         }
       }
       return {};
-    }
+    },
   };
 };
 function getSideOffsets(overflow, rect) {
@@ -13404,13 +15703,13 @@ function getSideOffsets(overflow, rect) {
     top: overflow.top - rect.height,
     right: overflow.right - rect.width,
     bottom: overflow.bottom - rect.height,
-    left: overflow.left - rect.width
+    left: overflow.left - rect.width,
   };
 }
 function isAnySideFullyClipped(overflow) {
   return sides.some((side) => overflow[side] >= 0);
 }
-const hide$2 = function(options) {
+const hide$2 = function (options) {
   if (options === void 0) {
     options = {};
   }
@@ -13418,86 +15717,81 @@ const hide$2 = function(options) {
     name: "hide",
     options,
     async fn(state) {
-      const {
-        rects
-      } = state;
-      const {
-        strategy = "referenceHidden",
-        ...detectOverflowOptions
-      } = evaluate(options, state);
+      const { rects } = state;
+      const { strategy = "referenceHidden", ...detectOverflowOptions } =
+        evaluate(options, state);
       switch (strategy) {
         case "referenceHidden": {
           const overflow = await detectOverflow(state, {
             ...detectOverflowOptions,
-            elementContext: "reference"
+            elementContext: "reference",
           });
           const offsets = getSideOffsets(overflow, rects.reference);
           return {
             data: {
               referenceHiddenOffsets: offsets,
-              referenceHidden: isAnySideFullyClipped(offsets)
-            }
+              referenceHidden: isAnySideFullyClipped(offsets),
+            },
           };
         }
         case "escaped": {
           const overflow = await detectOverflow(state, {
             ...detectOverflowOptions,
-            altBoundary: true
+            altBoundary: true,
           });
           const offsets = getSideOffsets(overflow, rects.floating);
           return {
             data: {
               escapedOffsets: offsets,
-              escaped: isAnySideFullyClipped(offsets)
-            }
+              escaped: isAnySideFullyClipped(offsets),
+            },
           };
         }
         default: {
           return {};
         }
       }
-    }
+    },
   };
 };
 const originSides = /* @__PURE__ */ new Set(["left", "top"]);
 async function convertValueToCoords(state, options) {
-  const {
-    placement,
-    platform: platform2,
-    elements
-  } = state;
-  const rtl = await (platform2.isRTL == null ? void 0 : platform2.isRTL(elements.floating));
+  const { placement, platform: platform2, elements } = state;
+  const rtl = await (platform2.isRTL == null
+    ? void 0
+    : platform2.isRTL(elements.floating));
   const side = getSide(placement);
   const alignment = getAlignment(placement);
   const isVertical = getSideAxis(placement) === "y";
   const mainAxisMulti = originSides.has(side) ? -1 : 1;
   const crossAxisMulti = rtl && isVertical ? -1 : 1;
   const rawValue = evaluate(options, state);
-  let {
-    mainAxis,
-    crossAxis,
-    alignmentAxis
-  } = typeof rawValue === "number" ? {
-    mainAxis: rawValue,
-    crossAxis: 0,
-    alignmentAxis: null
-  } : {
-    mainAxis: rawValue.mainAxis || 0,
-    crossAxis: rawValue.crossAxis || 0,
-    alignmentAxis: rawValue.alignmentAxis
-  };
+  let { mainAxis, crossAxis, alignmentAxis } =
+    typeof rawValue === "number"
+      ? {
+          mainAxis: rawValue,
+          crossAxis: 0,
+          alignmentAxis: null,
+        }
+      : {
+          mainAxis: rawValue.mainAxis || 0,
+          crossAxis: rawValue.crossAxis || 0,
+          alignmentAxis: rawValue.alignmentAxis,
+        };
   if (alignment && typeof alignmentAxis === "number") {
     crossAxis = alignment === "end" ? alignmentAxis * -1 : alignmentAxis;
   }
-  return isVertical ? {
-    x: crossAxis * crossAxisMulti,
-    y: mainAxis * mainAxisMulti
-  } : {
-    x: mainAxis * mainAxisMulti,
-    y: crossAxis * crossAxisMulti
-  };
+  return isVertical
+    ? {
+        x: crossAxis * crossAxisMulti,
+        y: mainAxis * mainAxisMulti,
+      }
+    : {
+        x: mainAxis * mainAxisMulti,
+        y: crossAxis * crossAxisMulti,
+      };
 }
-const offset$2 = function(options) {
+const offset$2 = function (options) {
   if (options === void 0) {
     options = 0;
   }
@@ -13506,14 +15800,16 @@ const offset$2 = function(options) {
     options,
     async fn(state) {
       var _middlewareData$offse, _middlewareData$arrow;
-      const {
-        x,
-        y,
-        placement,
-        middlewareData
-      } = state;
+      const { x, y, placement, middlewareData } = state;
       const diffCoords = await convertValueToCoords(state, options);
-      if (placement === ((_middlewareData$offse = middlewareData.offset) == null ? void 0 : _middlewareData$offse.placement) && (_middlewareData$arrow = middlewareData.arrow) != null && _middlewareData$arrow.alignmentOffset) {
+      if (
+        placement ===
+          ((_middlewareData$offse = middlewareData.offset) == null
+            ? void 0
+            : _middlewareData$offse.placement) &&
+        (_middlewareData$arrow = middlewareData.arrow) != null &&
+        _middlewareData$arrow.alignmentOffset
+      ) {
         return {};
       }
       return {
@@ -13521,13 +15817,13 @@ const offset$2 = function(options) {
         y: y + diffCoords.y,
         data: {
           ...diffCoords,
-          placement
-        }
+          placement,
+        },
       };
-    }
+    },
   };
 };
-const shift$2 = function(options) {
+const shift$2 = function (options) {
   if (options === void 0) {
     options = {};
   }
@@ -13535,31 +15831,24 @@ const shift$2 = function(options) {
     name: "shift",
     options,
     async fn(state) {
-      const {
-        x,
-        y,
-        placement
-      } = state;
+      const { x, y, placement } = state;
       const {
         mainAxis: checkMainAxis = true,
         crossAxis: checkCrossAxis = false,
         limiter = {
           fn: (_ref) => {
-            let {
-              x: x2,
-              y: y2
-            } = _ref;
+            let { x: x2, y: y2 } = _ref;
             return {
               x: x2,
-              y: y2
+              y: y2,
             };
-          }
+          },
         },
         ...detectOverflowOptions
       } = evaluate(options, state);
       const coords = {
         x,
-        y
+        y,
       };
       const overflow = await detectOverflow(state, detectOverflowOptions);
       const crossAxis = getSideAxis(getSide(placement));
@@ -13583,7 +15872,7 @@ const shift$2 = function(options) {
       const limitedCoords = limiter.fn({
         ...state,
         [mainAxis]: mainAxisCoord,
-        [crossAxis]: crossAxisCoord
+        [crossAxis]: crossAxisCoord,
       });
       return {
         ...limitedCoords,
@@ -13592,53 +15881,56 @@ const shift$2 = function(options) {
           y: limitedCoords.y - y,
           enabled: {
             [mainAxis]: checkMainAxis,
-            [crossAxis]: checkCrossAxis
-          }
-        }
+            [crossAxis]: checkCrossAxis,
+          },
+        },
       };
-    }
+    },
   };
 };
-const limitShift$2 = function(options) {
+const limitShift$2 = function (options) {
   if (options === void 0) {
     options = {};
   }
   return {
     options,
     fn(state) {
-      const {
-        x,
-        y,
-        placement,
-        rects,
-        middlewareData
-      } = state;
+      const { x, y, placement, rects, middlewareData } = state;
       const {
         offset: offset2 = 0,
         mainAxis: checkMainAxis = true,
-        crossAxis: checkCrossAxis = true
+        crossAxis: checkCrossAxis = true,
       } = evaluate(options, state);
       const coords = {
         x,
-        y
+        y,
       };
       const crossAxis = getSideAxis(placement);
       const mainAxis = getOppositeAxis(crossAxis);
       let mainAxisCoord = coords[mainAxis];
       let crossAxisCoord = coords[crossAxis];
       const rawOffset = evaluate(offset2, state);
-      const computedOffset = typeof rawOffset === "number" ? {
-        mainAxis: rawOffset,
-        crossAxis: 0
-      } : {
-        mainAxis: 0,
-        crossAxis: 0,
-        ...rawOffset
-      };
+      const computedOffset =
+        typeof rawOffset === "number"
+          ? {
+              mainAxis: rawOffset,
+              crossAxis: 0,
+            }
+          : {
+              mainAxis: 0,
+              crossAxis: 0,
+              ...rawOffset,
+            };
       if (checkMainAxis) {
         const len = mainAxis === "y" ? "height" : "width";
-        const limitMin = rects.reference[mainAxis] - rects.floating[len] + computedOffset.mainAxis;
-        const limitMax = rects.reference[mainAxis] + rects.reference[len] - computedOffset.mainAxis;
+        const limitMin =
+          rects.reference[mainAxis] -
+          rects.floating[len] +
+          computedOffset.mainAxis;
+        const limitMax =
+          rects.reference[mainAxis] +
+          rects.reference[len] -
+          computedOffset.mainAxis;
         if (mainAxisCoord < limitMin) {
           mainAxisCoord = limitMin;
         } else if (mainAxisCoord > limitMax) {
@@ -13649,8 +15941,24 @@ const limitShift$2 = function(options) {
         var _middlewareData$offse, _middlewareData$offse2;
         const len = mainAxis === "y" ? "width" : "height";
         const isOriginSide = originSides.has(getSide(placement));
-        const limitMin = rects.reference[crossAxis] - rects.floating[len] + (isOriginSide ? ((_middlewareData$offse = middlewareData.offset) == null ? void 0 : _middlewareData$offse[crossAxis]) || 0 : 0) + (isOriginSide ? 0 : computedOffset.crossAxis);
-        const limitMax = rects.reference[crossAxis] + rects.reference[len] + (isOriginSide ? 0 : ((_middlewareData$offse2 = middlewareData.offset) == null ? void 0 : _middlewareData$offse2[crossAxis]) || 0) - (isOriginSide ? computedOffset.crossAxis : 0);
+        const limitMin =
+          rects.reference[crossAxis] -
+          rects.floating[len] +
+          (isOriginSide
+            ? ((_middlewareData$offse = middlewareData.offset) == null
+                ? void 0
+                : _middlewareData$offse[crossAxis]) || 0
+            : 0) +
+          (isOriginSide ? 0 : computedOffset.crossAxis);
+        const limitMax =
+          rects.reference[crossAxis] +
+          rects.reference[len] +
+          (isOriginSide
+            ? 0
+            : ((_middlewareData$offse2 = middlewareData.offset) == null
+                ? void 0
+                : _middlewareData$offse2[crossAxis]) || 0) -
+          (isOriginSide ? computedOffset.crossAxis : 0);
         if (crossAxisCoord < limitMin) {
           crossAxisCoord = limitMin;
         } else if (crossAxisCoord > limitMax) {
@@ -13659,12 +15967,12 @@ const limitShift$2 = function(options) {
       }
       return {
         [mainAxis]: mainAxisCoord,
-        [crossAxis]: crossAxisCoord
+        [crossAxis]: crossAxisCoord,
       };
-    }
+    },
   };
 };
-const size$2 = function(options) {
+const size$2 = function (options) {
   if (options === void 0) {
     options = {};
   }
@@ -13673,45 +15981,56 @@ const size$2 = function(options) {
     options,
     async fn(state) {
       var _state$middlewareData, _state$middlewareData2;
-      const {
-        placement,
-        rects,
-        platform: platform2,
-        elements
-      } = state;
-      const {
-        apply = () => {
-        },
-        ...detectOverflowOptions
-      } = evaluate(options, state);
+      const { placement, rects, platform: platform2, elements } = state;
+      const { apply = () => {}, ...detectOverflowOptions } = evaluate(
+        options,
+        state,
+      );
       const overflow = await detectOverflow(state, detectOverflowOptions);
       const side = getSide(placement);
       const alignment = getAlignment(placement);
       const isYAxis = getSideAxis(placement) === "y";
-      const {
-        width,
-        height
-      } = rects.floating;
+      const { width, height } = rects.floating;
       let heightSide;
       let widthSide;
       if (side === "top" || side === "bottom") {
         heightSide = side;
-        widthSide = alignment === (await (platform2.isRTL == null ? void 0 : platform2.isRTL(elements.floating)) ? "start" : "end") ? "left" : "right";
+        widthSide =
+          alignment ===
+          ((await (platform2.isRTL == null
+            ? void 0
+            : platform2.isRTL(elements.floating)))
+            ? "start"
+            : "end")
+            ? "left"
+            : "right";
       } else {
         widthSide = side;
         heightSide = alignment === "end" ? "top" : "bottom";
       }
       const maximumClippingHeight = height - overflow.top - overflow.bottom;
       const maximumClippingWidth = width - overflow.left - overflow.right;
-      const overflowAvailableHeight = min(height - overflow[heightSide], maximumClippingHeight);
-      const overflowAvailableWidth = min(width - overflow[widthSide], maximumClippingWidth);
+      const overflowAvailableHeight = min(
+        height - overflow[heightSide],
+        maximumClippingHeight,
+      );
+      const overflowAvailableWidth = min(
+        width - overflow[widthSide],
+        maximumClippingWidth,
+      );
       const noShift = !state.middlewareData.shift;
       let availableHeight = overflowAvailableHeight;
       let availableWidth = overflowAvailableWidth;
-      if ((_state$middlewareData = state.middlewareData.shift) != null && _state$middlewareData.enabled.x) {
+      if (
+        (_state$middlewareData = state.middlewareData.shift) != null &&
+        _state$middlewareData.enabled.x
+      ) {
         availableWidth = maximumClippingWidth;
       }
-      if ((_state$middlewareData2 = state.middlewareData.shift) != null && _state$middlewareData2.enabled.y) {
+      if (
+        (_state$middlewareData2 = state.middlewareData.shift) != null &&
+        _state$middlewareData2.enabled.y
+      ) {
         availableHeight = maximumClippingHeight;
       }
       if (noShift && !alignment) {
@@ -13720,26 +16039,36 @@ const size$2 = function(options) {
         const yMin = max(overflow.top, 0);
         const yMax = max(overflow.bottom, 0);
         if (isYAxis) {
-          availableWidth = width - 2 * (xMin !== 0 || xMax !== 0 ? xMin + xMax : max(overflow.left, overflow.right));
+          availableWidth =
+            width -
+            2 *
+              (xMin !== 0 || xMax !== 0
+                ? xMin + xMax
+                : max(overflow.left, overflow.right));
         } else {
-          availableHeight = height - 2 * (yMin !== 0 || yMax !== 0 ? yMin + yMax : max(overflow.top, overflow.bottom));
+          availableHeight =
+            height -
+            2 *
+              (yMin !== 0 || yMax !== 0
+                ? yMin + yMax
+                : max(overflow.top, overflow.bottom));
         }
       }
       await apply({
         ...state,
         availableWidth,
-        availableHeight
+        availableHeight,
       });
       const nextDimensions = await platform2.getDimensions(elements.floating);
       if (width !== nextDimensions.width || height !== nextDimensions.height) {
         return {
           reset: {
-            rects: true
-          }
+            rects: true,
+          },
         };
       }
       return {};
-    }
+    },
   };
 };
 function hasWindow() {
@@ -13753,11 +16082,19 @@ function getNodeName(node) {
 }
 function getWindow(node) {
   var _node$ownerDocument;
-  return (node == null || (_node$ownerDocument = node.ownerDocument) == null ? void 0 : _node$ownerDocument.defaultView) || window;
+  return (
+    (node == null || (_node$ownerDocument = node.ownerDocument) == null
+      ? void 0
+      : _node$ownerDocument.defaultView) || window
+  );
 }
 function getDocumentElement(node) {
   var _ref;
-  return (_ref = (isNode(node) ? node.ownerDocument : node.document) || window.document) == null ? void 0 : _ref.documentElement;
+  return (_ref =
+    (isNode(node) ? node.ownerDocument : node.document) || window.document) ==
+    null
+    ? void 0
+    : _ref.documentElement;
 }
 function isNode(value) {
   if (!hasWindow()) {
@@ -13775,23 +16112,30 @@ function isHTMLElement(value) {
   if (!hasWindow()) {
     return false;
   }
-  return value instanceof HTMLElement || value instanceof getWindow(value).HTMLElement;
+  return (
+    value instanceof HTMLElement ||
+    value instanceof getWindow(value).HTMLElement
+  );
 }
 function isShadowRoot(value) {
   if (!hasWindow() || typeof ShadowRoot === "undefined") {
     return false;
   }
-  return value instanceof ShadowRoot || value instanceof getWindow(value).ShadowRoot;
+  return (
+    value instanceof ShadowRoot || value instanceof getWindow(value).ShadowRoot
+  );
 }
-const invalidOverflowDisplayValues = /* @__PURE__ */ new Set(["inline", "contents"]);
+const invalidOverflowDisplayValues = /* @__PURE__ */ new Set([
+  "inline",
+  "contents",
+]);
 function isOverflowElement(element) {
-  const {
-    overflow,
-    overflowX,
-    overflowY,
-    display
-  } = getComputedStyle$1(element);
-  return /auto|scroll|overlay|hidden|clip/.test(overflow + overflowY + overflowX) && !invalidOverflowDisplayValues.has(display);
+  const { overflow, overflowX, overflowY, display } =
+    getComputedStyle$1(element);
+  return (
+    /auto|scroll|overlay|hidden|clip/.test(overflow + overflowY + overflowX) &&
+    !invalidOverflowDisplayValues.has(display)
+  );
 }
 const tableElements = /* @__PURE__ */ new Set(["table", "td", "th"]);
 function isTableElement(element) {
@@ -13807,13 +16151,37 @@ function isTopLayer(element) {
     }
   });
 }
-const transformProperties = ["transform", "translate", "scale", "rotate", "perspective"];
-const willChangeValues = ["transform", "translate", "scale", "rotate", "perspective", "filter"];
+const transformProperties = [
+  "transform",
+  "translate",
+  "scale",
+  "rotate",
+  "perspective",
+];
+const willChangeValues = [
+  "transform",
+  "translate",
+  "scale",
+  "rotate",
+  "perspective",
+  "filter",
+];
 const containValues = ["paint", "layout", "strict", "content"];
 function isContainingBlock(elementOrCss) {
   const webkit = isWebKit();
-  const css = isElement(elementOrCss) ? getComputedStyle$1(elementOrCss) : elementOrCss;
-  return transformProperties.some((value) => css[value] ? css[value] !== "none" : false) || (css.containerType ? css.containerType !== "normal" : false) || !webkit && (css.backdropFilter ? css.backdropFilter !== "none" : false) || !webkit && (css.filter ? css.filter !== "none" : false) || willChangeValues.some((value) => (css.willChange || "").includes(value)) || containValues.some((value) => (css.contain || "").includes(value));
+  const css = isElement(elementOrCss)
+    ? getComputedStyle$1(elementOrCss)
+    : elementOrCss;
+  return (
+    transformProperties.some((value) =>
+      css[value] ? css[value] !== "none" : false,
+    ) ||
+    (css.containerType ? css.containerType !== "normal" : false) ||
+    (!webkit && (css.backdropFilter ? css.backdropFilter !== "none" : false)) ||
+    (!webkit && (css.filter ? css.filter !== "none" : false)) ||
+    willChangeValues.some((value) => (css.willChange || "").includes(value)) ||
+    containValues.some((value) => (css.contain || "").includes(value))
+  );
 }
 function getContainingBlock(element) {
   let currentNode = getParentNode(element);
@@ -13831,7 +16199,11 @@ function isWebKit() {
   if (typeof CSS === "undefined" || !CSS.supports) return false;
   return CSS.supports("-webkit-backdrop-filter", "none");
 }
-const lastTraversableNodeNames = /* @__PURE__ */ new Set(["html", "body", "#document"]);
+const lastTraversableNodeNames = /* @__PURE__ */ new Set([
+  "html",
+  "body",
+  "#document",
+]);
 function isLastTraversableNode(node) {
   return lastTraversableNodeNames.has(getNodeName(node));
 }
@@ -13842,25 +16214,24 @@ function getNodeScroll(element) {
   if (isElement(element)) {
     return {
       scrollLeft: element.scrollLeft,
-      scrollTop: element.scrollTop
+      scrollTop: element.scrollTop,
     };
   }
   return {
     scrollLeft: element.scrollX,
-    scrollTop: element.scrollY
+    scrollTop: element.scrollY,
   };
 }
 function getParentNode(node) {
   if (getNodeName(node) === "html") {
     return node;
   }
-  const result = (
+  const result =
     // Step into the shadow DOM of the parent of a slotted node.
     node.assignedSlot || // DOM Element detected.
     node.parentNode || // ShadowRoot detected.
-    isShadowRoot(node) && node.host || // Fallback.
-    getDocumentElement(node)
-  );
+    (isShadowRoot(node) && node.host) || // Fallback.
+    getDocumentElement(node);
   return isShadowRoot(result) ? result.host : result;
 }
 function getNearestOverflowAncestor(node) {
@@ -13882,16 +16253,30 @@ function getOverflowAncestors(node, list, traverseIframes) {
     traverseIframes = true;
   }
   const scrollableAncestor = getNearestOverflowAncestor(node);
-  const isBody = scrollableAncestor === ((_node$ownerDocument2 = node.ownerDocument) == null ? void 0 : _node$ownerDocument2.body);
+  const isBody =
+    scrollableAncestor ===
+    ((_node$ownerDocument2 = node.ownerDocument) == null
+      ? void 0
+      : _node$ownerDocument2.body);
   const win = getWindow(scrollableAncestor);
   if (isBody) {
     const frameElement = getFrameElement(win);
-    return list.concat(win, win.visualViewport || [], isOverflowElement(scrollableAncestor) ? scrollableAncestor : [], frameElement && traverseIframes ? getOverflowAncestors(frameElement) : []);
+    return list.concat(
+      win,
+      win.visualViewport || [],
+      isOverflowElement(scrollableAncestor) ? scrollableAncestor : [],
+      frameElement && traverseIframes ? getOverflowAncestors(frameElement) : [],
+    );
   }
-  return list.concat(scrollableAncestor, getOverflowAncestors(scrollableAncestor, [], traverseIframes));
+  return list.concat(
+    scrollableAncestor,
+    getOverflowAncestors(scrollableAncestor, [], traverseIframes),
+  );
 }
 function getFrameElement(win) {
-  return win.parent && Object.getPrototypeOf(win.parent) ? win.frameElement : null;
+  return win.parent && Object.getPrototypeOf(win.parent)
+    ? win.frameElement
+    : null;
 }
 function getCssDimensions(element) {
   const css = getComputedStyle$1(element);
@@ -13900,7 +16285,8 @@ function getCssDimensions(element) {
   const hasOffset = isHTMLElement(element);
   const offsetWidth = hasOffset ? element.offsetWidth : width;
   const offsetHeight = hasOffset ? element.offsetHeight : height;
-  const shouldFallback = round(width) !== offsetWidth || round(height) !== offsetHeight;
+  const shouldFallback =
+    round(width) !== offsetWidth || round(height) !== offsetHeight;
   if (shouldFallback) {
     width = offsetWidth;
     height = offsetHeight;
@@ -13908,7 +16294,7 @@ function getCssDimensions(element) {
   return {
     width,
     height,
-    $: shouldFallback
+    $: shouldFallback,
   };
 }
 function unwrapElement(element) {
@@ -13920,11 +16306,7 @@ function getScale(element) {
     return createCoords(1);
   }
   const rect = domElement.getBoundingClientRect();
-  const {
-    width,
-    height,
-    $
-  } = getCssDimensions(domElement);
+  const { width, height, $ } = getCssDimensions(domElement);
   let x = ($ ? round(rect.width) : rect.width) / width;
   let y = ($ ? round(rect.height) : rect.height) / height;
   if (!x || !Number.isFinite(x)) {
@@ -13935,7 +16317,7 @@ function getScale(element) {
   }
   return {
     x,
-    y
+    y,
   };
 }
 const noOffsets = /* @__PURE__ */ createCoords(0);
@@ -13946,19 +16328,27 @@ function getVisualOffsets(element) {
   }
   return {
     x: win.visualViewport.offsetLeft,
-    y: win.visualViewport.offsetTop
+    y: win.visualViewport.offsetTop,
   };
 }
 function shouldAddVisualOffsets(element, isFixed, floatingOffsetParent) {
   if (isFixed === void 0) {
     isFixed = false;
   }
-  if (!floatingOffsetParent || isFixed && floatingOffsetParent !== getWindow(element)) {
+  if (
+    !floatingOffsetParent ||
+    (isFixed && floatingOffsetParent !== getWindow(element))
+  ) {
     return false;
   }
   return isFixed;
 }
-function getBoundingClientRect(element, includeScale, isFixedStrategy, offsetParent) {
+function getBoundingClientRect(
+  element,
+  includeScale,
+  isFixedStrategy,
+  offsetParent,
+) {
   if (includeScale === void 0) {
     includeScale = false;
   }
@@ -13977,22 +16367,36 @@ function getBoundingClientRect(element, includeScale, isFixedStrategy, offsetPar
       scale = getScale(element);
     }
   }
-  const visualOffsets = shouldAddVisualOffsets(domElement, isFixedStrategy, offsetParent) ? getVisualOffsets(domElement) : createCoords(0);
+  const visualOffsets = shouldAddVisualOffsets(
+    domElement,
+    isFixedStrategy,
+    offsetParent,
+  )
+    ? getVisualOffsets(domElement)
+    : createCoords(0);
   let x = (clientRect.left + visualOffsets.x) / scale.x;
   let y = (clientRect.top + visualOffsets.y) / scale.y;
   let width = clientRect.width / scale.x;
   let height = clientRect.height / scale.y;
   if (domElement) {
     const win = getWindow(domElement);
-    const offsetWin = offsetParent && isElement(offsetParent) ? getWindow(offsetParent) : offsetParent;
+    const offsetWin =
+      offsetParent && isElement(offsetParent)
+        ? getWindow(offsetParent)
+        : offsetParent;
     let currentWin = win;
     let currentIFrame = getFrameElement(currentWin);
     while (currentIFrame && offsetParent && offsetWin !== currentWin) {
       const iframeScale = getScale(currentIFrame);
       const iframeRect = currentIFrame.getBoundingClientRect();
       const css = getComputedStyle$1(currentIFrame);
-      const left = iframeRect.left + (currentIFrame.clientLeft + parseFloat(css.paddingLeft)) * iframeScale.x;
-      const top = iframeRect.top + (currentIFrame.clientTop + parseFloat(css.paddingTop)) * iframeScale.y;
+      const left =
+        iframeRect.left +
+        (currentIFrame.clientLeft + parseFloat(css.paddingLeft)) *
+          iframeScale.x;
+      const top =
+        iframeRect.top +
+        (currentIFrame.clientTop + parseFloat(css.paddingTop)) * iframeScale.y;
       x *= iframeScale.x;
       y *= iframeScale.y;
       width *= iframeScale.x;
@@ -14007,7 +16411,7 @@ function getBoundingClientRect(element, includeScale, isFixedStrategy, offsetPar
     width,
     height,
     x,
-    y
+    y,
   });
 }
 function getWindowScrollBarX(element, rect) {
@@ -14019,35 +16423,36 @@ function getWindowScrollBarX(element, rect) {
 }
 function getHTMLOffset(documentElement, scroll) {
   const htmlRect = documentElement.getBoundingClientRect();
-  const x = htmlRect.left + scroll.scrollLeft - getWindowScrollBarX(documentElement, htmlRect);
+  const x =
+    htmlRect.left +
+    scroll.scrollLeft -
+    getWindowScrollBarX(documentElement, htmlRect);
   const y = htmlRect.top + scroll.scrollTop;
   return {
     x,
-    y
+    y,
   };
 }
 function convertOffsetParentRelativeRectToViewportRelativeRect(_ref) {
-  let {
-    elements,
-    rect,
-    offsetParent,
-    strategy
-  } = _ref;
+  let { elements, rect, offsetParent, strategy } = _ref;
   const isFixed = strategy === "fixed";
   const documentElement = getDocumentElement(offsetParent);
   const topLayer = elements ? isTopLayer(elements.floating) : false;
-  if (offsetParent === documentElement || topLayer && isFixed) {
+  if (offsetParent === documentElement || (topLayer && isFixed)) {
     return rect;
   }
   let scroll = {
     scrollLeft: 0,
-    scrollTop: 0
+    scrollTop: 0,
   };
   let scale = createCoords(1);
   const offsets = createCoords(0);
   const isOffsetParentAnElement = isHTMLElement(offsetParent);
-  if (isOffsetParentAnElement || !isOffsetParentAnElement && !isFixed) {
-    if (getNodeName(offsetParent) !== "body" || isOverflowElement(documentElement)) {
+  if (isOffsetParentAnElement || (!isOffsetParentAnElement && !isFixed)) {
+    if (
+      getNodeName(offsetParent) !== "body" ||
+      isOverflowElement(documentElement)
+    ) {
       scroll = getNodeScroll(offsetParent);
     }
     if (isHTMLElement(offsetParent)) {
@@ -14057,12 +16462,16 @@ function convertOffsetParentRelativeRectToViewportRelativeRect(_ref) {
       offsets.y = offsetRect.y + offsetParent.clientTop;
     }
   }
-  const htmlOffset = documentElement && !isOffsetParentAnElement && !isFixed ? getHTMLOffset(documentElement, scroll) : createCoords(0);
+  const htmlOffset =
+    documentElement && !isOffsetParentAnElement && !isFixed
+      ? getHTMLOffset(documentElement, scroll)
+      : createCoords(0);
   return {
     width: rect.width * scale.x,
     height: rect.height * scale.y,
-    x: rect.x * scale.x - scroll.scrollLeft * scale.x + offsets.x + htmlOffset.x,
-    y: rect.y * scale.y - scroll.scrollTop * scale.y + offsets.y + htmlOffset.y
+    x:
+      rect.x * scale.x - scroll.scrollLeft * scale.x + offsets.x + htmlOffset.x,
+    y: rect.y * scale.y - scroll.scrollTop * scale.y + offsets.y + htmlOffset.y,
   };
 }
 function getClientRects(element) {
@@ -14072,8 +16481,18 @@ function getDocumentRect(element) {
   const html = getDocumentElement(element);
   const scroll = getNodeScroll(element);
   const body = element.ownerDocument.body;
-  const width = max(html.scrollWidth, html.clientWidth, body.scrollWidth, body.clientWidth);
-  const height = max(html.scrollHeight, html.clientHeight, body.scrollHeight, body.clientHeight);
+  const width = max(
+    html.scrollWidth,
+    html.clientWidth,
+    body.scrollWidth,
+    body.clientWidth,
+  );
+  const height = max(
+    html.scrollHeight,
+    html.clientHeight,
+    body.scrollHeight,
+    body.clientHeight,
+  );
   let x = -scroll.scrollLeft + getWindowScrollBarX(element);
   const y = -scroll.scrollTop;
   if (getComputedStyle$1(body).direction === "rtl") {
@@ -14083,7 +16502,7 @@ function getDocumentRect(element) {
     width,
     height,
     x,
-    y
+    y,
   };
 }
 const SCROLLBAR_MAX = 25;
@@ -14099,7 +16518,7 @@ function getViewportRect(element, strategy) {
     width = visualViewport.width;
     height = visualViewport.height;
     const visualViewportBased = isWebKit();
-    if (!visualViewportBased || visualViewportBased && strategy === "fixed") {
+    if (!visualViewportBased || (visualViewportBased && strategy === "fixed")) {
       x = visualViewport.offsetLeft;
       y = visualViewport.offsetTop;
     }
@@ -14109,8 +16528,14 @@ function getViewportRect(element, strategy) {
     const doc = html.ownerDocument;
     const body = doc.body;
     const bodyStyles = getComputedStyle(body);
-    const bodyMarginInline = doc.compatMode === "CSS1Compat" ? parseFloat(bodyStyles.marginLeft) + parseFloat(bodyStyles.marginRight) || 0 : 0;
-    const clippingStableScrollbarWidth = Math.abs(html.clientWidth - body.clientWidth - bodyMarginInline);
+    const bodyMarginInline =
+      doc.compatMode === "CSS1Compat"
+        ? parseFloat(bodyStyles.marginLeft) +
+            parseFloat(bodyStyles.marginRight) || 0
+        : 0;
+    const clippingStableScrollbarWidth = Math.abs(
+      html.clientWidth - body.clientWidth - bodyMarginInline,
+    );
     if (clippingStableScrollbarWidth <= SCROLLBAR_MAX) {
       width -= clippingStableScrollbarWidth;
     }
@@ -14121,7 +16546,7 @@ function getViewportRect(element, strategy) {
     width,
     height,
     x,
-    y
+    y,
   };
 }
 const absoluteOrFixed = /* @__PURE__ */ new Set(["absolute", "fixed"]);
@@ -14138,10 +16563,14 @@ function getInnerBoundingClientRect(element, strategy) {
     width,
     height,
     x,
-    y
+    y,
   };
 }
-function getClientRectFromClippingAncestor(element, clippingAncestor, strategy) {
+function getClientRectFromClippingAncestor(
+  element,
+  clippingAncestor,
+  strategy,
+) {
   let rect;
   if (clippingAncestor === "viewport") {
     rect = getViewportRect(element, strategy);
@@ -14155,24 +16584,33 @@ function getClientRectFromClippingAncestor(element, clippingAncestor, strategy) 
       x: clippingAncestor.x - visualOffsets.x,
       y: clippingAncestor.y - visualOffsets.y,
       width: clippingAncestor.width,
-      height: clippingAncestor.height
+      height: clippingAncestor.height,
     };
   }
   return rectToClientRect(rect);
 }
 function hasFixedPositionAncestor(element, stopNode) {
   const parentNode = getParentNode(element);
-  if (parentNode === stopNode || !isElement(parentNode) || isLastTraversableNode(parentNode)) {
+  if (
+    parentNode === stopNode ||
+    !isElement(parentNode) ||
+    isLastTraversableNode(parentNode)
+  ) {
     return false;
   }
-  return getComputedStyle$1(parentNode).position === "fixed" || hasFixedPositionAncestor(parentNode, stopNode);
+  return (
+    getComputedStyle$1(parentNode).position === "fixed" ||
+    hasFixedPositionAncestor(parentNode, stopNode)
+  );
 }
 function getClippingElementAncestors(element, cache) {
   const cachedResult = cache.get(element);
   if (cachedResult) {
     return cachedResult;
   }
-  let result = getOverflowAncestors(element, [], false).filter((el) => isElement(el) && getNodeName(el) !== "body");
+  let result = getOverflowAncestors(element, [], false).filter(
+    (el) => isElement(el) && getNodeName(el) !== "body",
+  );
   let currentContainingBlockComputedStyle = null;
   const elementIsFixed = getComputedStyle$1(element).position === "fixed";
   let currentNode = elementIsFixed ? getParentNode(element) : element;
@@ -14182,7 +16620,15 @@ function getClippingElementAncestors(element, cache) {
     if (!currentNodeIsContaining && computedStyle.position === "fixed") {
       currentContainingBlockComputedStyle = null;
     }
-    const shouldDropCurrentNode = elementIsFixed ? !currentNodeIsContaining && !currentContainingBlockComputedStyle : !currentNodeIsContaining && computedStyle.position === "static" && !!currentContainingBlockComputedStyle && absoluteOrFixed.has(currentContainingBlockComputedStyle.position) || isOverflowElement(currentNode) && !currentNodeIsContaining && hasFixedPositionAncestor(element, currentNode);
+    const shouldDropCurrentNode = elementIsFixed
+      ? !currentNodeIsContaining && !currentContainingBlockComputedStyle
+      : (!currentNodeIsContaining &&
+          computedStyle.position === "static" &&
+          !!currentContainingBlockComputedStyle &&
+          absoluteOrFixed.has(currentContainingBlockComputedStyle.position)) ||
+        (isOverflowElement(currentNode) &&
+          !currentNodeIsContaining &&
+          hasFixedPositionAncestor(element, currentNode));
     if (shouldDropCurrentNode) {
       result = result.filter((ancestor) => ancestor !== currentNode);
     } else {
@@ -14194,38 +16640,42 @@ function getClippingElementAncestors(element, cache) {
   return result;
 }
 function getClippingRect(_ref) {
-  let {
-    element,
-    boundary,
-    rootBoundary,
-    strategy
-  } = _ref;
-  const elementClippingAncestors = boundary === "clippingAncestors" ? isTopLayer(element) ? [] : getClippingElementAncestors(element, this._c) : [].concat(boundary);
+  let { element, boundary, rootBoundary, strategy } = _ref;
+  const elementClippingAncestors =
+    boundary === "clippingAncestors"
+      ? isTopLayer(element)
+        ? []
+        : getClippingElementAncestors(element, this._c)
+      : [].concat(boundary);
   const clippingAncestors = [...elementClippingAncestors, rootBoundary];
   const firstClippingAncestor = clippingAncestors[0];
-  const clippingRect = clippingAncestors.reduce((accRect, clippingAncestor) => {
-    const rect = getClientRectFromClippingAncestor(element, clippingAncestor, strategy);
-    accRect.top = max(rect.top, accRect.top);
-    accRect.right = min(rect.right, accRect.right);
-    accRect.bottom = min(rect.bottom, accRect.bottom);
-    accRect.left = max(rect.left, accRect.left);
-    return accRect;
-  }, getClientRectFromClippingAncestor(element, firstClippingAncestor, strategy));
+  const clippingRect = clippingAncestors.reduce(
+    (accRect, clippingAncestor) => {
+      const rect = getClientRectFromClippingAncestor(
+        element,
+        clippingAncestor,
+        strategy,
+      );
+      accRect.top = max(rect.top, accRect.top);
+      accRect.right = min(rect.right, accRect.right);
+      accRect.bottom = min(rect.bottom, accRect.bottom);
+      accRect.left = max(rect.left, accRect.left);
+      return accRect;
+    },
+    getClientRectFromClippingAncestor(element, firstClippingAncestor, strategy),
+  );
   return {
     width: clippingRect.right - clippingRect.left,
     height: clippingRect.bottom - clippingRect.top,
     x: clippingRect.left,
-    y: clippingRect.top
+    y: clippingRect.top,
   };
 }
 function getDimensions(element) {
-  const {
-    width,
-    height
-  } = getCssDimensions(element);
+  const { width, height } = getCssDimensions(element);
   return {
     width,
-    height
+    height,
   };
 }
 function getRectRelativeToOffsetParent(element, offsetParent, strategy) {
@@ -14235,18 +16685,26 @@ function getRectRelativeToOffsetParent(element, offsetParent, strategy) {
   const rect = getBoundingClientRect(element, true, isFixed, offsetParent);
   let scroll = {
     scrollLeft: 0,
-    scrollTop: 0
+    scrollTop: 0,
   };
   const offsets = createCoords(0);
   function setLeftRTLScrollbarOffset() {
     offsets.x = getWindowScrollBarX(documentElement);
   }
-  if (isOffsetParentAnElement || !isOffsetParentAnElement && !isFixed) {
-    if (getNodeName(offsetParent) !== "body" || isOverflowElement(documentElement)) {
+  if (isOffsetParentAnElement || (!isOffsetParentAnElement && !isFixed)) {
+    if (
+      getNodeName(offsetParent) !== "body" ||
+      isOverflowElement(documentElement)
+    ) {
       scroll = getNodeScroll(offsetParent);
     }
     if (isOffsetParentAnElement) {
-      const offsetRect = getBoundingClientRect(offsetParent, true, isFixed, offsetParent);
+      const offsetRect = getBoundingClientRect(
+        offsetParent,
+        true,
+        isFixed,
+        offsetParent,
+      );
       offsets.x = offsetRect.x + offsetParent.clientLeft;
       offsets.y = offsetRect.y + offsetParent.clientTop;
     } else if (documentElement) {
@@ -14256,21 +16714,27 @@ function getRectRelativeToOffsetParent(element, offsetParent, strategy) {
   if (isFixed && !isOffsetParentAnElement && documentElement) {
     setLeftRTLScrollbarOffset();
   }
-  const htmlOffset = documentElement && !isOffsetParentAnElement && !isFixed ? getHTMLOffset(documentElement, scroll) : createCoords(0);
+  const htmlOffset =
+    documentElement && !isOffsetParentAnElement && !isFixed
+      ? getHTMLOffset(documentElement, scroll)
+      : createCoords(0);
   const x = rect.left + scroll.scrollLeft - offsets.x - htmlOffset.x;
   const y = rect.top + scroll.scrollTop - offsets.y - htmlOffset.y;
   return {
     x,
     y,
     width: rect.width,
-    height: rect.height
+    height: rect.height,
   };
 }
 function isStaticPositioned(element) {
   return getComputedStyle$1(element).position === "static";
 }
 function getTrueOffsetParent(element, polyfill) {
-  if (!isHTMLElement(element) || getComputedStyle$1(element).position === "fixed") {
+  if (
+    !isHTMLElement(element) ||
+    getComputedStyle$1(element).position === "fixed"
+  ) {
     return null;
   }
   if (polyfill) {
@@ -14298,26 +16762,39 @@ function getOffsetParent(element, polyfill) {
     return win;
   }
   let offsetParent = getTrueOffsetParent(element, polyfill);
-  while (offsetParent && isTableElement(offsetParent) && isStaticPositioned(offsetParent)) {
+  while (
+    offsetParent &&
+    isTableElement(offsetParent) &&
+    isStaticPositioned(offsetParent)
+  ) {
     offsetParent = getTrueOffsetParent(offsetParent, polyfill);
   }
-  if (offsetParent && isLastTraversableNode(offsetParent) && isStaticPositioned(offsetParent) && !isContainingBlock(offsetParent)) {
+  if (
+    offsetParent &&
+    isLastTraversableNode(offsetParent) &&
+    isStaticPositioned(offsetParent) &&
+    !isContainingBlock(offsetParent)
+  ) {
     return win;
   }
   return offsetParent || getContainingBlock(element) || win;
 }
-const getElementRects = async function(data) {
+const getElementRects = async function (data) {
   const getOffsetParentFn = this.getOffsetParent || getOffsetParent;
   const getDimensionsFn = this.getDimensions;
   const floatingDimensions = await getDimensionsFn(data.floating);
   return {
-    reference: getRectRelativeToOffsetParent(data.reference, await getOffsetParentFn(data.floating), data.strategy),
+    reference: getRectRelativeToOffsetParent(
+      data.reference,
+      await getOffsetParentFn(data.floating),
+      data.strategy,
+    ),
     floating: {
       x: 0,
       y: 0,
       width: floatingDimensions.width,
-      height: floatingDimensions.height
-    }
+      height: floatingDimensions.height,
+    },
   };
 };
 function isRTL(element) {
@@ -14333,10 +16810,15 @@ const platform = {
   getDimensions,
   getScale,
   isElement,
-  isRTL
+  isRTL,
 };
 function rectsAreEqual(a, b2) {
-  return a.x === b2.x && a.y === b2.y && a.width === b2.width && a.height === b2.height;
+  return (
+    a.x === b2.x &&
+    a.y === b2.y &&
+    a.width === b2.width &&
+    a.height === b2.height
+  );
 }
 function observeMove(element, onMove) {
   let io = null;
@@ -14357,12 +16839,7 @@ function observeMove(element, onMove) {
     }
     cleanup();
     const elementRectForRootMargin = element.getBoundingClientRect();
-    const {
-      left,
-      top,
-      width,
-      height
-    } = elementRectForRootMargin;
+    const { left, top, width, height } = elementRectForRootMargin;
     if (!skip) {
       onMove();
     }
@@ -14373,10 +16850,18 @@ function observeMove(element, onMove) {
     const insetRight = floor(root.clientWidth - (left + width));
     const insetBottom = floor(root.clientHeight - (top + height));
     const insetLeft = floor(left);
-    const rootMargin = -insetTop + "px " + -insetRight + "px " + -insetBottom + "px " + -insetLeft + "px";
+    const rootMargin =
+      -insetTop +
+      "px " +
+      -insetRight +
+      "px " +
+      -insetBottom +
+      "px " +
+      -insetLeft +
+      "px";
     const options = {
       rootMargin,
-      threshold: max(0, min(1, threshold)) || 1
+      threshold: max(0, min(1, threshold)) || 1,
     };
     let isFirstUpdate = true;
     function handleObserve(entries) {
@@ -14393,7 +16878,13 @@ function observeMove(element, onMove) {
           refresh(false, ratio);
         }
       }
-      if (ratio === 1 && !rectsAreEqual(elementRectForRootMargin, element.getBoundingClientRect())) {
+      if (
+        ratio === 1 &&
+        !rectsAreEqual(
+          elementRectForRootMargin,
+          element.getBoundingClientRect(),
+        )
+      ) {
         refresh();
       }
       isFirstUpdate = false;
@@ -14402,7 +16893,7 @@ function observeMove(element, onMove) {
       io = new IntersectionObserver(handleObserve, {
         ...options,
         // Handle <iframe>s
-        root: root.ownerDocument
+        root: root.ownerDocument,
       });
     } catch (_e) {
       io = new IntersectionObserver(handleObserve, options);
@@ -14421,17 +16912,25 @@ function autoUpdate(reference, floating, update, options) {
     ancestorResize = true,
     elementResize = typeof ResizeObserver === "function",
     layoutShift = typeof IntersectionObserver === "function",
-    animationFrame = false
+    animationFrame = false,
   } = options;
   const referenceEl = unwrapElement(reference);
-  const ancestors = ancestorScroll || ancestorResize ? [...referenceEl ? getOverflowAncestors(referenceEl) : [], ...getOverflowAncestors(floating)] : [];
+  const ancestors =
+    ancestorScroll || ancestorResize
+      ? [
+          ...(referenceEl ? getOverflowAncestors(referenceEl) : []),
+          ...getOverflowAncestors(floating),
+        ]
+      : [];
   ancestors.forEach((ancestor) => {
-    ancestorScroll && ancestor.addEventListener("scroll", update, {
-      passive: true
-    });
+    ancestorScroll &&
+      ancestor.addEventListener("scroll", update, {
+        passive: true,
+      });
     ancestorResize && ancestor.addEventListener("resize", update);
   });
-  const cleanupIo = referenceEl && layoutShift ? observeMove(referenceEl, update) : null;
+  const cleanupIo =
+    referenceEl && layoutShift ? observeMove(referenceEl, update) : null;
   let reobserveFrame = -1;
   let resizeObserver = null;
   if (elementResize) {
@@ -14442,7 +16941,8 @@ function autoUpdate(reference, floating, update, options) {
         cancelAnimationFrame(reobserveFrame);
         reobserveFrame = requestAnimationFrame(() => {
           var _resizeObserver;
-          (_resizeObserver = resizeObserver) == null || _resizeObserver.observe(floating);
+          (_resizeObserver = resizeObserver) == null ||
+            _resizeObserver.observe(floating);
         });
       }
       update();
@@ -14473,7 +16973,8 @@ function autoUpdate(reference, floating, update, options) {
       ancestorResize && ancestor.removeEventListener("resize", update);
     });
     cleanupIo == null || cleanupIo();
-    (_resizeObserver2 = resizeObserver) == null || _resizeObserver2.disconnect();
+    (_resizeObserver2 = resizeObserver) == null ||
+      _resizeObserver2.disconnect();
     resizeObserver = null;
     if (animationFrame) {
       cancelAnimationFrame(frameId);
@@ -14491,20 +16992,19 @@ const computePosition = (reference, floating, options) => {
   const cache = /* @__PURE__ */ new Map();
   const mergedOptions = {
     platform,
-    ...options
+    ...options,
   };
   const platformWithCache = {
     ...mergedOptions.platform,
-    _c: cache
+    _c: cache,
   };
   return computePosition$1(reference, floating, {
     ...mergedOptions,
-    platform: platformWithCache
+    platform: platformWithCache,
   });
 };
 var isClient = typeof document !== "undefined";
-var noop = function noop2() {
-};
+var noop = function noop2() {};
 var index = isClient ? useLayoutEffect : noop;
 function deepEqual(a, b2) {
   if (a === b2) {
@@ -14580,13 +17080,10 @@ function useFloating(options) {
     strategy = "absolute",
     middleware = [],
     platform: platform2,
-    elements: {
-      reference: externalReference,
-      floating: externalFloating
-    } = {},
+    elements: { reference: externalReference, floating: externalFloating } = {},
     transform = true,
     whileElementsMounted,
-    open
+    open,
   } = options;
   const [data, setData] = React.useState({
     x: 0,
@@ -14594,7 +17091,7 @@ function useFloating(options) {
     strategy,
     placement,
     middlewareData: {},
-    isPositioned: false
+    isPositioned: false,
   });
   const [latestMiddleware, setLatestMiddleware] = React.useState(middleware);
   if (!deepEqual(latestMiddleware, middleware)) {
@@ -14630,34 +17127,36 @@ function useFloating(options) {
     const config = {
       placement,
       strategy,
-      middleware: latestMiddleware
+      middleware: latestMiddleware,
     };
     if (platformRef.current) {
       config.platform = platformRef.current;
     }
-    computePosition(referenceRef.current, floatingRef.current, config).then((data2) => {
-      const fullData = {
-        ...data2,
-        // The floating element's position may be recomputed while it's closed
-        // but still mounted (such as when transitioning out). To ensure
-        // `isPositioned` will be `false` initially on the next open, avoid
-        // setting it to `true` when `open === false` (must be specified).
-        isPositioned: openRef.current !== false
-      };
-      if (isMountedRef.current && !deepEqual(dataRef.current, fullData)) {
-        dataRef.current = fullData;
-        ReactDOM.flushSync(() => {
-          setData(fullData);
-        });
-      }
-    });
+    computePosition(referenceRef.current, floatingRef.current, config).then(
+      (data2) => {
+        const fullData = {
+          ...data2,
+          // The floating element's position may be recomputed while it's closed
+          // but still mounted (such as when transitioning out). To ensure
+          // `isPositioned` will be `false` initially on the next open, avoid
+          // setting it to `true` when `open === false` (must be specified).
+          isPositioned: openRef.current !== false,
+        };
+        if (isMountedRef.current && !deepEqual(dataRef.current, fullData)) {
+          dataRef.current = fullData;
+          ReactDOM.flushSync(() => {
+            setData(fullData);
+          });
+        }
+      },
+    );
   }, [latestMiddleware, placement, strategy, platformRef, openRef]);
   index(() => {
     if (open === false && dataRef.current.isPositioned) {
       dataRef.current.isPositioned = false;
       setData((data2) => ({
         ...data2,
-        isPositioned: false
+        isPositioned: false,
       }));
     }
   }, [open]);
@@ -14677,22 +17176,34 @@ function useFloating(options) {
       }
       update();
     }
-  }, [referenceEl, floatingEl, update, whileElementsMountedRef, hasWhileElementsMounted]);
-  const refs = React.useMemo(() => ({
-    reference: referenceRef,
-    floating: floatingRef,
-    setReference,
-    setFloating
-  }), [setReference, setFloating]);
-  const elements = React.useMemo(() => ({
-    reference: referenceEl,
-    floating: floatingEl
-  }), [referenceEl, floatingEl]);
+  }, [
+    referenceEl,
+    floatingEl,
+    update,
+    whileElementsMountedRef,
+    hasWhileElementsMounted,
+  ]);
+  const refs = React.useMemo(
+    () => ({
+      reference: referenceRef,
+      floating: floatingRef,
+      setReference,
+      setFloating,
+    }),
+    [setReference, setFloating],
+  );
+  const elements = React.useMemo(
+    () => ({
+      reference: referenceEl,
+      floating: floatingEl,
+    }),
+    [referenceEl, floatingEl],
+  );
   const floatingStyles = React.useMemo(() => {
     const initialStyles = {
       position: strategy,
       left: 0,
-      top: 0
+      top: 0,
     };
     if (!elements.floating) {
       return initialStyles;
@@ -14703,24 +17214,27 @@ function useFloating(options) {
       return {
         ...initialStyles,
         transform: "translate(" + x + "px, " + y + "px)",
-        ...getDPR(elements.floating) >= 1.5 && {
-          willChange: "transform"
-        }
+        ...(getDPR(elements.floating) >= 1.5 && {
+          willChange: "transform",
+        }),
       };
     }
     return {
       position: strategy,
       left: x,
-      top: y
+      top: y,
     };
   }, [strategy, transform, elements.floating, data.x, data.y]);
-  return React.useMemo(() => ({
-    ...data,
-    update,
-    refs,
-    elements,
-    floatingStyles
-  }), [data, update, refs, elements, floatingStyles]);
+  return React.useMemo(
+    () => ({
+      ...data,
+      update,
+      refs,
+      elements,
+      floatingStyles,
+    }),
+    [data, update, refs, elements, floatingStyles],
+  );
 }
 const arrow$1 = (options) => {
   function isRef(value) {
@@ -14730,15 +17244,13 @@ const arrow$1 = (options) => {
     name: "arrow",
     options,
     fn(state) {
-      const {
-        element,
-        padding
-      } = typeof options === "function" ? options(state) : options;
+      const { element, padding } =
+        typeof options === "function" ? options(state) : options;
       if (element && isRef(element)) {
         if (element.current != null) {
           return arrow$2({
             element: element.current,
-            padding
+            padding,
           }).fn(state);
         }
         return {};
@@ -14746,56 +17258,55 @@ const arrow$1 = (options) => {
       if (element) {
         return arrow$2({
           element,
-          padding
+          padding,
         }).fn(state);
       }
       return {};
-    }
+    },
   };
 };
 const offset = (options, deps) => ({
   ...offset$1(options),
-  options: [options, deps]
+  options: [options, deps],
 });
 const shift = (options, deps) => ({
   ...shift$1(options),
-  options: [options, deps]
+  options: [options, deps],
 });
 const limitShift = (options, deps) => ({
   ...limitShift$1(options),
-  options: [options, deps]
+  options: [options, deps],
 });
 const flip = (options, deps) => ({
   ...flip$1(options),
-  options: [options, deps]
+  options: [options, deps],
 });
 const size = (options, deps) => ({
   ...size$1(options),
-  options: [options, deps]
+  options: [options, deps],
 });
 const hide = (options, deps) => ({
   ...hide$1(options),
-  options: [options, deps]
+  options: [options, deps],
 });
 const arrow = (options, deps) => ({
   ...arrow$1(options),
-  options: [options, deps]
+  options: [options, deps],
 });
 var NAME = "Arrow";
 var Arrow$1 = React.forwardRef((props, forwardedRef) => {
   const { children, width = 10, height = 5, ...arrowProps } = props;
-  return /* @__PURE__ */ jsx(
-    Primitive.svg,
-    {
-      ...arrowProps,
-      ref: forwardedRef,
-      width,
-      height,
-      viewBox: "0 0 30 10",
-      preserveAspectRatio: "none",
-      children: props.asChild ? children : /* @__PURE__ */ jsx("polygon", { points: "0,0 30,0 15,10" })
-    }
-  );
+  return /* @__PURE__ */ jsx(Primitive.svg, {
+    ...arrowProps,
+    ref: forwardedRef,
+    width,
+    height,
+    viewBox: "0 0 30 10",
+    preserveAspectRatio: "none",
+    children: props.asChild
+      ? children
+      : /* @__PURE__ */ jsx("polygon", { points: "0,0 30,0 15,10" }),
+  });
 });
 Arrow$1.displayName = NAME;
 var Root$1 = Arrow$1;
@@ -14805,178 +17316,201 @@ var [PopperProvider, usePopperContext] = createPopperContext(POPPER_NAME);
 var Popper = (props) => {
   const { __scopePopper, children } = props;
   const [anchor, setAnchor] = React.useState(null);
-  return /* @__PURE__ */ jsx(PopperProvider, { scope: __scopePopper, anchor, onAnchorChange: setAnchor, children });
+  return /* @__PURE__ */ jsx(PopperProvider, {
+    scope: __scopePopper,
+    anchor,
+    onAnchorChange: setAnchor,
+    children,
+  });
 };
 Popper.displayName = POPPER_NAME;
 var ANCHOR_NAME$1 = "PopperAnchor";
-var PopperAnchor = React.forwardRef(
-  (props, forwardedRef) => {
-    const { __scopePopper, virtualRef, ...anchorProps } = props;
-    const context = usePopperContext(ANCHOR_NAME$1, __scopePopper);
-    const ref = React.useRef(null);
-    const composedRefs = useComposedRefs(forwardedRef, ref);
-    const anchorRef = React.useRef(null);
-    React.useEffect(() => {
-      const previousAnchor = anchorRef.current;
-      anchorRef.current = virtualRef?.current || ref.current;
-      if (previousAnchor !== anchorRef.current) {
-        context.onAnchorChange(anchorRef.current);
-      }
-    });
-    return virtualRef ? null : /* @__PURE__ */ jsx(Primitive.div, { ...anchorProps, ref: composedRefs });
-  }
-);
+var PopperAnchor = React.forwardRef((props, forwardedRef) => {
+  const { __scopePopper, virtualRef, ...anchorProps } = props;
+  const context = usePopperContext(ANCHOR_NAME$1, __scopePopper);
+  const ref = React.useRef(null);
+  const composedRefs = useComposedRefs(forwardedRef, ref);
+  const anchorRef = React.useRef(null);
+  React.useEffect(() => {
+    const previousAnchor = anchorRef.current;
+    anchorRef.current = virtualRef?.current || ref.current;
+    if (previousAnchor !== anchorRef.current) {
+      context.onAnchorChange(anchorRef.current);
+    }
+  });
+  return virtualRef
+    ? null
+    : /* @__PURE__ */ jsx(Primitive.div, { ...anchorProps, ref: composedRefs });
+});
 PopperAnchor.displayName = ANCHOR_NAME$1;
 var CONTENT_NAME$2 = "PopperContent";
-var [PopperContentProvider, useContentContext] = createPopperContext(CONTENT_NAME$2);
-var PopperContent = React.forwardRef(
-  (props, forwardedRef) => {
-    const {
-      __scopePopper,
-      side = "bottom",
-      sideOffset = 0,
-      align = "center",
-      alignOffset = 0,
-      arrowPadding = 0,
-      avoidCollisions = true,
-      collisionBoundary = [],
-      collisionPadding: collisionPaddingProp = 0,
-      sticky = "partial",
-      hideWhenDetached = false,
-      updatePositionStrategy = "optimized",
-      onPlaced,
-      ...contentProps
-    } = props;
-    const context = usePopperContext(CONTENT_NAME$2, __scopePopper);
-    const [content, setContent] = React.useState(null);
-    const composedRefs = useComposedRefs(forwardedRef, (node) => setContent(node));
-    const [arrow$12, setArrow] = React.useState(null);
-    const arrowSize = useSize(arrow$12);
-    const arrowWidth = arrowSize?.width ?? 0;
-    const arrowHeight = arrowSize?.height ?? 0;
-    const desiredPlacement = side + (align !== "center" ? "-" + align : "");
-    const collisionPadding = typeof collisionPaddingProp === "number" ? collisionPaddingProp : { top: 0, right: 0, bottom: 0, left: 0, ...collisionPaddingProp };
-    const boundary = Array.isArray(collisionBoundary) ? collisionBoundary : [collisionBoundary];
-    const hasExplicitBoundaries = boundary.length > 0;
-    const detectOverflowOptions = {
-      padding: collisionPadding,
-      boundary: boundary.filter(isNotNull),
-      // with `strategy: 'fixed'`, this is the only way to get it to respect boundaries
-      altBoundary: hasExplicitBoundaries
-    };
-    const { refs, floatingStyles, placement, isPositioned, middlewareData } = useFloating({
+var [PopperContentProvider, useContentContext] =
+  createPopperContext(CONTENT_NAME$2);
+var PopperContent = React.forwardRef((props, forwardedRef) => {
+  const {
+    __scopePopper,
+    side = "bottom",
+    sideOffset = 0,
+    align = "center",
+    alignOffset = 0,
+    arrowPadding = 0,
+    avoidCollisions = true,
+    collisionBoundary = [],
+    collisionPadding: collisionPaddingProp = 0,
+    sticky = "partial",
+    hideWhenDetached = false,
+    updatePositionStrategy = "optimized",
+    onPlaced,
+    ...contentProps
+  } = props;
+  const context = usePopperContext(CONTENT_NAME$2, __scopePopper);
+  const [content, setContent] = React.useState(null);
+  const composedRefs = useComposedRefs(forwardedRef, (node) =>
+    setContent(node),
+  );
+  const [arrow$12, setArrow] = React.useState(null);
+  const arrowSize = useSize(arrow$12);
+  const arrowWidth = arrowSize?.width ?? 0;
+  const arrowHeight = arrowSize?.height ?? 0;
+  const desiredPlacement = side + (align !== "center" ? "-" + align : "");
+  const collisionPadding =
+    typeof collisionPaddingProp === "number"
+      ? collisionPaddingProp
+      : { top: 0, right: 0, bottom: 0, left: 0, ...collisionPaddingProp };
+  const boundary = Array.isArray(collisionBoundary)
+    ? collisionBoundary
+    : [collisionBoundary];
+  const hasExplicitBoundaries = boundary.length > 0;
+  const detectOverflowOptions = {
+    padding: collisionPadding,
+    boundary: boundary.filter(isNotNull),
+    // with `strategy: 'fixed'`, this is the only way to get it to respect boundaries
+    altBoundary: hasExplicitBoundaries,
+  };
+  const { refs, floatingStyles, placement, isPositioned, middlewareData } =
+    useFloating({
       // default to `fixed` strategy so users don't have to pick and we also avoid focus scroll issues
       strategy: "fixed",
       placement: desiredPlacement,
       whileElementsMounted: (...args) => {
         const cleanup = autoUpdate(...args, {
-          animationFrame: updatePositionStrategy === "always"
+          animationFrame: updatePositionStrategy === "always",
         });
         return cleanup;
       },
       elements: {
-        reference: context.anchor
+        reference: context.anchor,
       },
       middleware: [
-        offset({ mainAxis: sideOffset + arrowHeight, alignmentAxis: alignOffset }),
-        avoidCollisions && shift({
-          mainAxis: true,
-          crossAxis: false,
-          limiter: sticky === "partial" ? limitShift() : void 0,
-          ...detectOverflowOptions
+        offset({
+          mainAxis: sideOffset + arrowHeight,
+          alignmentAxis: alignOffset,
         }),
+        avoidCollisions &&
+          shift({
+            mainAxis: true,
+            crossAxis: false,
+            limiter: sticky === "partial" ? limitShift() : void 0,
+            ...detectOverflowOptions,
+          }),
         avoidCollisions && flip({ ...detectOverflowOptions }),
         size({
           ...detectOverflowOptions,
           apply: ({ elements, rects, availableWidth, availableHeight }) => {
-            const { width: anchorWidth, height: anchorHeight } = rects.reference;
+            const { width: anchorWidth, height: anchorHeight } =
+              rects.reference;
             const contentStyle = elements.floating.style;
-            contentStyle.setProperty("--radix-popper-available-width", `${availableWidth}px`);
-            contentStyle.setProperty("--radix-popper-available-height", `${availableHeight}px`);
-            contentStyle.setProperty("--radix-popper-anchor-width", `${anchorWidth}px`);
-            contentStyle.setProperty("--radix-popper-anchor-height", `${anchorHeight}px`);
-          }
+            contentStyle.setProperty(
+              "--radix-popper-available-width",
+              `${availableWidth}px`,
+            );
+            contentStyle.setProperty(
+              "--radix-popper-available-height",
+              `${availableHeight}px`,
+            );
+            contentStyle.setProperty(
+              "--radix-popper-anchor-width",
+              `${anchorWidth}px`,
+            );
+            contentStyle.setProperty(
+              "--radix-popper-anchor-height",
+              `${anchorHeight}px`,
+            );
+          },
         }),
         arrow$12 && arrow({ element: arrow$12, padding: arrowPadding }),
         transformOrigin({ arrowWidth, arrowHeight }),
-        hideWhenDetached && hide({ strategy: "referenceHidden", ...detectOverflowOptions })
-      ]
+        hideWhenDetached &&
+          hide({ strategy: "referenceHidden", ...detectOverflowOptions }),
+      ],
     });
-    const [placedSide, placedAlign] = getSideAndAlignFromPlacement(placement);
-    const handlePlaced = useCallbackRef$1(onPlaced);
-    useLayoutEffect2(() => {
-      if (isPositioned) {
-        handlePlaced?.();
-      }
-    }, [isPositioned, handlePlaced]);
-    const arrowX = middlewareData.arrow?.x;
-    const arrowY = middlewareData.arrow?.y;
-    const cannotCenterArrow = middlewareData.arrow?.centerOffset !== 0;
-    const [contentZIndex, setContentZIndex] = React.useState();
-    useLayoutEffect2(() => {
-      if (content) setContentZIndex(window.getComputedStyle(content).zIndex);
-    }, [content]);
-    return /* @__PURE__ */ jsx(
-      "div",
-      {
-        ref: refs.setFloating,
-        "data-radix-popper-content-wrapper": "",
+  const [placedSide, placedAlign] = getSideAndAlignFromPlacement(placement);
+  const handlePlaced = useCallbackRef$1(onPlaced);
+  useLayoutEffect2(() => {
+    if (isPositioned) {
+      handlePlaced?.();
+    }
+  }, [isPositioned, handlePlaced]);
+  const arrowX = middlewareData.arrow?.x;
+  const arrowY = middlewareData.arrow?.y;
+  const cannotCenterArrow = middlewareData.arrow?.centerOffset !== 0;
+  const [contentZIndex, setContentZIndex] = React.useState();
+  useLayoutEffect2(() => {
+    if (content) setContentZIndex(window.getComputedStyle(content).zIndex);
+  }, [content]);
+  return /* @__PURE__ */ jsx("div", {
+    ref: refs.setFloating,
+    "data-radix-popper-content-wrapper": "",
+    style: {
+      ...floatingStyles,
+      transform: isPositioned
+        ? floatingStyles.transform
+        : "translate(0, -200%)",
+      // keep off the page when measuring
+      minWidth: "max-content",
+      zIndex: contentZIndex,
+      ["--radix-popper-transform-origin"]: [
+        middlewareData.transformOrigin?.x,
+        middlewareData.transformOrigin?.y,
+      ].join(" "),
+      // hide the content if using the hide middleware and should be hidden
+      // set visibility to hidden and disable pointer events so the UI behaves
+      // as if the PopperContent isn't there at all
+      ...(middlewareData.hide?.referenceHidden && {
+        visibility: "hidden",
+        pointerEvents: "none",
+      }),
+    },
+    dir: props.dir,
+    children: /* @__PURE__ */ jsx(PopperContentProvider, {
+      scope: __scopePopper,
+      placedSide,
+      onArrowChange: setArrow,
+      arrowX,
+      arrowY,
+      shouldHideArrow: cannotCenterArrow,
+      children: /* @__PURE__ */ jsx(Primitive.div, {
+        "data-side": placedSide,
+        "data-align": placedAlign,
+        ...contentProps,
+        ref: composedRefs,
         style: {
-          ...floatingStyles,
-          transform: isPositioned ? floatingStyles.transform : "translate(0, -200%)",
-          // keep off the page when measuring
-          minWidth: "max-content",
-          zIndex: contentZIndex,
-          ["--radix-popper-transform-origin"]: [
-            middlewareData.transformOrigin?.x,
-            middlewareData.transformOrigin?.y
-          ].join(" "),
-          // hide the content if using the hide middleware and should be hidden
-          // set visibility to hidden and disable pointer events so the UI behaves
-          // as if the PopperContent isn't there at all
-          ...middlewareData.hide?.referenceHidden && {
-            visibility: "hidden",
-            pointerEvents: "none"
-          }
+          ...contentProps.style,
+          // if the PopperContent hasn't been placed yet (not all measurements done)
+          // we prevent animations so that users's animation don't kick in too early referring wrong sides
+          animation: !isPositioned ? "none" : void 0,
         },
-        dir: props.dir,
-        children: /* @__PURE__ */ jsx(
-          PopperContentProvider,
-          {
-            scope: __scopePopper,
-            placedSide,
-            onArrowChange: setArrow,
-            arrowX,
-            arrowY,
-            shouldHideArrow: cannotCenterArrow,
-            children: /* @__PURE__ */ jsx(
-              Primitive.div,
-              {
-                "data-side": placedSide,
-                "data-align": placedAlign,
-                ...contentProps,
-                ref: composedRefs,
-                style: {
-                  ...contentProps.style,
-                  // if the PopperContent hasn't been placed yet (not all measurements done)
-                  // we prevent animations so that users's animation don't kick in too early referring wrong sides
-                  animation: !isPositioned ? "none" : void 0
-                }
-              }
-            )
-          }
-        )
-      }
-    );
-  }
-);
+      }),
+    }),
+  });
+});
 PopperContent.displayName = CONTENT_NAME$2;
 var ARROW_NAME$2 = "PopperArrow";
 var OPPOSITE_SIDE = {
   top: "bottom",
   right: "left",
   bottom: "top",
-  left: "right"
+  left: "right",
 };
 var PopperArrow = React.forwardRef(function PopperArrow2(props, forwardedRef) {
   const { __scopePopper, ...arrowProps } = props;
@@ -14986,43 +17520,37 @@ var PopperArrow = React.forwardRef(function PopperArrow2(props, forwardedRef) {
     // we have to use an extra wrapper because `ResizeObserver` (used by `useSize`)
     // doesn't report size as we'd expect on SVG elements.
     // it reports their bounding box which is effectively the largest path inside the SVG.
-    /* @__PURE__ */ jsx(
-      "span",
-      {
-        ref: contentContext.onArrowChange,
+    /* @__PURE__ */ jsx("span", {
+      ref: contentContext.onArrowChange,
+      style: {
+        position: "absolute",
+        left: contentContext.arrowX,
+        top: contentContext.arrowY,
+        [baseSide]: 0,
+        transformOrigin: {
+          top: "",
+          right: "0 0",
+          bottom: "center 0",
+          left: "100% 0",
+        }[contentContext.placedSide],
+        transform: {
+          top: "translateY(100%)",
+          right: "translateY(50%) rotate(90deg) translateX(-50%)",
+          bottom: `rotate(180deg)`,
+          left: "translateY(50%) rotate(-90deg) translateX(50%)",
+        }[contentContext.placedSide],
+        visibility: contentContext.shouldHideArrow ? "hidden" : void 0,
+      },
+      children: /* @__PURE__ */ jsx(Root$1, {
+        ...arrowProps,
+        ref: forwardedRef,
         style: {
-          position: "absolute",
-          left: contentContext.arrowX,
-          top: contentContext.arrowY,
-          [baseSide]: 0,
-          transformOrigin: {
-            top: "",
-            right: "0 0",
-            bottom: "center 0",
-            left: "100% 0"
-          }[contentContext.placedSide],
-          transform: {
-            top: "translateY(100%)",
-            right: "translateY(50%) rotate(90deg) translateX(-50%)",
-            bottom: `rotate(180deg)`,
-            left: "translateY(50%) rotate(-90deg) translateX(50%)"
-          }[contentContext.placedSide],
-          visibility: contentContext.shouldHideArrow ? "hidden" : void 0
+          ...arrowProps.style,
+          // ensures the element can be measured correctly (mostly for if SVG)
+          display: "block",
         },
-        children: /* @__PURE__ */ jsx(
-          Root$1,
-          {
-            ...arrowProps,
-            ref: forwardedRef,
-            style: {
-              ...arrowProps.style,
-              // ensures the element can be measured correctly (mostly for if SVG)
-              display: "block"
-            }
-          }
-        )
-      }
-    )
+      }),
+    })
   );
 });
 PopperArrow.displayName = ARROW_NAME$2;
@@ -15039,7 +17567,9 @@ var transformOrigin = (options) => ({
     const arrowWidth = isArrowHidden ? 0 : options.arrowWidth;
     const arrowHeight = isArrowHidden ? 0 : options.arrowHeight;
     const [placedSide, placedAlign] = getSideAndAlignFromPlacement(placement);
-    const noArrowAlign = { start: "0%", center: "50%", end: "100%" }[placedAlign];
+    const noArrowAlign = { start: "0%", center: "50%", end: "100%" }[
+      placedAlign
+    ];
     const arrowXCenter = (middlewareData.arrow?.x ?? 0) + arrowWidth / 2;
     const arrowYCenter = (middlewareData.arrow?.y ?? 0) + arrowHeight / 2;
     let x = "";
@@ -15058,7 +17588,7 @@ var transformOrigin = (options) => ({
       y = isArrowHidden ? noArrowAlign : `${arrowYCenter}px`;
     }
     return { data: { x, y } };
-  }
+  },
 });
 function getSideAndAlignFromPlacement(placement) {
   const [side, align = "center"] = placement.split("-");
@@ -15071,17 +17601,24 @@ var Arrow = PopperArrow;
 var ENTRY_FOCUS = "rovingFocusGroup.onEntryFocus";
 var EVENT_OPTIONS = { bubbles: false, cancelable: true };
 var GROUP_NAME$2 = "RovingFocusGroup";
-var [Collection$1, useCollection$1, createCollectionScope$1] = createCollection(GROUP_NAME$2);
-var [createRovingFocusGroupContext, createRovingFocusGroupScope] = createContextScope(
-  GROUP_NAME$2,
-  [createCollectionScope$1]
-);
-var [RovingFocusProvider, useRovingFocusContext] = createRovingFocusGroupContext(GROUP_NAME$2);
-var RovingFocusGroup = React.forwardRef(
-  (props, forwardedRef) => {
-    return /* @__PURE__ */ jsx(Collection$1.Provider, { scope: props.__scopeRovingFocusGroup, children: /* @__PURE__ */ jsx(Collection$1.Slot, { scope: props.__scopeRovingFocusGroup, children: /* @__PURE__ */ jsx(RovingFocusGroupImpl, { ...props, ref: forwardedRef }) }) });
-  }
-);
+var [Collection$1, useCollection$1, createCollectionScope$1] =
+  createCollection(GROUP_NAME$2);
+var [createRovingFocusGroupContext, createRovingFocusGroupScope] =
+  createContextScope(GROUP_NAME$2, [createCollectionScope$1]);
+var [RovingFocusProvider, useRovingFocusContext] =
+  createRovingFocusGroupContext(GROUP_NAME$2);
+var RovingFocusGroup = React.forwardRef((props, forwardedRef) => {
+  return /* @__PURE__ */ jsx(Collection$1.Provider, {
+    scope: props.__scopeRovingFocusGroup,
+    children: /* @__PURE__ */ jsx(Collection$1.Slot, {
+      scope: props.__scopeRovingFocusGroup,
+      children: /* @__PURE__ */ jsx(RovingFocusGroupImpl, {
+        ...props,
+        ref: forwardedRef,
+      }),
+    }),
+  });
+});
 RovingFocusGroup.displayName = GROUP_NAME$2;
 var RovingFocusGroupImpl = React.forwardRef((props, forwardedRef) => {
   const {
@@ -15103,7 +17640,7 @@ var RovingFocusGroupImpl = React.forwardRef((props, forwardedRef) => {
     prop: currentTabStopIdProp,
     defaultProp: defaultCurrentTabStopId ?? null,
     onChange: onCurrentTabStopIdChange,
-    caller: GROUP_NAME$2
+    caller: GROUP_NAME$2,
   });
   const [isTabbingBackOut, setIsTabbingBackOut] = React.useState(false);
   const handleEntryFocus = useCallbackRef$1(onEntryFocus);
@@ -15117,132 +17654,141 @@ var RovingFocusGroupImpl = React.forwardRef((props, forwardedRef) => {
       return () => node.removeEventListener(ENTRY_FOCUS, handleEntryFocus);
     }
   }, [handleEntryFocus]);
-  return /* @__PURE__ */ jsx(
-    RovingFocusProvider,
-    {
-      scope: __scopeRovingFocusGroup,
-      orientation,
-      dir: direction,
-      loop,
-      currentTabStopId,
-      onItemFocus: React.useCallback(
-        (tabStopId) => setCurrentTabStopId(tabStopId),
-        [setCurrentTabStopId]
-      ),
-      onItemShiftTab: React.useCallback(() => setIsTabbingBackOut(true), []),
-      onFocusableItemAdd: React.useCallback(
-        () => setFocusableItemsCount((prevCount) => prevCount + 1),
-        []
-      ),
-      onFocusableItemRemove: React.useCallback(
-        () => setFocusableItemsCount((prevCount) => prevCount - 1),
-        []
-      ),
-      children: /* @__PURE__ */ jsx(
-        Primitive.div,
-        {
-          tabIndex: isTabbingBackOut || focusableItemsCount === 0 ? -1 : 0,
-          "data-orientation": orientation,
-          ...groupProps,
-          ref: composedRefs,
-          style: { outline: "none", ...props.style },
-          onMouseDown: composeEventHandlers(props.onMouseDown, () => {
-            isClickFocusRef.current = true;
-          }),
-          onFocus: composeEventHandlers(props.onFocus, (event) => {
-            const isKeyboardFocus = !isClickFocusRef.current;
-            if (event.target === event.currentTarget && isKeyboardFocus && !isTabbingBackOut) {
-              const entryFocusEvent = new CustomEvent(ENTRY_FOCUS, EVENT_OPTIONS);
-              event.currentTarget.dispatchEvent(entryFocusEvent);
-              if (!entryFocusEvent.defaultPrevented) {
-                const items = getItems().filter((item) => item.focusable);
-                const activeItem = items.find((item) => item.active);
-                const currentItem = items.find((item) => item.id === currentTabStopId);
-                const candidateItems = [activeItem, currentItem, ...items].filter(
-                  Boolean
-                );
-                const candidateNodes = candidateItems.map((item) => item.ref.current);
-                focusFirst$1(candidateNodes, preventScrollOnEntryFocus);
-              }
-            }
-            isClickFocusRef.current = false;
-          }),
-          onBlur: composeEventHandlers(props.onBlur, () => setIsTabbingBackOut(false))
+  return /* @__PURE__ */ jsx(RovingFocusProvider, {
+    scope: __scopeRovingFocusGroup,
+    orientation,
+    dir: direction,
+    loop,
+    currentTabStopId,
+    onItemFocus: React.useCallback(
+      (tabStopId) => setCurrentTabStopId(tabStopId),
+      [setCurrentTabStopId],
+    ),
+    onItemShiftTab: React.useCallback(() => setIsTabbingBackOut(true), []),
+    onFocusableItemAdd: React.useCallback(
+      () => setFocusableItemsCount((prevCount) => prevCount + 1),
+      [],
+    ),
+    onFocusableItemRemove: React.useCallback(
+      () => setFocusableItemsCount((prevCount) => prevCount - 1),
+      [],
+    ),
+    children: /* @__PURE__ */ jsx(Primitive.div, {
+      tabIndex: isTabbingBackOut || focusableItemsCount === 0 ? -1 : 0,
+      "data-orientation": orientation,
+      ...groupProps,
+      ref: composedRefs,
+      style: { outline: "none", ...props.style },
+      onMouseDown: composeEventHandlers(props.onMouseDown, () => {
+        isClickFocusRef.current = true;
+      }),
+      onFocus: composeEventHandlers(props.onFocus, (event) => {
+        const isKeyboardFocus = !isClickFocusRef.current;
+        if (
+          event.target === event.currentTarget &&
+          isKeyboardFocus &&
+          !isTabbingBackOut
+        ) {
+          const entryFocusEvent = new CustomEvent(ENTRY_FOCUS, EVENT_OPTIONS);
+          event.currentTarget.dispatchEvent(entryFocusEvent);
+          if (!entryFocusEvent.defaultPrevented) {
+            const items = getItems().filter((item) => item.focusable);
+            const activeItem = items.find((item) => item.active);
+            const currentItem = items.find(
+              (item) => item.id === currentTabStopId,
+            );
+            const candidateItems = [activeItem, currentItem, ...items].filter(
+              Boolean,
+            );
+            const candidateNodes = candidateItems.map(
+              (item) => item.ref.current,
+            );
+            focusFirst$1(candidateNodes, preventScrollOnEntryFocus);
+          }
         }
-      )
-    }
-  );
+        isClickFocusRef.current = false;
+      }),
+      onBlur: composeEventHandlers(props.onBlur, () =>
+        setIsTabbingBackOut(false),
+      ),
+    }),
+  });
 });
 var ITEM_NAME$2 = "RovingFocusGroupItem";
-var RovingFocusGroupItem = React.forwardRef(
-  (props, forwardedRef) => {
-    const {
-      __scopeRovingFocusGroup,
-      focusable = true,
-      active = false,
-      tabStopId,
-      children,
-      ...itemProps
-    } = props;
-    const autoId = useId();
-    const id = tabStopId || autoId;
-    const context = useRovingFocusContext(ITEM_NAME$2, __scopeRovingFocusGroup);
-    const isCurrentTabStop = context.currentTabStopId === id;
-    const getItems = useCollection$1(__scopeRovingFocusGroup);
-    const { onFocusableItemAdd, onFocusableItemRemove, currentTabStopId } = context;
-    React.useEffect(() => {
-      if (focusable) {
-        onFocusableItemAdd();
-        return () => onFocusableItemRemove();
-      }
-    }, [focusable, onFocusableItemAdd, onFocusableItemRemove]);
-    return /* @__PURE__ */ jsx(
-      Collection$1.ItemSlot,
-      {
-        scope: __scopeRovingFocusGroup,
-        id,
-        focusable,
-        active,
-        children: /* @__PURE__ */ jsx(
-          Primitive.span,
-          {
-            tabIndex: isCurrentTabStop ? 0 : -1,
-            "data-orientation": context.orientation,
-            ...itemProps,
-            ref: forwardedRef,
-            onMouseDown: composeEventHandlers(props.onMouseDown, (event) => {
-              if (!focusable) event.preventDefault();
-              else context.onItemFocus(id);
-            }),
-            onFocus: composeEventHandlers(props.onFocus, () => context.onItemFocus(id)),
-            onKeyDown: composeEventHandlers(props.onKeyDown, (event) => {
-              if (event.key === "Tab" && event.shiftKey) {
-                context.onItemShiftTab();
-                return;
-              }
-              if (event.target !== event.currentTarget) return;
-              const focusIntent = getFocusIntent(event, context.orientation, context.dir);
-              if (focusIntent !== void 0) {
-                if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) return;
-                event.preventDefault();
-                const items = getItems().filter((item) => item.focusable);
-                let candidateNodes = items.map((item) => item.ref.current);
-                if (focusIntent === "last") candidateNodes.reverse();
-                else if (focusIntent === "prev" || focusIntent === "next") {
-                  if (focusIntent === "prev") candidateNodes.reverse();
-                  const currentIndex = candidateNodes.indexOf(event.currentTarget);
-                  candidateNodes = context.loop ? wrapArray$1(candidateNodes, currentIndex + 1) : candidateNodes.slice(currentIndex + 1);
-                }
-                setTimeout(() => focusFirst$1(candidateNodes));
-              }
-            }),
-            children: typeof children === "function" ? children({ isCurrentTabStop, hasTabStop: currentTabStopId != null }) : children
+var RovingFocusGroupItem = React.forwardRef((props, forwardedRef) => {
+  const {
+    __scopeRovingFocusGroup,
+    focusable = true,
+    active = false,
+    tabStopId,
+    children,
+    ...itemProps
+  } = props;
+  const autoId = useId();
+  const id = tabStopId || autoId;
+  const context = useRovingFocusContext(ITEM_NAME$2, __scopeRovingFocusGroup);
+  const isCurrentTabStop = context.currentTabStopId === id;
+  const getItems = useCollection$1(__scopeRovingFocusGroup);
+  const { onFocusableItemAdd, onFocusableItemRemove, currentTabStopId } =
+    context;
+  React.useEffect(() => {
+    if (focusable) {
+      onFocusableItemAdd();
+      return () => onFocusableItemRemove();
+    }
+  }, [focusable, onFocusableItemAdd, onFocusableItemRemove]);
+  return /* @__PURE__ */ jsx(Collection$1.ItemSlot, {
+    scope: __scopeRovingFocusGroup,
+    id,
+    focusable,
+    active,
+    children: /* @__PURE__ */ jsx(Primitive.span, {
+      tabIndex: isCurrentTabStop ? 0 : -1,
+      "data-orientation": context.orientation,
+      ...itemProps,
+      ref: forwardedRef,
+      onMouseDown: composeEventHandlers(props.onMouseDown, (event) => {
+        if (!focusable) event.preventDefault();
+        else context.onItemFocus(id);
+      }),
+      onFocus: composeEventHandlers(props.onFocus, () =>
+        context.onItemFocus(id),
+      ),
+      onKeyDown: composeEventHandlers(props.onKeyDown, (event) => {
+        if (event.key === "Tab" && event.shiftKey) {
+          context.onItemShiftTab();
+          return;
+        }
+        if (event.target !== event.currentTarget) return;
+        const focusIntent = getFocusIntent(
+          event,
+          context.orientation,
+          context.dir,
+        );
+        if (focusIntent !== void 0) {
+          if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey)
+            return;
+          event.preventDefault();
+          const items = getItems().filter((item) => item.focusable);
+          let candidateNodes = items.map((item) => item.ref.current);
+          if (focusIntent === "last") candidateNodes.reverse();
+          else if (focusIntent === "prev" || focusIntent === "next") {
+            if (focusIntent === "prev") candidateNodes.reverse();
+            const currentIndex = candidateNodes.indexOf(event.currentTarget);
+            candidateNodes = context.loop
+              ? wrapArray$1(candidateNodes, currentIndex + 1)
+              : candidateNodes.slice(currentIndex + 1);
           }
-        )
-      }
-    );
-  }
-);
+          setTimeout(() => focusFirst$1(candidateNodes));
+        }
+      }),
+      children:
+        typeof children === "function"
+          ? children({ isCurrentTabStop, hasTabStop: currentTabStopId != null })
+          : children,
+    }),
+  });
+});
 RovingFocusGroupItem.displayName = ITEM_NAME$2;
 var MAP_KEY_TO_FOCUS_INTENT = {
   ArrowLeft: "prev",
@@ -15252,16 +17798,22 @@ var MAP_KEY_TO_FOCUS_INTENT = {
   PageUp: "first",
   Home: "first",
   PageDown: "last",
-  End: "last"
+  End: "last",
 };
 function getDirectionAwareKey(key, dir) {
   if (dir !== "rtl") return key;
-  return key === "ArrowLeft" ? "ArrowRight" : key === "ArrowRight" ? "ArrowLeft" : key;
+  return key === "ArrowLeft"
+    ? "ArrowRight"
+    : key === "ArrowRight"
+      ? "ArrowLeft"
+      : key;
 }
 function getFocusIntent(event, orientation, dir) {
   const key = getDirectionAwareKey(event.key, dir);
-  if (orientation === "vertical" && ["ArrowLeft", "ArrowRight"].includes(key)) return void 0;
-  if (orientation === "horizontal" && ["ArrowUp", "ArrowDown"].includes(key)) return void 0;
+  if (orientation === "vertical" && ["ArrowLeft", "ArrowRight"].includes(key))
+    return void 0;
+  if (orientation === "horizontal" && ["ArrowUp", "ArrowDown"].includes(key))
+    return void 0;
   return MAP_KEY_TO_FOCUS_INTENT[key];
 }
 function focusFirst$1(candidates, preventScroll = false) {
@@ -15283,25 +17835,33 @@ var LAST_KEYS = ["ArrowUp", "PageDown", "End"];
 var FIRST_LAST_KEYS = [...FIRST_KEYS, ...LAST_KEYS];
 var SUB_OPEN_KEYS = {
   ltr: [...SELECTION_KEYS, "ArrowRight"],
-  rtl: [...SELECTION_KEYS, "ArrowLeft"]
+  rtl: [...SELECTION_KEYS, "ArrowLeft"],
 };
 var SUB_CLOSE_KEYS = {
   ltr: ["ArrowLeft"],
-  rtl: ["ArrowRight"]
+  rtl: ["ArrowRight"],
 };
 var MENU_NAME = "Menu";
-var [Collection, useCollection, createCollectionScope] = createCollection(MENU_NAME);
+var [Collection, useCollection, createCollectionScope] =
+  createCollection(MENU_NAME);
 var [createMenuContext, createMenuScope] = createContextScope(MENU_NAME, [
   createCollectionScope,
   createPopperScope,
-  createRovingFocusGroupScope
+  createRovingFocusGroupScope,
 ]);
 var usePopperScope = createPopperScope();
 var useRovingFocusGroupScope = createRovingFocusGroupScope();
 var [MenuProvider, useMenuContext] = createMenuContext(MENU_NAME);
 var [MenuRootProvider, useMenuRootContext] = createMenuContext(MENU_NAME);
 var Menu = (props) => {
-  const { __scopeMenu, open = false, children, dir, onOpenChange, modal = true } = props;
+  const {
+    __scopeMenu,
+    open = false,
+    children,
+    dir,
+    onOpenChange,
+    modal = true,
+  } = props;
   const popperScope = usePopperScope(__scopeMenu);
   const [content, setContent] = React.useState(null);
   const isUsingKeyboardRef = React.useRef(false);
@@ -15310,678 +17870,739 @@ var Menu = (props) => {
   React.useEffect(() => {
     const handleKeyDown = () => {
       isUsingKeyboardRef.current = true;
-      document.addEventListener("pointerdown", handlePointer, { capture: true, once: true });
-      document.addEventListener("pointermove", handlePointer, { capture: true, once: true });
+      document.addEventListener("pointerdown", handlePointer, {
+        capture: true,
+        once: true,
+      });
+      document.addEventListener("pointermove", handlePointer, {
+        capture: true,
+        once: true,
+      });
     };
-    const handlePointer = () => isUsingKeyboardRef.current = false;
+    const handlePointer = () => (isUsingKeyboardRef.current = false);
     document.addEventListener("keydown", handleKeyDown, { capture: true });
     return () => {
       document.removeEventListener("keydown", handleKeyDown, { capture: true });
-      document.removeEventListener("pointerdown", handlePointer, { capture: true });
-      document.removeEventListener("pointermove", handlePointer, { capture: true });
+      document.removeEventListener("pointerdown", handlePointer, {
+        capture: true,
+      });
+      document.removeEventListener("pointermove", handlePointer, {
+        capture: true,
+      });
     };
   }, []);
-  return /* @__PURE__ */ jsx(Root2$1, { ...popperScope, children: /* @__PURE__ */ jsx(
-    MenuProvider,
-    {
+  return /* @__PURE__ */ jsx(Root2$1, {
+    ...popperScope,
+    children: /* @__PURE__ */ jsx(MenuProvider, {
       scope: __scopeMenu,
       open,
       onOpenChange: handleOpenChange,
       content,
       onContentChange: setContent,
-      children: /* @__PURE__ */ jsx(
-        MenuRootProvider,
-        {
-          scope: __scopeMenu,
-          onClose: React.useCallback(() => handleOpenChange(false), [handleOpenChange]),
-          isUsingKeyboardRef,
-          dir: direction,
-          modal,
-          children
-        }
-      )
-    }
-  ) });
+      children: /* @__PURE__ */ jsx(MenuRootProvider, {
+        scope: __scopeMenu,
+        onClose: React.useCallback(
+          () => handleOpenChange(false),
+          [handleOpenChange],
+        ),
+        isUsingKeyboardRef,
+        dir: direction,
+        modal,
+        children,
+      }),
+    }),
+  });
 };
 Menu.displayName = MENU_NAME;
 var ANCHOR_NAME = "MenuAnchor";
-var MenuAnchor = React.forwardRef(
-  (props, forwardedRef) => {
-    const { __scopeMenu, ...anchorProps } = props;
-    const popperScope = usePopperScope(__scopeMenu);
-    return /* @__PURE__ */ jsx(Anchor, { ...popperScope, ...anchorProps, ref: forwardedRef });
-  }
-);
+var MenuAnchor = React.forwardRef((props, forwardedRef) => {
+  const { __scopeMenu, ...anchorProps } = props;
+  const popperScope = usePopperScope(__scopeMenu);
+  return /* @__PURE__ */ jsx(Anchor, {
+    ...popperScope,
+    ...anchorProps,
+    ref: forwardedRef,
+  });
+});
 MenuAnchor.displayName = ANCHOR_NAME;
 var PORTAL_NAME$1 = "MenuPortal";
 var [PortalProvider, usePortalContext] = createMenuContext(PORTAL_NAME$1, {
-  forceMount: void 0
+  forceMount: void 0,
 });
 var MenuPortal = (props) => {
   const { __scopeMenu, forceMount, children, container } = props;
   const context = useMenuContext(PORTAL_NAME$1, __scopeMenu);
-  return /* @__PURE__ */ jsx(PortalProvider, { scope: __scopeMenu, forceMount, children: /* @__PURE__ */ jsx(Presence, { present: forceMount || context.open, children: /* @__PURE__ */ jsx(Portal$1, { asChild: true, container, children }) }) });
+  return /* @__PURE__ */ jsx(PortalProvider, {
+    scope: __scopeMenu,
+    forceMount,
+    children: /* @__PURE__ */ jsx(Presence, {
+      present: forceMount || context.open,
+      children: /* @__PURE__ */ jsx(Portal$1, {
+        asChild: true,
+        container,
+        children,
+      }),
+    }),
+  });
 };
 MenuPortal.displayName = PORTAL_NAME$1;
 var CONTENT_NAME$1 = "MenuContent";
-var [MenuContentProvider, useMenuContentContext] = createMenuContext(CONTENT_NAME$1);
-var MenuContent = React.forwardRef(
-  (props, forwardedRef) => {
-    const portalContext = usePortalContext(CONTENT_NAME$1, props.__scopeMenu);
-    const { forceMount = portalContext.forceMount, ...contentProps } = props;
-    const context = useMenuContext(CONTENT_NAME$1, props.__scopeMenu);
-    const rootContext = useMenuRootContext(CONTENT_NAME$1, props.__scopeMenu);
-    return /* @__PURE__ */ jsx(Collection.Provider, { scope: props.__scopeMenu, children: /* @__PURE__ */ jsx(Presence, { present: forceMount || context.open, children: /* @__PURE__ */ jsx(Collection.Slot, { scope: props.__scopeMenu, children: rootContext.modal ? /* @__PURE__ */ jsx(MenuRootContentModal, { ...contentProps, ref: forwardedRef }) : /* @__PURE__ */ jsx(MenuRootContentNonModal, { ...contentProps, ref: forwardedRef }) }) }) });
-  }
-);
-var MenuRootContentModal = React.forwardRef(
-  (props, forwardedRef) => {
-    const context = useMenuContext(CONTENT_NAME$1, props.__scopeMenu);
-    const ref = React.useRef(null);
-    const composedRefs = useComposedRefs(forwardedRef, ref);
-    React.useEffect(() => {
-      const content = ref.current;
-      if (content) return hideOthers(content);
-    }, []);
-    return /* @__PURE__ */ jsx(
-      MenuContentImpl,
-      {
-        ...props,
-        ref: composedRefs,
-        trapFocus: context.open,
-        disableOutsidePointerEvents: context.open,
-        disableOutsideScroll: true,
-        onFocusOutside: composeEventHandlers(
-          props.onFocusOutside,
-          (event) => event.preventDefault(),
-          { checkForDefaultPrevented: false }
-        ),
-        onDismiss: () => context.onOpenChange(false)
-      }
-    );
-  }
-);
+var [MenuContentProvider, useMenuContentContext] =
+  createMenuContext(CONTENT_NAME$1);
+var MenuContent = React.forwardRef((props, forwardedRef) => {
+  const portalContext = usePortalContext(CONTENT_NAME$1, props.__scopeMenu);
+  const { forceMount = portalContext.forceMount, ...contentProps } = props;
+  const context = useMenuContext(CONTENT_NAME$1, props.__scopeMenu);
+  const rootContext = useMenuRootContext(CONTENT_NAME$1, props.__scopeMenu);
+  return /* @__PURE__ */ jsx(Collection.Provider, {
+    scope: props.__scopeMenu,
+    children: /* @__PURE__ */ jsx(Presence, {
+      present: forceMount || context.open,
+      children: /* @__PURE__ */ jsx(Collection.Slot, {
+        scope: props.__scopeMenu,
+        children: rootContext.modal
+          ? /* @__PURE__ */ jsx(MenuRootContentModal, {
+              ...contentProps,
+              ref: forwardedRef,
+            })
+          : /* @__PURE__ */ jsx(MenuRootContentNonModal, {
+              ...contentProps,
+              ref: forwardedRef,
+            }),
+      }),
+    }),
+  });
+});
+var MenuRootContentModal = React.forwardRef((props, forwardedRef) => {
+  const context = useMenuContext(CONTENT_NAME$1, props.__scopeMenu);
+  const ref = React.useRef(null);
+  const composedRefs = useComposedRefs(forwardedRef, ref);
+  React.useEffect(() => {
+    const content = ref.current;
+    if (content) return hideOthers(content);
+  }, []);
+  return /* @__PURE__ */ jsx(MenuContentImpl, {
+    ...props,
+    ref: composedRefs,
+    trapFocus: context.open,
+    disableOutsidePointerEvents: context.open,
+    disableOutsideScroll: true,
+    onFocusOutside: composeEventHandlers(
+      props.onFocusOutside,
+      (event) => event.preventDefault(),
+      { checkForDefaultPrevented: false },
+    ),
+    onDismiss: () => context.onOpenChange(false),
+  });
+});
 var MenuRootContentNonModal = React.forwardRef((props, forwardedRef) => {
   const context = useMenuContext(CONTENT_NAME$1, props.__scopeMenu);
-  return /* @__PURE__ */ jsx(
-    MenuContentImpl,
-    {
-      ...props,
-      ref: forwardedRef,
-      trapFocus: false,
-      disableOutsidePointerEvents: false,
-      disableOutsideScroll: false,
-      onDismiss: () => context.onOpenChange(false)
-    }
-  );
+  return /* @__PURE__ */ jsx(MenuContentImpl, {
+    ...props,
+    ref: forwardedRef,
+    trapFocus: false,
+    disableOutsidePointerEvents: false,
+    disableOutsideScroll: false,
+    onDismiss: () => context.onOpenChange(false),
+  });
 });
 var Slot = /* @__PURE__ */ createSlot("MenuContent.ScrollLock");
-var MenuContentImpl = React.forwardRef(
-  (props, forwardedRef) => {
-    const {
-      __scopeMenu,
-      loop = false,
-      trapFocus,
-      onOpenAutoFocus,
-      onCloseAutoFocus,
-      disableOutsidePointerEvents,
-      onEntryFocus,
-      onEscapeKeyDown,
-      onPointerDownOutside,
-      onFocusOutside,
-      onInteractOutside,
-      onDismiss,
-      disableOutsideScroll,
-      ...contentProps
-    } = props;
-    const context = useMenuContext(CONTENT_NAME$1, __scopeMenu);
-    const rootContext = useMenuRootContext(CONTENT_NAME$1, __scopeMenu);
-    const popperScope = usePopperScope(__scopeMenu);
-    const rovingFocusGroupScope = useRovingFocusGroupScope(__scopeMenu);
-    const getItems = useCollection(__scopeMenu);
-    const [currentItemId, setCurrentItemId] = React.useState(null);
-    const contentRef = React.useRef(null);
-    const composedRefs = useComposedRefs(forwardedRef, contentRef, context.onContentChange);
-    const timerRef = React.useRef(0);
-    const searchRef = React.useRef("");
-    const pointerGraceTimerRef = React.useRef(0);
-    const pointerGraceIntentRef = React.useRef(null);
-    const pointerDirRef = React.useRef("right");
-    const lastPointerXRef = React.useRef(0);
-    const ScrollLockWrapper = disableOutsideScroll ? ReactRemoveScroll : React.Fragment;
-    const scrollLockWrapperProps = disableOutsideScroll ? { as: Slot, allowPinchZoom: true } : void 0;
-    const handleTypeaheadSearch = (key) => {
-      const search = searchRef.current + key;
-      const items = getItems().filter((item) => !item.disabled);
-      const currentItem = document.activeElement;
-      const currentMatch = items.find((item) => item.ref.current === currentItem)?.textValue;
-      const values2 = items.map((item) => item.textValue);
-      const nextMatch = getNextMatch(values2, search, currentMatch);
-      const newItem = items.find((item) => item.textValue === nextMatch)?.ref.current;
-      (function updateSearch(value) {
-        searchRef.current = value;
-        window.clearTimeout(timerRef.current);
-        if (value !== "") timerRef.current = window.setTimeout(() => updateSearch(""), 1e3);
-      })(search);
-      if (newItem) {
-        setTimeout(() => newItem.focus());
-      }
-    };
-    React.useEffect(() => {
-      return () => window.clearTimeout(timerRef.current);
-    }, []);
-    useFocusGuards();
-    const isPointerMovingToSubmenu = React.useCallback((event) => {
-      const isMovingTowards = pointerDirRef.current === pointerGraceIntentRef.current?.side;
-      return isMovingTowards && isPointerInGraceArea(event, pointerGraceIntentRef.current?.area);
-    }, []);
-    return /* @__PURE__ */ jsx(
-      MenuContentProvider,
-      {
-        scope: __scopeMenu,
-        searchRef,
-        onItemEnter: React.useCallback(
-          (event) => {
-            if (isPointerMovingToSubmenu(event)) event.preventDefault();
-          },
-          [isPointerMovingToSubmenu]
-        ),
-        onItemLeave: React.useCallback(
-          (event) => {
-            if (isPointerMovingToSubmenu(event)) return;
-            contentRef.current?.focus();
-            setCurrentItemId(null);
-          },
-          [isPointerMovingToSubmenu]
-        ),
-        onTriggerLeave: React.useCallback(
-          (event) => {
-            if (isPointerMovingToSubmenu(event)) event.preventDefault();
-          },
-          [isPointerMovingToSubmenu]
-        ),
-        pointerGraceTimerRef,
-        onPointerGraceIntentChange: React.useCallback((intent) => {
-          pointerGraceIntentRef.current = intent;
-        }, []),
-        children: /* @__PURE__ */ jsx(ScrollLockWrapper, { ...scrollLockWrapperProps, children: /* @__PURE__ */ jsx(
-          FocusScope,
-          {
-            asChild: true,
-            trapped: trapFocus,
-            onMountAutoFocus: composeEventHandlers(onOpenAutoFocus, (event) => {
-              event.preventDefault();
-              contentRef.current?.focus({ preventScroll: true });
-            }),
-            onUnmountAutoFocus: onCloseAutoFocus,
-            children: /* @__PURE__ */ jsx(
-              DismissableLayer,
-              {
-                asChild: true,
-                disableOutsidePointerEvents,
-                onEscapeKeyDown,
-                onPointerDownOutside,
-                onFocusOutside,
-                onInteractOutside,
-                onDismiss,
-                children: /* @__PURE__ */ jsx(
-                  Root,
-                  {
-                    asChild: true,
-                    ...rovingFocusGroupScope,
-                    dir: rootContext.dir,
-                    orientation: "vertical",
-                    loop,
-                    currentTabStopId: currentItemId,
-                    onCurrentTabStopIdChange: setCurrentItemId,
-                    onEntryFocus: composeEventHandlers(onEntryFocus, (event) => {
-                      if (!rootContext.isUsingKeyboardRef.current) event.preventDefault();
-                    }),
-                    preventScrollOnEntryFocus: true,
-                    children: /* @__PURE__ */ jsx(
-                      Content,
-                      {
-                        role: "menu",
-                        "aria-orientation": "vertical",
-                        "data-state": getOpenState(context.open),
-                        "data-radix-menu-content": "",
-                        dir: rootContext.dir,
-                        ...popperScope,
-                        ...contentProps,
-                        ref: composedRefs,
-                        style: { outline: "none", ...contentProps.style },
-                        onKeyDown: composeEventHandlers(contentProps.onKeyDown, (event) => {
-                          const target = event.target;
-                          const isKeyDownInside = target.closest("[data-radix-menu-content]") === event.currentTarget;
-                          const isModifierKey = event.ctrlKey || event.altKey || event.metaKey;
-                          const isCharacterKey = event.key.length === 1;
-                          if (isKeyDownInside) {
-                            if (event.key === "Tab") event.preventDefault();
-                            if (!isModifierKey && isCharacterKey) handleTypeaheadSearch(event.key);
-                          }
-                          const content = contentRef.current;
-                          if (event.target !== content) return;
-                          if (!FIRST_LAST_KEYS.includes(event.key)) return;
-                          event.preventDefault();
-                          const items = getItems().filter((item) => !item.disabled);
-                          const candidateNodes = items.map((item) => item.ref.current);
-                          if (LAST_KEYS.includes(event.key)) candidateNodes.reverse();
-                          focusFirst(candidateNodes);
-                        }),
-                        onBlur: composeEventHandlers(props.onBlur, (event) => {
-                          if (!event.currentTarget.contains(event.target)) {
-                            window.clearTimeout(timerRef.current);
-                            searchRef.current = "";
-                          }
-                        }),
-                        onPointerMove: composeEventHandlers(
-                          props.onPointerMove,
-                          whenMouse((event) => {
-                            const target = event.target;
-                            const pointerXHasChanged = lastPointerXRef.current !== event.clientX;
-                            if (event.currentTarget.contains(target) && pointerXHasChanged) {
-                              const newDir = event.clientX > lastPointerXRef.current ? "right" : "left";
-                              pointerDirRef.current = newDir;
-                              lastPointerXRef.current = event.clientX;
-                            }
-                          })
-                        )
-                      }
-                    )
-                  }
-                )
-              }
-            )
-          }
-        ) })
-      }
+var MenuContentImpl = React.forwardRef((props, forwardedRef) => {
+  const {
+    __scopeMenu,
+    loop = false,
+    trapFocus,
+    onOpenAutoFocus,
+    onCloseAutoFocus,
+    disableOutsidePointerEvents,
+    onEntryFocus,
+    onEscapeKeyDown,
+    onPointerDownOutside,
+    onFocusOutside,
+    onInteractOutside,
+    onDismiss,
+    disableOutsideScroll,
+    ...contentProps
+  } = props;
+  const context = useMenuContext(CONTENT_NAME$1, __scopeMenu);
+  const rootContext = useMenuRootContext(CONTENT_NAME$1, __scopeMenu);
+  const popperScope = usePopperScope(__scopeMenu);
+  const rovingFocusGroupScope = useRovingFocusGroupScope(__scopeMenu);
+  const getItems = useCollection(__scopeMenu);
+  const [currentItemId, setCurrentItemId] = React.useState(null);
+  const contentRef = React.useRef(null);
+  const composedRefs = useComposedRefs(
+    forwardedRef,
+    contentRef,
+    context.onContentChange,
+  );
+  const timerRef = React.useRef(0);
+  const searchRef = React.useRef("");
+  const pointerGraceTimerRef = React.useRef(0);
+  const pointerGraceIntentRef = React.useRef(null);
+  const pointerDirRef = React.useRef("right");
+  const lastPointerXRef = React.useRef(0);
+  const ScrollLockWrapper = disableOutsideScroll
+    ? ReactRemoveScroll
+    : React.Fragment;
+  const scrollLockWrapperProps = disableOutsideScroll
+    ? { as: Slot, allowPinchZoom: true }
+    : void 0;
+  const handleTypeaheadSearch = (key) => {
+    const search = searchRef.current + key;
+    const items = getItems().filter((item) => !item.disabled);
+    const currentItem = document.activeElement;
+    const currentMatch = items.find(
+      (item) => item.ref.current === currentItem,
+    )?.textValue;
+    const values2 = items.map((item) => item.textValue);
+    const nextMatch = getNextMatch(values2, search, currentMatch);
+    const newItem = items.find((item) => item.textValue === nextMatch)?.ref
+      .current;
+    (function updateSearch(value) {
+      searchRef.current = value;
+      window.clearTimeout(timerRef.current);
+      if (value !== "")
+        timerRef.current = window.setTimeout(() => updateSearch(""), 1e3);
+    })(search);
+    if (newItem) {
+      setTimeout(() => newItem.focus());
+    }
+  };
+  React.useEffect(() => {
+    return () => window.clearTimeout(timerRef.current);
+  }, []);
+  useFocusGuards();
+  const isPointerMovingToSubmenu = React.useCallback((event) => {
+    const isMovingTowards =
+      pointerDirRef.current === pointerGraceIntentRef.current?.side;
+    return (
+      isMovingTowards &&
+      isPointerInGraceArea(event, pointerGraceIntentRef.current?.area)
     );
-  }
-);
+  }, []);
+  return /* @__PURE__ */ jsx(MenuContentProvider, {
+    scope: __scopeMenu,
+    searchRef,
+    onItemEnter: React.useCallback(
+      (event) => {
+        if (isPointerMovingToSubmenu(event)) event.preventDefault();
+      },
+      [isPointerMovingToSubmenu],
+    ),
+    onItemLeave: React.useCallback(
+      (event) => {
+        if (isPointerMovingToSubmenu(event)) return;
+        contentRef.current?.focus();
+        setCurrentItemId(null);
+      },
+      [isPointerMovingToSubmenu],
+    ),
+    onTriggerLeave: React.useCallback(
+      (event) => {
+        if (isPointerMovingToSubmenu(event)) event.preventDefault();
+      },
+      [isPointerMovingToSubmenu],
+    ),
+    pointerGraceTimerRef,
+    onPointerGraceIntentChange: React.useCallback((intent) => {
+      pointerGraceIntentRef.current = intent;
+    }, []),
+    children: /* @__PURE__ */ jsx(ScrollLockWrapper, {
+      ...scrollLockWrapperProps,
+      children: /* @__PURE__ */ jsx(FocusScope, {
+        asChild: true,
+        trapped: trapFocus,
+        onMountAutoFocus: composeEventHandlers(onOpenAutoFocus, (event) => {
+          event.preventDefault();
+          contentRef.current?.focus({ preventScroll: true });
+        }),
+        onUnmountAutoFocus: onCloseAutoFocus,
+        children: /* @__PURE__ */ jsx(DismissableLayer, {
+          asChild: true,
+          disableOutsidePointerEvents,
+          onEscapeKeyDown,
+          onPointerDownOutside,
+          onFocusOutside,
+          onInteractOutside,
+          onDismiss,
+          children: /* @__PURE__ */ jsx(Root, {
+            asChild: true,
+            ...rovingFocusGroupScope,
+            dir: rootContext.dir,
+            orientation: "vertical",
+            loop,
+            currentTabStopId: currentItemId,
+            onCurrentTabStopIdChange: setCurrentItemId,
+            onEntryFocus: composeEventHandlers(onEntryFocus, (event) => {
+              if (!rootContext.isUsingKeyboardRef.current)
+                event.preventDefault();
+            }),
+            preventScrollOnEntryFocus: true,
+            children: /* @__PURE__ */ jsx(Content, {
+              role: "menu",
+              "aria-orientation": "vertical",
+              "data-state": getOpenState(context.open),
+              "data-radix-menu-content": "",
+              dir: rootContext.dir,
+              ...popperScope,
+              ...contentProps,
+              ref: composedRefs,
+              style: { outline: "none", ...contentProps.style },
+              onKeyDown: composeEventHandlers(
+                contentProps.onKeyDown,
+                (event) => {
+                  const target = event.target;
+                  const isKeyDownInside =
+                    target.closest("[data-radix-menu-content]") ===
+                    event.currentTarget;
+                  const isModifierKey =
+                    event.ctrlKey || event.altKey || event.metaKey;
+                  const isCharacterKey = event.key.length === 1;
+                  if (isKeyDownInside) {
+                    if (event.key === "Tab") event.preventDefault();
+                    if (!isModifierKey && isCharacterKey)
+                      handleTypeaheadSearch(event.key);
+                  }
+                  const content = contentRef.current;
+                  if (event.target !== content) return;
+                  if (!FIRST_LAST_KEYS.includes(event.key)) return;
+                  event.preventDefault();
+                  const items = getItems().filter((item) => !item.disabled);
+                  const candidateNodes = items.map((item) => item.ref.current);
+                  if (LAST_KEYS.includes(event.key)) candidateNodes.reverse();
+                  focusFirst(candidateNodes);
+                },
+              ),
+              onBlur: composeEventHandlers(props.onBlur, (event) => {
+                if (!event.currentTarget.contains(event.target)) {
+                  window.clearTimeout(timerRef.current);
+                  searchRef.current = "";
+                }
+              }),
+              onPointerMove: composeEventHandlers(
+                props.onPointerMove,
+                whenMouse((event) => {
+                  const target = event.target;
+                  const pointerXHasChanged =
+                    lastPointerXRef.current !== event.clientX;
+                  if (
+                    event.currentTarget.contains(target) &&
+                    pointerXHasChanged
+                  ) {
+                    const newDir =
+                      event.clientX > lastPointerXRef.current
+                        ? "right"
+                        : "left";
+                    pointerDirRef.current = newDir;
+                    lastPointerXRef.current = event.clientX;
+                  }
+                }),
+              ),
+            }),
+          }),
+        }),
+      }),
+    }),
+  });
+});
 MenuContent.displayName = CONTENT_NAME$1;
 var GROUP_NAME$1 = "MenuGroup";
-var MenuGroup = React.forwardRef(
-  (props, forwardedRef) => {
-    const { __scopeMenu, ...groupProps } = props;
-    return /* @__PURE__ */ jsx(Primitive.div, { role: "group", ...groupProps, ref: forwardedRef });
-  }
-);
+var MenuGroup = React.forwardRef((props, forwardedRef) => {
+  const { __scopeMenu, ...groupProps } = props;
+  return /* @__PURE__ */ jsx(Primitive.div, {
+    role: "group",
+    ...groupProps,
+    ref: forwardedRef,
+  });
+});
 MenuGroup.displayName = GROUP_NAME$1;
 var LABEL_NAME$1 = "MenuLabel";
-var MenuLabel = React.forwardRef(
-  (props, forwardedRef) => {
-    const { __scopeMenu, ...labelProps } = props;
-    return /* @__PURE__ */ jsx(Primitive.div, { ...labelProps, ref: forwardedRef });
-  }
-);
+var MenuLabel = React.forwardRef((props, forwardedRef) => {
+  const { __scopeMenu, ...labelProps } = props;
+  return /* @__PURE__ */ jsx(Primitive.div, {
+    ...labelProps,
+    ref: forwardedRef,
+  });
+});
 MenuLabel.displayName = LABEL_NAME$1;
 var ITEM_NAME$1 = "MenuItem";
 var ITEM_SELECT = "menu.itemSelect";
-var MenuItem = React.forwardRef(
-  (props, forwardedRef) => {
-    const { disabled = false, onSelect, ...itemProps } = props;
-    const ref = React.useRef(null);
-    const rootContext = useMenuRootContext(ITEM_NAME$1, props.__scopeMenu);
-    const contentContext = useMenuContentContext(ITEM_NAME$1, props.__scopeMenu);
-    const composedRefs = useComposedRefs(forwardedRef, ref);
-    const isPointerDownRef = React.useRef(false);
-    const handleSelect = () => {
-      const menuItem = ref.current;
-      if (!disabled && menuItem) {
-        const itemSelectEvent = new CustomEvent(ITEM_SELECT, { bubbles: true, cancelable: true });
-        menuItem.addEventListener(ITEM_SELECT, (event) => onSelect?.(event), { once: true });
-        dispatchDiscreteCustomEvent(menuItem, itemSelectEvent);
-        if (itemSelectEvent.defaultPrevented) {
-          isPointerDownRef.current = false;
-        } else {
-          rootContext.onClose();
-        }
+var MenuItem = React.forwardRef((props, forwardedRef) => {
+  const { disabled = false, onSelect, ...itemProps } = props;
+  const ref = React.useRef(null);
+  const rootContext = useMenuRootContext(ITEM_NAME$1, props.__scopeMenu);
+  const contentContext = useMenuContentContext(ITEM_NAME$1, props.__scopeMenu);
+  const composedRefs = useComposedRefs(forwardedRef, ref);
+  const isPointerDownRef = React.useRef(false);
+  const handleSelect = () => {
+    const menuItem = ref.current;
+    if (!disabled && menuItem) {
+      const itemSelectEvent = new CustomEvent(ITEM_SELECT, {
+        bubbles: true,
+        cancelable: true,
+      });
+      menuItem.addEventListener(ITEM_SELECT, (event) => onSelect?.(event), {
+        once: true,
+      });
+      dispatchDiscreteCustomEvent(menuItem, itemSelectEvent);
+      if (itemSelectEvent.defaultPrevented) {
+        isPointerDownRef.current = false;
+      } else {
+        rootContext.onClose();
       }
-    };
-    return /* @__PURE__ */ jsx(
-      MenuItemImpl,
-      {
+    }
+  };
+  return /* @__PURE__ */ jsx(MenuItemImpl, {
+    ...itemProps,
+    ref: composedRefs,
+    disabled,
+    onClick: composeEventHandlers(props.onClick, handleSelect),
+    onPointerDown: (event) => {
+      props.onPointerDown?.(event);
+      isPointerDownRef.current = true;
+    },
+    onPointerUp: composeEventHandlers(props.onPointerUp, (event) => {
+      if (!isPointerDownRef.current) event.currentTarget?.click();
+    }),
+    onKeyDown: composeEventHandlers(props.onKeyDown, (event) => {
+      const isTypingAhead = contentContext.searchRef.current !== "";
+      if (disabled || (isTypingAhead && event.key === " ")) return;
+      if (SELECTION_KEYS.includes(event.key)) {
+        event.currentTarget.click();
+        event.preventDefault();
+      }
+    }),
+  });
+});
+MenuItem.displayName = ITEM_NAME$1;
+var MenuItemImpl = React.forwardRef((props, forwardedRef) => {
+  const { __scopeMenu, disabled = false, textValue, ...itemProps } = props;
+  const contentContext = useMenuContentContext(ITEM_NAME$1, __scopeMenu);
+  const rovingFocusGroupScope = useRovingFocusGroupScope(__scopeMenu);
+  const ref = React.useRef(null);
+  const composedRefs = useComposedRefs(forwardedRef, ref);
+  const [isFocused, setIsFocused] = React.useState(false);
+  const [textContent, setTextContent] = React.useState("");
+  React.useEffect(() => {
+    const menuItem = ref.current;
+    if (menuItem) {
+      setTextContent((menuItem.textContent ?? "").trim());
+    }
+  }, [itemProps.children]);
+  return /* @__PURE__ */ jsx(Collection.ItemSlot, {
+    scope: __scopeMenu,
+    disabled,
+    textValue: textValue ?? textContent,
+    children: /* @__PURE__ */ jsx(Item, {
+      asChild: true,
+      ...rovingFocusGroupScope,
+      focusable: !disabled,
+      children: /* @__PURE__ */ jsx(Primitive.div, {
+        role: "menuitem",
+        "data-highlighted": isFocused ? "" : void 0,
+        "aria-disabled": disabled || void 0,
+        "data-disabled": disabled ? "" : void 0,
         ...itemProps,
         ref: composedRefs,
-        disabled,
-        onClick: composeEventHandlers(props.onClick, handleSelect),
-        onPointerDown: (event) => {
-          props.onPointerDown?.(event);
-          isPointerDownRef.current = true;
-        },
-        onPointerUp: composeEventHandlers(props.onPointerUp, (event) => {
-          if (!isPointerDownRef.current) event.currentTarget?.click();
-        }),
-        onKeyDown: composeEventHandlers(props.onKeyDown, (event) => {
-          const isTypingAhead = contentContext.searchRef.current !== "";
-          if (disabled || isTypingAhead && event.key === " ") return;
-          if (SELECTION_KEYS.includes(event.key)) {
-            event.currentTarget.click();
-            event.preventDefault();
-          }
-        })
-      }
-    );
-  }
-);
-MenuItem.displayName = ITEM_NAME$1;
-var MenuItemImpl = React.forwardRef(
-  (props, forwardedRef) => {
-    const { __scopeMenu, disabled = false, textValue, ...itemProps } = props;
-    const contentContext = useMenuContentContext(ITEM_NAME$1, __scopeMenu);
-    const rovingFocusGroupScope = useRovingFocusGroupScope(__scopeMenu);
-    const ref = React.useRef(null);
-    const composedRefs = useComposedRefs(forwardedRef, ref);
-    const [isFocused, setIsFocused] = React.useState(false);
-    const [textContent, setTextContent] = React.useState("");
-    React.useEffect(() => {
-      const menuItem = ref.current;
-      if (menuItem) {
-        setTextContent((menuItem.textContent ?? "").trim());
-      }
-    }, [itemProps.children]);
-    return /* @__PURE__ */ jsx(
-      Collection.ItemSlot,
-      {
-        scope: __scopeMenu,
-        disabled,
-        textValue: textValue ?? textContent,
-        children: /* @__PURE__ */ jsx(Item, { asChild: true, ...rovingFocusGroupScope, focusable: !disabled, children: /* @__PURE__ */ jsx(
-          Primitive.div,
-          {
-            role: "menuitem",
-            "data-highlighted": isFocused ? "" : void 0,
-            "aria-disabled": disabled || void 0,
-            "data-disabled": disabled ? "" : void 0,
-            ...itemProps,
-            ref: composedRefs,
-            onPointerMove: composeEventHandlers(
-              props.onPointerMove,
-              whenMouse((event) => {
-                if (disabled) {
-                  contentContext.onItemLeave(event);
-                } else {
-                  contentContext.onItemEnter(event);
-                  if (!event.defaultPrevented) {
-                    const item = event.currentTarget;
-                    item.focus({ preventScroll: true });
-                  }
-                }
-              })
-            ),
-            onPointerLeave: composeEventHandlers(
-              props.onPointerLeave,
-              whenMouse((event) => contentContext.onItemLeave(event))
-            ),
-            onFocus: composeEventHandlers(props.onFocus, () => setIsFocused(true)),
-            onBlur: composeEventHandlers(props.onBlur, () => setIsFocused(false))
-          }
-        ) })
-      }
-    );
-  }
-);
+        onPointerMove: composeEventHandlers(
+          props.onPointerMove,
+          whenMouse((event) => {
+            if (disabled) {
+              contentContext.onItemLeave(event);
+            } else {
+              contentContext.onItemEnter(event);
+              if (!event.defaultPrevented) {
+                const item = event.currentTarget;
+                item.focus({ preventScroll: true });
+              }
+            }
+          }),
+        ),
+        onPointerLeave: composeEventHandlers(
+          props.onPointerLeave,
+          whenMouse((event) => contentContext.onItemLeave(event)),
+        ),
+        onFocus: composeEventHandlers(props.onFocus, () => setIsFocused(true)),
+        onBlur: composeEventHandlers(props.onBlur, () => setIsFocused(false)),
+      }),
+    }),
+  });
+});
 var CHECKBOX_ITEM_NAME$1 = "MenuCheckboxItem";
-var MenuCheckboxItem = React.forwardRef(
-  (props, forwardedRef) => {
-    const { checked = false, onCheckedChange, ...checkboxItemProps } = props;
-    return /* @__PURE__ */ jsx(ItemIndicatorProvider, { scope: props.__scopeMenu, checked, children: /* @__PURE__ */ jsx(
-      MenuItem,
-      {
-        role: "menuitemcheckbox",
-        "aria-checked": isIndeterminate(checked) ? "mixed" : checked,
-        ...checkboxItemProps,
-        ref: forwardedRef,
-        "data-state": getCheckedState(checked),
-        onSelect: composeEventHandlers(
-          checkboxItemProps.onSelect,
-          () => onCheckedChange?.(isIndeterminate(checked) ? true : !checked),
-          { checkForDefaultPrevented: false }
-        )
-      }
-    ) });
-  }
-);
+var MenuCheckboxItem = React.forwardRef((props, forwardedRef) => {
+  const { checked = false, onCheckedChange, ...checkboxItemProps } = props;
+  return /* @__PURE__ */ jsx(ItemIndicatorProvider, {
+    scope: props.__scopeMenu,
+    checked,
+    children: /* @__PURE__ */ jsx(MenuItem, {
+      role: "menuitemcheckbox",
+      "aria-checked": isIndeterminate(checked) ? "mixed" : checked,
+      ...checkboxItemProps,
+      ref: forwardedRef,
+      "data-state": getCheckedState(checked),
+      onSelect: composeEventHandlers(
+        checkboxItemProps.onSelect,
+        () => onCheckedChange?.(isIndeterminate(checked) ? true : !checked),
+        { checkForDefaultPrevented: false },
+      ),
+    }),
+  });
+});
 MenuCheckboxItem.displayName = CHECKBOX_ITEM_NAME$1;
 var RADIO_GROUP_NAME$1 = "MenuRadioGroup";
 var [RadioGroupProvider, useRadioGroupContext] = createMenuContext(
   RADIO_GROUP_NAME$1,
-  { value: void 0, onValueChange: () => {
-  } }
+  { value: void 0, onValueChange: () => {} },
 );
-var MenuRadioGroup = React.forwardRef(
-  (props, forwardedRef) => {
-    const { value, onValueChange, ...groupProps } = props;
-    const handleValueChange = useCallbackRef$1(onValueChange);
-    return /* @__PURE__ */ jsx(RadioGroupProvider, { scope: props.__scopeMenu, value, onValueChange: handleValueChange, children: /* @__PURE__ */ jsx(MenuGroup, { ...groupProps, ref: forwardedRef }) });
-  }
-);
+var MenuRadioGroup = React.forwardRef((props, forwardedRef) => {
+  const { value, onValueChange, ...groupProps } = props;
+  const handleValueChange = useCallbackRef$1(onValueChange);
+  return /* @__PURE__ */ jsx(RadioGroupProvider, {
+    scope: props.__scopeMenu,
+    value,
+    onValueChange: handleValueChange,
+    children: /* @__PURE__ */ jsx(MenuGroup, {
+      ...groupProps,
+      ref: forwardedRef,
+    }),
+  });
+});
 MenuRadioGroup.displayName = RADIO_GROUP_NAME$1;
 var RADIO_ITEM_NAME$1 = "MenuRadioItem";
-var MenuRadioItem = React.forwardRef(
-  (props, forwardedRef) => {
-    const { value, ...radioItemProps } = props;
-    const context = useRadioGroupContext(RADIO_ITEM_NAME$1, props.__scopeMenu);
-    const checked = value === context.value;
-    return /* @__PURE__ */ jsx(ItemIndicatorProvider, { scope: props.__scopeMenu, checked, children: /* @__PURE__ */ jsx(
-      MenuItem,
-      {
-        role: "menuitemradio",
-        "aria-checked": checked,
-        ...radioItemProps,
-        ref: forwardedRef,
-        "data-state": getCheckedState(checked),
-        onSelect: composeEventHandlers(
-          radioItemProps.onSelect,
-          () => context.onValueChange?.(value),
-          { checkForDefaultPrevented: false }
-        )
-      }
-    ) });
-  }
-);
+var MenuRadioItem = React.forwardRef((props, forwardedRef) => {
+  const { value, ...radioItemProps } = props;
+  const context = useRadioGroupContext(RADIO_ITEM_NAME$1, props.__scopeMenu);
+  const checked = value === context.value;
+  return /* @__PURE__ */ jsx(ItemIndicatorProvider, {
+    scope: props.__scopeMenu,
+    checked,
+    children: /* @__PURE__ */ jsx(MenuItem, {
+      role: "menuitemradio",
+      "aria-checked": checked,
+      ...radioItemProps,
+      ref: forwardedRef,
+      "data-state": getCheckedState(checked),
+      onSelect: composeEventHandlers(
+        radioItemProps.onSelect,
+        () => context.onValueChange?.(value),
+        { checkForDefaultPrevented: false },
+      ),
+    }),
+  });
+});
 MenuRadioItem.displayName = RADIO_ITEM_NAME$1;
 var ITEM_INDICATOR_NAME = "MenuItemIndicator";
 var [ItemIndicatorProvider, useItemIndicatorContext] = createMenuContext(
   ITEM_INDICATOR_NAME,
-  { checked: false }
+  { checked: false },
 );
-var MenuItemIndicator = React.forwardRef(
-  (props, forwardedRef) => {
-    const { __scopeMenu, forceMount, ...itemIndicatorProps } = props;
-    const indicatorContext = useItemIndicatorContext(ITEM_INDICATOR_NAME, __scopeMenu);
-    return /* @__PURE__ */ jsx(
-      Presence,
-      {
-        present: forceMount || isIndeterminate(indicatorContext.checked) || indicatorContext.checked === true,
-        children: /* @__PURE__ */ jsx(
-          Primitive.span,
-          {
-            ...itemIndicatorProps,
-            ref: forwardedRef,
-            "data-state": getCheckedState(indicatorContext.checked)
-          }
-        )
-      }
-    );
-  }
-);
+var MenuItemIndicator = React.forwardRef((props, forwardedRef) => {
+  const { __scopeMenu, forceMount, ...itemIndicatorProps } = props;
+  const indicatorContext = useItemIndicatorContext(
+    ITEM_INDICATOR_NAME,
+    __scopeMenu,
+  );
+  return /* @__PURE__ */ jsx(Presence, {
+    present:
+      forceMount ||
+      isIndeterminate(indicatorContext.checked) ||
+      indicatorContext.checked === true,
+    children: /* @__PURE__ */ jsx(Primitive.span, {
+      ...itemIndicatorProps,
+      ref: forwardedRef,
+      "data-state": getCheckedState(indicatorContext.checked),
+    }),
+  });
+});
 MenuItemIndicator.displayName = ITEM_INDICATOR_NAME;
 var SEPARATOR_NAME$1 = "MenuSeparator";
-var MenuSeparator = React.forwardRef(
-  (props, forwardedRef) => {
-    const { __scopeMenu, ...separatorProps } = props;
-    return /* @__PURE__ */ jsx(
-      Primitive.div,
-      {
-        role: "separator",
-        "aria-orientation": "horizontal",
-        ...separatorProps,
-        ref: forwardedRef
-      }
-    );
-  }
-);
+var MenuSeparator = React.forwardRef((props, forwardedRef) => {
+  const { __scopeMenu, ...separatorProps } = props;
+  return /* @__PURE__ */ jsx(Primitive.div, {
+    role: "separator",
+    "aria-orientation": "horizontal",
+    ...separatorProps,
+    ref: forwardedRef,
+  });
+});
 MenuSeparator.displayName = SEPARATOR_NAME$1;
 var ARROW_NAME$1 = "MenuArrow";
-var MenuArrow = React.forwardRef(
-  (props, forwardedRef) => {
-    const { __scopeMenu, ...arrowProps } = props;
-    const popperScope = usePopperScope(__scopeMenu);
-    return /* @__PURE__ */ jsx(Arrow, { ...popperScope, ...arrowProps, ref: forwardedRef });
-  }
-);
+var MenuArrow = React.forwardRef((props, forwardedRef) => {
+  const { __scopeMenu, ...arrowProps } = props;
+  const popperScope = usePopperScope(__scopeMenu);
+  return /* @__PURE__ */ jsx(Arrow, {
+    ...popperScope,
+    ...arrowProps,
+    ref: forwardedRef,
+  });
+});
 MenuArrow.displayName = ARROW_NAME$1;
 var SUB_NAME = "MenuSub";
 var [MenuSubProvider, useMenuSubContext] = createMenuContext(SUB_NAME);
 var SUB_TRIGGER_NAME$1 = "MenuSubTrigger";
-var MenuSubTrigger = React.forwardRef(
-  (props, forwardedRef) => {
-    const context = useMenuContext(SUB_TRIGGER_NAME$1, props.__scopeMenu);
-    const rootContext = useMenuRootContext(SUB_TRIGGER_NAME$1, props.__scopeMenu);
-    const subContext = useMenuSubContext(SUB_TRIGGER_NAME$1, props.__scopeMenu);
-    const contentContext = useMenuContentContext(SUB_TRIGGER_NAME$1, props.__scopeMenu);
-    const openTimerRef = React.useRef(null);
-    const { pointerGraceTimerRef, onPointerGraceIntentChange } = contentContext;
-    const scope = { __scopeMenu: props.__scopeMenu };
-    const clearOpenTimer = React.useCallback(() => {
-      if (openTimerRef.current) window.clearTimeout(openTimerRef.current);
-      openTimerRef.current = null;
-    }, []);
-    React.useEffect(() => clearOpenTimer, [clearOpenTimer]);
-    React.useEffect(() => {
-      const pointerGraceTimer = pointerGraceTimerRef.current;
-      return () => {
-        window.clearTimeout(pointerGraceTimer);
-        onPointerGraceIntentChange(null);
-      };
-    }, [pointerGraceTimerRef, onPointerGraceIntentChange]);
-    return /* @__PURE__ */ jsx(MenuAnchor, { asChild: true, ...scope, children: /* @__PURE__ */ jsx(
-      MenuItemImpl,
-      {
-        id: subContext.triggerId,
-        "aria-haspopup": "menu",
-        "aria-expanded": context.open,
-        "aria-controls": subContext.contentId,
-        "data-state": getOpenState(context.open),
-        ...props,
-        ref: composeRefs(forwardedRef, subContext.onTriggerChange),
-        onClick: (event) => {
-          props.onClick?.(event);
-          if (props.disabled || event.defaultPrevented) return;
-          event.currentTarget.focus();
-          if (!context.open) context.onOpenChange(true);
-        },
-        onPointerMove: composeEventHandlers(
-          props.onPointerMove,
-          whenMouse((event) => {
-            contentContext.onItemEnter(event);
-            if (event.defaultPrevented) return;
-            if (!props.disabled && !context.open && !openTimerRef.current) {
-              contentContext.onPointerGraceIntentChange(null);
-              openTimerRef.current = window.setTimeout(() => {
-                context.onOpenChange(true);
-                clearOpenTimer();
-              }, 100);
-            }
-          })
-        ),
-        onPointerLeave: composeEventHandlers(
-          props.onPointerLeave,
-          whenMouse((event) => {
-            clearOpenTimer();
-            const contentRect = context.content?.getBoundingClientRect();
-            if (contentRect) {
-              const side = context.content?.dataset.side;
-              const rightSide = side === "right";
-              const bleed = rightSide ? -5 : 5;
-              const contentNearEdge = contentRect[rightSide ? "left" : "right"];
-              const contentFarEdge = contentRect[rightSide ? "right" : "left"];
-              contentContext.onPointerGraceIntentChange({
-                area: [
-                  // Apply a bleed on clientX to ensure that our exit point is
-                  // consistently within polygon bounds
-                  { x: event.clientX + bleed, y: event.clientY },
-                  { x: contentNearEdge, y: contentRect.top },
-                  { x: contentFarEdge, y: contentRect.top },
-                  { x: contentFarEdge, y: contentRect.bottom },
-                  { x: contentNearEdge, y: contentRect.bottom }
-                ],
-                side
-              });
-              window.clearTimeout(pointerGraceTimerRef.current);
-              pointerGraceTimerRef.current = window.setTimeout(
-                () => contentContext.onPointerGraceIntentChange(null),
-                300
-              );
-            } else {
-              contentContext.onTriggerLeave(event);
-              if (event.defaultPrevented) return;
-              contentContext.onPointerGraceIntentChange(null);
-            }
-          })
-        ),
-        onKeyDown: composeEventHandlers(props.onKeyDown, (event) => {
-          const isTypingAhead = contentContext.searchRef.current !== "";
-          if (props.disabled || isTypingAhead && event.key === " ") return;
-          if (SUB_OPEN_KEYS[rootContext.dir].includes(event.key)) {
-            context.onOpenChange(true);
-            context.content?.focus();
-            event.preventDefault();
+var MenuSubTrigger = React.forwardRef((props, forwardedRef) => {
+  const context = useMenuContext(SUB_TRIGGER_NAME$1, props.__scopeMenu);
+  const rootContext = useMenuRootContext(SUB_TRIGGER_NAME$1, props.__scopeMenu);
+  const subContext = useMenuSubContext(SUB_TRIGGER_NAME$1, props.__scopeMenu);
+  const contentContext = useMenuContentContext(
+    SUB_TRIGGER_NAME$1,
+    props.__scopeMenu,
+  );
+  const openTimerRef = React.useRef(null);
+  const { pointerGraceTimerRef, onPointerGraceIntentChange } = contentContext;
+  const scope = { __scopeMenu: props.__scopeMenu };
+  const clearOpenTimer = React.useCallback(() => {
+    if (openTimerRef.current) window.clearTimeout(openTimerRef.current);
+    openTimerRef.current = null;
+  }, []);
+  React.useEffect(() => clearOpenTimer, [clearOpenTimer]);
+  React.useEffect(() => {
+    const pointerGraceTimer = pointerGraceTimerRef.current;
+    return () => {
+      window.clearTimeout(pointerGraceTimer);
+      onPointerGraceIntentChange(null);
+    };
+  }, [pointerGraceTimerRef, onPointerGraceIntentChange]);
+  return /* @__PURE__ */ jsx(MenuAnchor, {
+    asChild: true,
+    ...scope,
+    children: /* @__PURE__ */ jsx(MenuItemImpl, {
+      id: subContext.triggerId,
+      "aria-haspopup": "menu",
+      "aria-expanded": context.open,
+      "aria-controls": subContext.contentId,
+      "data-state": getOpenState(context.open),
+      ...props,
+      ref: composeRefs(forwardedRef, subContext.onTriggerChange),
+      onClick: (event) => {
+        props.onClick?.(event);
+        if (props.disabled || event.defaultPrevented) return;
+        event.currentTarget.focus();
+        if (!context.open) context.onOpenChange(true);
+      },
+      onPointerMove: composeEventHandlers(
+        props.onPointerMove,
+        whenMouse((event) => {
+          contentContext.onItemEnter(event);
+          if (event.defaultPrevented) return;
+          if (!props.disabled && !context.open && !openTimerRef.current) {
+            contentContext.onPointerGraceIntentChange(null);
+            openTimerRef.current = window.setTimeout(() => {
+              context.onOpenChange(true);
+              clearOpenTimer();
+            }, 100);
           }
-        })
-      }
-    ) });
-  }
-);
+        }),
+      ),
+      onPointerLeave: composeEventHandlers(
+        props.onPointerLeave,
+        whenMouse((event) => {
+          clearOpenTimer();
+          const contentRect = context.content?.getBoundingClientRect();
+          if (contentRect) {
+            const side = context.content?.dataset.side;
+            const rightSide = side === "right";
+            const bleed = rightSide ? -5 : 5;
+            const contentNearEdge = contentRect[rightSide ? "left" : "right"];
+            const contentFarEdge = contentRect[rightSide ? "right" : "left"];
+            contentContext.onPointerGraceIntentChange({
+              area: [
+                // Apply a bleed on clientX to ensure that our exit point is
+                // consistently within polygon bounds
+                { x: event.clientX + bleed, y: event.clientY },
+                { x: contentNearEdge, y: contentRect.top },
+                { x: contentFarEdge, y: contentRect.top },
+                { x: contentFarEdge, y: contentRect.bottom },
+                { x: contentNearEdge, y: contentRect.bottom },
+              ],
+              side,
+            });
+            window.clearTimeout(pointerGraceTimerRef.current);
+            pointerGraceTimerRef.current = window.setTimeout(
+              () => contentContext.onPointerGraceIntentChange(null),
+              300,
+            );
+          } else {
+            contentContext.onTriggerLeave(event);
+            if (event.defaultPrevented) return;
+            contentContext.onPointerGraceIntentChange(null);
+          }
+        }),
+      ),
+      onKeyDown: composeEventHandlers(props.onKeyDown, (event) => {
+        const isTypingAhead = contentContext.searchRef.current !== "";
+        if (props.disabled || (isTypingAhead && event.key === " ")) return;
+        if (SUB_OPEN_KEYS[rootContext.dir].includes(event.key)) {
+          context.onOpenChange(true);
+          context.content?.focus();
+          event.preventDefault();
+        }
+      }),
+    }),
+  });
+});
 MenuSubTrigger.displayName = SUB_TRIGGER_NAME$1;
 var SUB_CONTENT_NAME$1 = "MenuSubContent";
-var MenuSubContent = React.forwardRef(
-  (props, forwardedRef) => {
-    const portalContext = usePortalContext(CONTENT_NAME$1, props.__scopeMenu);
-    const { forceMount = portalContext.forceMount, ...subContentProps } = props;
-    const context = useMenuContext(CONTENT_NAME$1, props.__scopeMenu);
-    const rootContext = useMenuRootContext(CONTENT_NAME$1, props.__scopeMenu);
-    const subContext = useMenuSubContext(SUB_CONTENT_NAME$1, props.__scopeMenu);
-    const ref = React.useRef(null);
-    const composedRefs = useComposedRefs(forwardedRef, ref);
-    return /* @__PURE__ */ jsx(Collection.Provider, { scope: props.__scopeMenu, children: /* @__PURE__ */ jsx(Presence, { present: forceMount || context.open, children: /* @__PURE__ */ jsx(Collection.Slot, { scope: props.__scopeMenu, children: /* @__PURE__ */ jsx(
-      MenuContentImpl,
-      {
-        id: subContext.contentId,
-        "aria-labelledby": subContext.triggerId,
-        ...subContentProps,
-        ref: composedRefs,
-        align: "start",
-        side: rootContext.dir === "rtl" ? "left" : "right",
-        disableOutsidePointerEvents: false,
-        disableOutsideScroll: false,
-        trapFocus: false,
-        onOpenAutoFocus: (event) => {
-          if (rootContext.isUsingKeyboardRef.current) ref.current?.focus();
-          event.preventDefault();
-        },
-        onCloseAutoFocus: (event) => event.preventDefault(),
-        onFocusOutside: composeEventHandlers(props.onFocusOutside, (event) => {
-          if (event.target !== subContext.trigger) context.onOpenChange(false);
-        }),
-        onEscapeKeyDown: composeEventHandlers(props.onEscapeKeyDown, (event) => {
-          rootContext.onClose();
-          event.preventDefault();
-        }),
-        onKeyDown: composeEventHandlers(props.onKeyDown, (event) => {
-          const isKeyDownInside = event.currentTarget.contains(event.target);
-          const isCloseKey = SUB_CLOSE_KEYS[rootContext.dir].includes(event.key);
-          if (isKeyDownInside && isCloseKey) {
-            context.onOpenChange(false);
-            subContext.trigger?.focus();
+var MenuSubContent = React.forwardRef((props, forwardedRef) => {
+  const portalContext = usePortalContext(CONTENT_NAME$1, props.__scopeMenu);
+  const { forceMount = portalContext.forceMount, ...subContentProps } = props;
+  const context = useMenuContext(CONTENT_NAME$1, props.__scopeMenu);
+  const rootContext = useMenuRootContext(CONTENT_NAME$1, props.__scopeMenu);
+  const subContext = useMenuSubContext(SUB_CONTENT_NAME$1, props.__scopeMenu);
+  const ref = React.useRef(null);
+  const composedRefs = useComposedRefs(forwardedRef, ref);
+  return /* @__PURE__ */ jsx(Collection.Provider, {
+    scope: props.__scopeMenu,
+    children: /* @__PURE__ */ jsx(Presence, {
+      present: forceMount || context.open,
+      children: /* @__PURE__ */ jsx(Collection.Slot, {
+        scope: props.__scopeMenu,
+        children: /* @__PURE__ */ jsx(MenuContentImpl, {
+          id: subContext.contentId,
+          "aria-labelledby": subContext.triggerId,
+          ...subContentProps,
+          ref: composedRefs,
+          align: "start",
+          side: rootContext.dir === "rtl" ? "left" : "right",
+          disableOutsidePointerEvents: false,
+          disableOutsideScroll: false,
+          trapFocus: false,
+          onOpenAutoFocus: (event) => {
+            if (rootContext.isUsingKeyboardRef.current) ref.current?.focus();
             event.preventDefault();
-          }
-        })
-      }
-    ) }) }) });
-  }
-);
+          },
+          onCloseAutoFocus: (event) => event.preventDefault(),
+          onFocusOutside: composeEventHandlers(
+            props.onFocusOutside,
+            (event) => {
+              if (event.target !== subContext.trigger)
+                context.onOpenChange(false);
+            },
+          ),
+          onEscapeKeyDown: composeEventHandlers(
+            props.onEscapeKeyDown,
+            (event) => {
+              rootContext.onClose();
+              event.preventDefault();
+            },
+          ),
+          onKeyDown: composeEventHandlers(props.onKeyDown, (event) => {
+            const isKeyDownInside = event.currentTarget.contains(event.target);
+            const isCloseKey = SUB_CLOSE_KEYS[rootContext.dir].includes(
+              event.key,
+            );
+            if (isKeyDownInside && isCloseKey) {
+              context.onOpenChange(false);
+              subContext.trigger?.focus();
+              event.preventDefault();
+            }
+          }),
+        }),
+      }),
+    }),
+  });
+});
 MenuSubContent.displayName = SUB_CONTENT_NAME$1;
 function getOpenState(open) {
   return open ? "open" : "closed";
@@ -15990,7 +18611,11 @@ function isIndeterminate(checked) {
   return checked === "indeterminate";
 }
 function getCheckedState(checked) {
-  return isIndeterminate(checked) ? "indeterminate" : checked ? "checked" : "unchecked";
+  return isIndeterminate(checked)
+    ? "indeterminate"
+    : checked
+      ? "checked"
+      : "unchecked";
 }
 function focusFirst(candidates) {
   const PREVIOUSLY_FOCUSED_ELEMENT = document.activeElement;
@@ -16004,14 +18629,17 @@ function wrapArray(array, startIndex) {
   return array.map((_, index2) => array[(startIndex + index2) % array.length]);
 }
 function getNextMatch(values2, search, currentMatch) {
-  const isRepeated = search.length > 1 && Array.from(search).every((char2) => char2 === search[0]);
+  const isRepeated =
+    search.length > 1 &&
+    Array.from(search).every((char2) => char2 === search[0]);
   const normalizedSearch = isRepeated ? search[0] : search;
   const currentMatchIndex = currentMatch ? values2.indexOf(currentMatch) : -1;
   let wrappedValues = wrapArray(values2, Math.max(currentMatchIndex, 0));
   const excludeCurrentMatch = normalizedSearch.length === 1;
-  if (excludeCurrentMatch) wrappedValues = wrappedValues.filter((v) => v !== currentMatch);
-  const nextMatch = wrappedValues.find(
-    (value) => value.toLowerCase().startsWith(normalizedSearch.toLowerCase())
+  if (excludeCurrentMatch)
+    wrappedValues = wrappedValues.filter((v) => v !== currentMatch);
+  const nextMatch = wrappedValues.find((value) =>
+    value.toLowerCase().startsWith(normalizedSearch.toLowerCase()),
   );
   return nextMatch !== currentMatch ? nextMatch : void 0;
 }
@@ -16025,7 +18653,8 @@ function isPointInPolygon(point2, polygon) {
     const yi = ii.y;
     const xj = jj.x;
     const yj = jj.y;
-    const intersect2 = yi > y !== yj > y && x < (xj - xi) * (y - yi) / (yj - yi) + xi;
+    const intersect2 =
+      yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi;
     if (intersect2) inside = !inside;
   }
   return inside;
@@ -16036,7 +18665,7 @@ function isPointerInGraceArea(event, area) {
   return isPointInPolygon(cursorPos, area);
 }
 function whenMouse(handler2) {
-  return (event) => event.pointerType === "mouse" ? handler2(event) : void 0;
+  return (event) => (event.pointerType === "mouse" ? handler2(event) : void 0);
 }
 var Root3 = Menu;
 var Anchor2 = MenuAnchor;
@@ -16054,12 +18683,12 @@ var Arrow2 = MenuArrow;
 var SubTrigger = MenuSubTrigger;
 var SubContent = MenuSubContent;
 var DROPDOWN_MENU_NAME = "DropdownMenu";
-var [createDropdownMenuContext] = createContextScope(
-  DROPDOWN_MENU_NAME,
-  [createMenuScope]
-);
+var [createDropdownMenuContext] = createContextScope(DROPDOWN_MENU_NAME, [
+  createMenuScope,
+]);
 var useMenuScope = createMenuScope();
-var [DropdownMenuProvider, useDropdownMenuContext] = createDropdownMenuContext(DROPDOWN_MENU_NAME);
+var [DropdownMenuProvider, useDropdownMenuContext] =
+  createDropdownMenuContext(DROPDOWN_MENU_NAME);
 var DropdownMenu$1 = (props) => {
   const {
     __scopeDropdownMenu,
@@ -16068,7 +18697,7 @@ var DropdownMenu$1 = (props) => {
     open: openProp,
     defaultOpen,
     onOpenChange,
-    modal = true
+    modal = true,
   } = props;
   const menuScope = useMenuScope(__scopeDropdownMenu);
   const triggerRef = React.useRef(null);
@@ -16076,59 +18705,66 @@ var DropdownMenu$1 = (props) => {
     prop: openProp,
     defaultProp: defaultOpen ?? false,
     onChange: onOpenChange,
-    caller: DROPDOWN_MENU_NAME
+    caller: DROPDOWN_MENU_NAME,
   });
-  return /* @__PURE__ */ jsx(
-    DropdownMenuProvider,
-    {
-      scope: __scopeDropdownMenu,
-      triggerId: useId(),
-      triggerRef,
-      contentId: useId(),
+  return /* @__PURE__ */ jsx(DropdownMenuProvider, {
+    scope: __scopeDropdownMenu,
+    triggerId: useId(),
+    triggerRef,
+    contentId: useId(),
+    open,
+    onOpenChange: setOpen,
+    onOpenToggle: React.useCallback(
+      () => setOpen((prevOpen) => !prevOpen),
+      [setOpen],
+    ),
+    modal,
+    children: /* @__PURE__ */ jsx(Root3, {
+      ...menuScope,
       open,
       onOpenChange: setOpen,
-      onOpenToggle: React.useCallback(() => setOpen((prevOpen) => !prevOpen), [setOpen]),
+      dir,
       modal,
-      children: /* @__PURE__ */ jsx(Root3, { ...menuScope, open, onOpenChange: setOpen, dir, modal, children })
-    }
-  );
+      children,
+    }),
+  });
 };
 DropdownMenu$1.displayName = DROPDOWN_MENU_NAME;
 var TRIGGER_NAME = "DropdownMenuTrigger";
-var DropdownMenuTrigger$1 = React.forwardRef(
-  (props, forwardedRef) => {
-    const { __scopeDropdownMenu, disabled = false, ...triggerProps } = props;
-    const context = useDropdownMenuContext(TRIGGER_NAME, __scopeDropdownMenu);
-    const menuScope = useMenuScope(__scopeDropdownMenu);
-    return /* @__PURE__ */ jsx(Anchor2, { asChild: true, ...menuScope, children: /* @__PURE__ */ jsx(
-      Primitive.button,
-      {
-        type: "button",
-        id: context.triggerId,
-        "aria-haspopup": "menu",
-        "aria-expanded": context.open,
-        "aria-controls": context.open ? context.contentId : void 0,
-        "data-state": context.open ? "open" : "closed",
-        "data-disabled": disabled ? "" : void 0,
-        disabled,
-        ...triggerProps,
-        ref: composeRefs(forwardedRef, context.triggerRef),
-        onPointerDown: composeEventHandlers(props.onPointerDown, (event) => {
-          if (!disabled && event.button === 0 && event.ctrlKey === false) {
-            context.onOpenToggle();
-            if (!context.open) event.preventDefault();
-          }
-        }),
-        onKeyDown: composeEventHandlers(props.onKeyDown, (event) => {
-          if (disabled) return;
-          if (["Enter", " "].includes(event.key)) context.onOpenToggle();
-          if (event.key === "ArrowDown") context.onOpenChange(true);
-          if (["Enter", " ", "ArrowDown"].includes(event.key)) event.preventDefault();
-        })
-      }
-    ) });
-  }
-);
+var DropdownMenuTrigger$1 = React.forwardRef((props, forwardedRef) => {
+  const { __scopeDropdownMenu, disabled = false, ...triggerProps } = props;
+  const context = useDropdownMenuContext(TRIGGER_NAME, __scopeDropdownMenu);
+  const menuScope = useMenuScope(__scopeDropdownMenu);
+  return /* @__PURE__ */ jsx(Anchor2, {
+    asChild: true,
+    ...menuScope,
+    children: /* @__PURE__ */ jsx(Primitive.button, {
+      type: "button",
+      id: context.triggerId,
+      "aria-haspopup": "menu",
+      "aria-expanded": context.open,
+      "aria-controls": context.open ? context.contentId : void 0,
+      "data-state": context.open ? "open" : "closed",
+      "data-disabled": disabled ? "" : void 0,
+      disabled,
+      ...triggerProps,
+      ref: composeRefs(forwardedRef, context.triggerRef),
+      onPointerDown: composeEventHandlers(props.onPointerDown, (event) => {
+        if (!disabled && event.button === 0 && event.ctrlKey === false) {
+          context.onOpenToggle();
+          if (!context.open) event.preventDefault();
+        }
+      }),
+      onKeyDown: composeEventHandlers(props.onKeyDown, (event) => {
+        if (disabled) return;
+        if (["Enter", " "].includes(event.key)) context.onOpenToggle();
+        if (event.key === "ArrowDown") context.onOpenChange(true);
+        if (["Enter", " ", "ArrowDown"].includes(event.key))
+          event.preventDefault();
+      }),
+    }),
+  });
+});
 DropdownMenuTrigger$1.displayName = TRIGGER_NAME;
 var PORTAL_NAME = "DropdownMenuPortal";
 var DropdownMenuPortal = (props) => {
@@ -16138,148 +18774,187 @@ var DropdownMenuPortal = (props) => {
 };
 DropdownMenuPortal.displayName = PORTAL_NAME;
 var CONTENT_NAME = "DropdownMenuContent";
-var DropdownMenuContent$1 = React.forwardRef(
-  (props, forwardedRef) => {
-    const { __scopeDropdownMenu, ...contentProps } = props;
-    const context = useDropdownMenuContext(CONTENT_NAME, __scopeDropdownMenu);
-    const menuScope = useMenuScope(__scopeDropdownMenu);
-    const hasInteractedOutsideRef = React.useRef(false);
-    return /* @__PURE__ */ jsx(
-      Content2$1,
-      {
-        id: context.contentId,
-        "aria-labelledby": context.triggerId,
-        ...menuScope,
-        ...contentProps,
-        ref: forwardedRef,
-        onCloseAutoFocus: composeEventHandlers(props.onCloseAutoFocus, (event) => {
-          if (!hasInteractedOutsideRef.current) context.triggerRef.current?.focus();
-          hasInteractedOutsideRef.current = false;
-          event.preventDefault();
-        }),
-        onInteractOutside: composeEventHandlers(props.onInteractOutside, (event) => {
-          const originalEvent = event.detail.originalEvent;
-          const ctrlLeftClick = originalEvent.button === 0 && originalEvent.ctrlKey === true;
-          const isRightClick = originalEvent.button === 2 || ctrlLeftClick;
-          if (!context.modal || isRightClick) hasInteractedOutsideRef.current = true;
-        }),
-        style: {
-          ...props.style,
-          // re-namespace exposed content custom properties
-          ...{
-            "--radix-dropdown-menu-content-transform-origin": "var(--radix-popper-transform-origin)",
-            "--radix-dropdown-menu-content-available-width": "var(--radix-popper-available-width)",
-            "--radix-dropdown-menu-content-available-height": "var(--radix-popper-available-height)",
-            "--radix-dropdown-menu-trigger-width": "var(--radix-popper-anchor-width)",
-            "--radix-dropdown-menu-trigger-height": "var(--radix-popper-anchor-height)"
-          }
-        }
-      }
-    );
-  }
-);
+var DropdownMenuContent$1 = React.forwardRef((props, forwardedRef) => {
+  const { __scopeDropdownMenu, ...contentProps } = props;
+  const context = useDropdownMenuContext(CONTENT_NAME, __scopeDropdownMenu);
+  const menuScope = useMenuScope(__scopeDropdownMenu);
+  const hasInteractedOutsideRef = React.useRef(false);
+  return /* @__PURE__ */ jsx(Content2$1, {
+    id: context.contentId,
+    "aria-labelledby": context.triggerId,
+    ...menuScope,
+    ...contentProps,
+    ref: forwardedRef,
+    onCloseAutoFocus: composeEventHandlers(props.onCloseAutoFocus, (event) => {
+      if (!hasInteractedOutsideRef.current) context.triggerRef.current?.focus();
+      hasInteractedOutsideRef.current = false;
+      event.preventDefault();
+    }),
+    onInteractOutside: composeEventHandlers(
+      props.onInteractOutside,
+      (event) => {
+        const originalEvent = event.detail.originalEvent;
+        const ctrlLeftClick =
+          originalEvent.button === 0 && originalEvent.ctrlKey === true;
+        const isRightClick = originalEvent.button === 2 || ctrlLeftClick;
+        if (!context.modal || isRightClick)
+          hasInteractedOutsideRef.current = true;
+      },
+    ),
+    style: {
+      ...props.style,
+      // re-namespace exposed content custom properties
+      ...{
+        "--radix-dropdown-menu-content-transform-origin":
+          "var(--radix-popper-transform-origin)",
+        "--radix-dropdown-menu-content-available-width":
+          "var(--radix-popper-available-width)",
+        "--radix-dropdown-menu-content-available-height":
+          "var(--radix-popper-available-height)",
+        "--radix-dropdown-menu-trigger-width":
+          "var(--radix-popper-anchor-width)",
+        "--radix-dropdown-menu-trigger-height":
+          "var(--radix-popper-anchor-height)",
+      },
+    },
+  });
+});
 DropdownMenuContent$1.displayName = CONTENT_NAME;
 var GROUP_NAME = "DropdownMenuGroup";
-var DropdownMenuGroup = React.forwardRef(
-  (props, forwardedRef) => {
-    const { __scopeDropdownMenu, ...groupProps } = props;
-    const menuScope = useMenuScope(__scopeDropdownMenu);
-    return /* @__PURE__ */ jsx(Group, { ...menuScope, ...groupProps, ref: forwardedRef });
-  }
-);
+var DropdownMenuGroup = React.forwardRef((props, forwardedRef) => {
+  const { __scopeDropdownMenu, ...groupProps } = props;
+  const menuScope = useMenuScope(__scopeDropdownMenu);
+  return /* @__PURE__ */ jsx(Group, {
+    ...menuScope,
+    ...groupProps,
+    ref: forwardedRef,
+  });
+});
 DropdownMenuGroup.displayName = GROUP_NAME;
 var LABEL_NAME = "DropdownMenuLabel";
-var DropdownMenuLabel = React.forwardRef(
-  (props, forwardedRef) => {
-    const { __scopeDropdownMenu, ...labelProps } = props;
-    const menuScope = useMenuScope(__scopeDropdownMenu);
-    return /* @__PURE__ */ jsx(Label, { ...menuScope, ...labelProps, ref: forwardedRef });
-  }
-);
+var DropdownMenuLabel = React.forwardRef((props, forwardedRef) => {
+  const { __scopeDropdownMenu, ...labelProps } = props;
+  const menuScope = useMenuScope(__scopeDropdownMenu);
+  return /* @__PURE__ */ jsx(Label, {
+    ...menuScope,
+    ...labelProps,
+    ref: forwardedRef,
+  });
+});
 DropdownMenuLabel.displayName = LABEL_NAME;
 var ITEM_NAME = "DropdownMenuItem";
-var DropdownMenuItem$1 = React.forwardRef(
-  (props, forwardedRef) => {
-    const { __scopeDropdownMenu, ...itemProps } = props;
-    const menuScope = useMenuScope(__scopeDropdownMenu);
-    return /* @__PURE__ */ jsx(Item2$1, { ...menuScope, ...itemProps, ref: forwardedRef });
-  }
-);
+var DropdownMenuItem$1 = React.forwardRef((props, forwardedRef) => {
+  const { __scopeDropdownMenu, ...itemProps } = props;
+  const menuScope = useMenuScope(__scopeDropdownMenu);
+  return /* @__PURE__ */ jsx(Item2$1, {
+    ...menuScope,
+    ...itemProps,
+    ref: forwardedRef,
+  });
+});
 DropdownMenuItem$1.displayName = ITEM_NAME;
 var CHECKBOX_ITEM_NAME = "DropdownMenuCheckboxItem";
 var DropdownMenuCheckboxItem = React.forwardRef((props, forwardedRef) => {
   const { __scopeDropdownMenu, ...checkboxItemProps } = props;
   const menuScope = useMenuScope(__scopeDropdownMenu);
-  return /* @__PURE__ */ jsx(CheckboxItem, { ...menuScope, ...checkboxItemProps, ref: forwardedRef });
+  return /* @__PURE__ */ jsx(CheckboxItem, {
+    ...menuScope,
+    ...checkboxItemProps,
+    ref: forwardedRef,
+  });
 });
 DropdownMenuCheckboxItem.displayName = CHECKBOX_ITEM_NAME;
 var RADIO_GROUP_NAME = "DropdownMenuRadioGroup";
 var DropdownMenuRadioGroup = React.forwardRef((props, forwardedRef) => {
   const { __scopeDropdownMenu, ...radioGroupProps } = props;
   const menuScope = useMenuScope(__scopeDropdownMenu);
-  return /* @__PURE__ */ jsx(RadioGroup, { ...menuScope, ...radioGroupProps, ref: forwardedRef });
+  return /* @__PURE__ */ jsx(RadioGroup, {
+    ...menuScope,
+    ...radioGroupProps,
+    ref: forwardedRef,
+  });
 });
 DropdownMenuRadioGroup.displayName = RADIO_GROUP_NAME;
 var RADIO_ITEM_NAME = "DropdownMenuRadioItem";
 var DropdownMenuRadioItem = React.forwardRef((props, forwardedRef) => {
   const { __scopeDropdownMenu, ...radioItemProps } = props;
   const menuScope = useMenuScope(__scopeDropdownMenu);
-  return /* @__PURE__ */ jsx(RadioItem, { ...menuScope, ...radioItemProps, ref: forwardedRef });
+  return /* @__PURE__ */ jsx(RadioItem, {
+    ...menuScope,
+    ...radioItemProps,
+    ref: forwardedRef,
+  });
 });
 DropdownMenuRadioItem.displayName = RADIO_ITEM_NAME;
 var INDICATOR_NAME = "DropdownMenuItemIndicator";
 var DropdownMenuItemIndicator = React.forwardRef((props, forwardedRef) => {
   const { __scopeDropdownMenu, ...itemIndicatorProps } = props;
   const menuScope = useMenuScope(__scopeDropdownMenu);
-  return /* @__PURE__ */ jsx(ItemIndicator, { ...menuScope, ...itemIndicatorProps, ref: forwardedRef });
+  return /* @__PURE__ */ jsx(ItemIndicator, {
+    ...menuScope,
+    ...itemIndicatorProps,
+    ref: forwardedRef,
+  });
 });
 DropdownMenuItemIndicator.displayName = INDICATOR_NAME;
 var SEPARATOR_NAME = "DropdownMenuSeparator";
 var DropdownMenuSeparator = React.forwardRef((props, forwardedRef) => {
   const { __scopeDropdownMenu, ...separatorProps } = props;
   const menuScope = useMenuScope(__scopeDropdownMenu);
-  return /* @__PURE__ */ jsx(Separator, { ...menuScope, ...separatorProps, ref: forwardedRef });
+  return /* @__PURE__ */ jsx(Separator, {
+    ...menuScope,
+    ...separatorProps,
+    ref: forwardedRef,
+  });
 });
 DropdownMenuSeparator.displayName = SEPARATOR_NAME;
 var ARROW_NAME = "DropdownMenuArrow";
-var DropdownMenuArrow = React.forwardRef(
-  (props, forwardedRef) => {
-    const { __scopeDropdownMenu, ...arrowProps } = props;
-    const menuScope = useMenuScope(__scopeDropdownMenu);
-    return /* @__PURE__ */ jsx(Arrow2, { ...menuScope, ...arrowProps, ref: forwardedRef });
-  }
-);
+var DropdownMenuArrow = React.forwardRef((props, forwardedRef) => {
+  const { __scopeDropdownMenu, ...arrowProps } = props;
+  const menuScope = useMenuScope(__scopeDropdownMenu);
+  return /* @__PURE__ */ jsx(Arrow2, {
+    ...menuScope,
+    ...arrowProps,
+    ref: forwardedRef,
+  });
+});
 DropdownMenuArrow.displayName = ARROW_NAME;
 var SUB_TRIGGER_NAME = "DropdownMenuSubTrigger";
 var DropdownMenuSubTrigger = React.forwardRef((props, forwardedRef) => {
   const { __scopeDropdownMenu, ...subTriggerProps } = props;
   const menuScope = useMenuScope(__scopeDropdownMenu);
-  return /* @__PURE__ */ jsx(SubTrigger, { ...menuScope, ...subTriggerProps, ref: forwardedRef });
+  return /* @__PURE__ */ jsx(SubTrigger, {
+    ...menuScope,
+    ...subTriggerProps,
+    ref: forwardedRef,
+  });
 });
 DropdownMenuSubTrigger.displayName = SUB_TRIGGER_NAME;
 var SUB_CONTENT_NAME = "DropdownMenuSubContent";
 var DropdownMenuSubContent = React.forwardRef((props, forwardedRef) => {
   const { __scopeDropdownMenu, ...subContentProps } = props;
   const menuScope = useMenuScope(__scopeDropdownMenu);
-  return /* @__PURE__ */ jsx(
-    SubContent,
-    {
-      ...menuScope,
-      ...subContentProps,
-      ref: forwardedRef,
-      style: {
-        ...props.style,
-        // re-namespace exposed content custom properties
-        ...{
-          "--radix-dropdown-menu-content-transform-origin": "var(--radix-popper-transform-origin)",
-          "--radix-dropdown-menu-content-available-width": "var(--radix-popper-available-width)",
-          "--radix-dropdown-menu-content-available-height": "var(--radix-popper-available-height)",
-          "--radix-dropdown-menu-trigger-width": "var(--radix-popper-anchor-width)",
-          "--radix-dropdown-menu-trigger-height": "var(--radix-popper-anchor-height)"
-        }
-      }
-    }
-  );
+  return /* @__PURE__ */ jsx(SubContent, {
+    ...menuScope,
+    ...subContentProps,
+    ref: forwardedRef,
+    style: {
+      ...props.style,
+      // re-namespace exposed content custom properties
+      ...{
+        "--radix-dropdown-menu-content-transform-origin":
+          "var(--radix-popper-transform-origin)",
+        "--radix-dropdown-menu-content-available-width":
+          "var(--radix-popper-available-width)",
+        "--radix-dropdown-menu-content-available-height":
+          "var(--radix-popper-available-height)",
+        "--radix-dropdown-menu-trigger-width":
+          "var(--radix-popper-anchor-width)",
+        "--radix-dropdown-menu-trigger-height":
+          "var(--radix-popper-anchor-height)",
+      },
+    },
+  });
 });
 DropdownMenuSubContent.displayName = SUB_CONTENT_NAME;
 var Root2 = DropdownMenu$1;
@@ -16290,16 +18965,16 @@ var Item2 = DropdownMenuItem$1;
 const CLASS_PART_SEPARATOR = "-";
 const createClassGroupUtils = (config) => {
   const classMap = createClassMap(config);
-  const {
-    conflictingClassGroups,
-    conflictingClassGroupModifiers
-  } = config;
+  const { conflictingClassGroups, conflictingClassGroupModifiers } = config;
   const getClassGroupId = (className) => {
     const classParts = className.split(CLASS_PART_SEPARATOR);
     if (classParts[0] === "" && classParts.length !== 1) {
       classParts.shift();
     }
-    return getGroupRecursive(classParts, classMap) || getGroupIdForArbitraryProperty(className);
+    return (
+      getGroupRecursive(classParts, classMap) ||
+      getGroupIdForArbitraryProperty(className)
+    );
   };
   const getConflictingClassGroupIds = (classGroupId, hasPostfixModifier) => {
     const conflicts = conflictingClassGroups[classGroupId] || [];
@@ -16310,7 +18985,7 @@ const createClassGroupUtils = (config) => {
   };
   return {
     getClassGroupId,
-    getConflictingClassGroupIds
+    getConflictingClassGroupIds,
   };
 };
 const getGroupRecursive = (classParts, classPartObject) => {
@@ -16319,7 +18994,9 @@ const getGroupRecursive = (classParts, classPartObject) => {
   }
   const currentClassPart = classParts[0];
   const nextClassPartObject = classPartObject.nextPart.get(currentClassPart);
-  const classGroupFromNextClassPart = nextClassPartObject ? getGroupRecursive(classParts.slice(1), nextClassPartObject) : void 0;
+  const classGroupFromNextClassPart = nextClassPartObject
+    ? getGroupRecursive(classParts.slice(1), nextClassPartObject)
+    : void 0;
   if (classGroupFromNextClassPart) {
     return classGroupFromNextClassPart;
   }
@@ -16327,54 +19004,78 @@ const getGroupRecursive = (classParts, classPartObject) => {
     return void 0;
   }
   const classRest = classParts.join(CLASS_PART_SEPARATOR);
-  return classPartObject.validators.find(({
-    validator
-  }) => validator(classRest))?.classGroupId;
+  return classPartObject.validators.find(({ validator }) =>
+    validator(classRest),
+  )?.classGroupId;
 };
 const arbitraryPropertyRegex = /^\[(.+)\]$/;
 const getGroupIdForArbitraryProperty = (className) => {
   if (arbitraryPropertyRegex.test(className)) {
-    const arbitraryPropertyClassName = arbitraryPropertyRegex.exec(className)[1];
-    const property = arbitraryPropertyClassName?.substring(0, arbitraryPropertyClassName.indexOf(":"));
+    const arbitraryPropertyClassName =
+      arbitraryPropertyRegex.exec(className)[1];
+    const property = arbitraryPropertyClassName?.substring(
+      0,
+      arbitraryPropertyClassName.indexOf(":"),
+    );
     if (property) {
       return "arbitrary.." + property;
     }
   }
 };
 const createClassMap = (config) => {
-  const {
-    theme,
-    classGroups
-  } = config;
+  const { theme, classGroups } = config;
   const classMap = {
     nextPart: /* @__PURE__ */ new Map(),
-    validators: []
+    validators: [],
   };
   for (const classGroupId in classGroups) {
-    processClassesRecursively(classGroups[classGroupId], classMap, classGroupId, theme);
+    processClassesRecursively(
+      classGroups[classGroupId],
+      classMap,
+      classGroupId,
+      theme,
+    );
   }
   return classMap;
 };
-const processClassesRecursively = (classGroup, classPartObject, classGroupId, theme) => {
+const processClassesRecursively = (
+  classGroup,
+  classPartObject,
+  classGroupId,
+  theme,
+) => {
   classGroup.forEach((classDefinition) => {
     if (typeof classDefinition === "string") {
-      const classPartObjectToEdit = classDefinition === "" ? classPartObject : getPart(classPartObject, classDefinition);
+      const classPartObjectToEdit =
+        classDefinition === ""
+          ? classPartObject
+          : getPart(classPartObject, classDefinition);
       classPartObjectToEdit.classGroupId = classGroupId;
       return;
     }
     if (typeof classDefinition === "function") {
       if (isThemeGetter(classDefinition)) {
-        processClassesRecursively(classDefinition(theme), classPartObject, classGroupId, theme);
+        processClassesRecursively(
+          classDefinition(theme),
+          classPartObject,
+          classGroupId,
+          theme,
+        );
         return;
       }
       classPartObject.validators.push({
         validator: classDefinition,
-        classGroupId
+        classGroupId,
       });
       return;
     }
     Object.entries(classDefinition).forEach(([key, classGroup2]) => {
-      processClassesRecursively(classGroup2, getPart(classPartObject, key), classGroupId, theme);
+      processClassesRecursively(
+        classGroup2,
+        getPart(classPartObject, key),
+        classGroupId,
+        theme,
+      );
     });
   });
 };
@@ -16384,7 +19085,7 @@ const getPart = (classPartObject, path) => {
     if (!currentClassPartObject.nextPart.has(pathPart)) {
       currentClassPartObject.nextPart.set(pathPart, {
         nextPart: /* @__PURE__ */ new Map(),
-        validators: []
+        validators: [],
       });
     }
     currentClassPartObject = currentClassPartObject.nextPart.get(pathPart);
@@ -16396,8 +19097,7 @@ const createLruCache = (maxCacheSize) => {
   if (maxCacheSize < 1) {
     return {
       get: () => void 0,
-      set: () => {
-      }
+      set: () => {},
     };
   }
   let cacheSize = 0;
@@ -16429,17 +19129,14 @@ const createLruCache = (maxCacheSize) => {
       } else {
         update(key, value);
       }
-    }
+    },
   };
 };
 const IMPORTANT_MODIFIER = "!";
 const MODIFIER_SEPARATOR = ":";
 const MODIFIER_SEPARATOR_LENGTH = MODIFIER_SEPARATOR.length;
 const createParseClassName = (config) => {
-  const {
-    prefix,
-    experimentalParseClassName
-  } = config;
+  const { prefix, experimentalParseClassName } = config;
   let parseClassName = (className) => {
     const modifiers = [];
     let bracketDepth = 0;
@@ -16469,34 +19166,45 @@ const createParseClassName = (config) => {
         parenDepth--;
       }
     }
-    const baseClassNameWithImportantModifier = modifiers.length === 0 ? className : className.substring(modifierStart);
-    const baseClassName = stripImportantModifier(baseClassNameWithImportantModifier);
-    const hasImportantModifier = baseClassName !== baseClassNameWithImportantModifier;
-    const maybePostfixModifierPosition = postfixModifierPosition && postfixModifierPosition > modifierStart ? postfixModifierPosition - modifierStart : void 0;
+    const baseClassNameWithImportantModifier =
+      modifiers.length === 0 ? className : className.substring(modifierStart);
+    const baseClassName = stripImportantModifier(
+      baseClassNameWithImportantModifier,
+    );
+    const hasImportantModifier =
+      baseClassName !== baseClassNameWithImportantModifier;
+    const maybePostfixModifierPosition =
+      postfixModifierPosition && postfixModifierPosition > modifierStart
+        ? postfixModifierPosition - modifierStart
+        : void 0;
     return {
       modifiers,
       hasImportantModifier,
       baseClassName,
-      maybePostfixModifierPosition
+      maybePostfixModifierPosition,
     };
   };
   if (prefix) {
     const fullPrefix = prefix + MODIFIER_SEPARATOR;
     const parseClassNameOriginal = parseClassName;
-    parseClassName = (className) => className.startsWith(fullPrefix) ? parseClassNameOriginal(className.substring(fullPrefix.length)) : {
-      isExternal: true,
-      modifiers: [],
-      hasImportantModifier: false,
-      baseClassName: className,
-      maybePostfixModifierPosition: void 0
-    };
+    parseClassName = (className) =>
+      className.startsWith(fullPrefix)
+        ? parseClassNameOriginal(className.substring(fullPrefix.length))
+        : {
+            isExternal: true,
+            modifiers: [],
+            hasImportantModifier: false,
+            baseClassName: className,
+            maybePostfixModifierPosition: void 0,
+          };
   }
   if (experimentalParseClassName) {
     const parseClassNameOriginal = parseClassName;
-    parseClassName = (className) => experimentalParseClassName({
-      className,
-      parseClassName: parseClassNameOriginal
-    });
+    parseClassName = (className) =>
+      experimentalParseClassName({
+        className,
+        parseClassName: parseClassNameOriginal,
+      });
   }
   return parseClassName;
 };
@@ -16510,7 +19218,9 @@ const stripImportantModifier = (baseClassName) => {
   return baseClassName;
 };
 const createSortModifiers = (config) => {
-  const orderSensitiveModifiers = Object.fromEntries(config.orderSensitiveModifiers.map((modifier) => [modifier, true]));
+  const orderSensitiveModifiers = Object.fromEntries(
+    config.orderSensitiveModifiers.map((modifier) => [modifier, true]),
+  );
   const sortModifiers = (modifiers) => {
     if (modifiers.length <= 1) {
       return modifiers;
@@ -16518,7 +19228,8 @@ const createSortModifiers = (config) => {
     const sortedModifiers = [];
     let unsortedModifiers = [];
     modifiers.forEach((modifier) => {
-      const isPositionSensitive = modifier[0] === "[" || orderSensitiveModifiers[modifier];
+      const isPositionSensitive =
+        modifier[0] === "[" || orderSensitiveModifiers[modifier];
       if (isPositionSensitive) {
         sortedModifiers.push(...unsortedModifiers.sort(), modifier);
         unsortedModifiers = [];
@@ -16535,7 +19246,7 @@ const createConfigUtils = (config) => ({
   cache: createLruCache(config.cacheSize),
   parseClassName: createParseClassName(config),
   sortModifiers: createSortModifiers(config),
-  ...createClassGroupUtils(config)
+  ...createClassGroupUtils(config),
 });
 const SPLIT_CLASSES_REGEX = /\s+/;
 const mergeClassList = (classList, configUtils) => {
@@ -16543,7 +19254,7 @@ const mergeClassList = (classList, configUtils) => {
     parseClassName,
     getClassGroupId,
     getConflictingClassGroupIds,
-    sortModifiers
+    sortModifiers,
   } = configUtils;
   const classGroupsInConflict = [];
   const classNames = classList.trim().split(SPLIT_CLASSES_REGEX);
@@ -16555,34 +19266,45 @@ const mergeClassList = (classList, configUtils) => {
       modifiers,
       hasImportantModifier,
       baseClassName,
-      maybePostfixModifierPosition
+      maybePostfixModifierPosition,
     } = parseClassName(originalClassName);
     if (isExternal) {
       result = originalClassName + (result.length > 0 ? " " + result : result);
       continue;
     }
     let hasPostfixModifier = !!maybePostfixModifierPosition;
-    let classGroupId = getClassGroupId(hasPostfixModifier ? baseClassName.substring(0, maybePostfixModifierPosition) : baseClassName);
+    let classGroupId = getClassGroupId(
+      hasPostfixModifier
+        ? baseClassName.substring(0, maybePostfixModifierPosition)
+        : baseClassName,
+    );
     if (!classGroupId) {
       if (!hasPostfixModifier) {
-        result = originalClassName + (result.length > 0 ? " " + result : result);
+        result =
+          originalClassName + (result.length > 0 ? " " + result : result);
         continue;
       }
       classGroupId = getClassGroupId(baseClassName);
       if (!classGroupId) {
-        result = originalClassName + (result.length > 0 ? " " + result : result);
+        result =
+          originalClassName + (result.length > 0 ? " " + result : result);
         continue;
       }
       hasPostfixModifier = false;
     }
     const variantModifier = sortModifiers(modifiers).join(":");
-    const modifierId = hasImportantModifier ? variantModifier + IMPORTANT_MODIFIER : variantModifier;
+    const modifierId = hasImportantModifier
+      ? variantModifier + IMPORTANT_MODIFIER
+      : variantModifier;
     const classId = modifierId + classGroupId;
     if (classGroupsInConflict.includes(classId)) {
       continue;
     }
     classGroupsInConflict.push(classId);
-    const conflictGroups = getConflictingClassGroupIds(classGroupId, hasPostfixModifier);
+    const conflictGroups = getConflictingClassGroupIds(
+      classGroupId,
+      hasPostfixModifier,
+    );
     for (let i = 0; i < conflictGroups.length; ++i) {
       const group = conflictGroups[i];
       classGroupsInConflict.push(modifierId + group);
@@ -16597,8 +19319,8 @@ function twJoin() {
   let resolvedValue;
   let string = "";
   while (index2 < arguments.length) {
-    if (argument = arguments[index2++]) {
-      if (resolvedValue = toValue(argument)) {
+    if ((argument = arguments[index2++])) {
+      if ((resolvedValue = toValue(argument))) {
         string && (string += " ");
         string += resolvedValue;
       }
@@ -16614,7 +19336,7 @@ const toValue = (mix) => {
   let string = "";
   for (let k = 0; k < mix.length; k++) {
     if (mix[k]) {
-      if (resolvedValue = toValue(mix[k])) {
+      if ((resolvedValue = toValue(mix[k]))) {
         string && (string += " ");
         string += resolvedValue;
       }
@@ -16628,7 +19350,11 @@ function createTailwindMerge(createConfigFirst, ...createConfigRest) {
   let cacheSet;
   let functionToCall = initTailwindMerge;
   function initTailwindMerge(classList) {
-    const config = createConfigRest.reduce((previousConfig, createConfigCurrent) => createConfigCurrent(previousConfig), createConfigFirst());
+    const config = createConfigRest.reduce(
+      (previousConfig, createConfigCurrent) =>
+        createConfigCurrent(previousConfig),
+      createConfigFirst(),
+    );
     configUtils = createConfigUtils(config);
     cacheGet = configUtils.cache.get;
     cacheSet = configUtils.cache.set;
@@ -16657,40 +19383,56 @@ const arbitraryValueRegex = /^\[(?:(\w[\w-]*):)?(.+)\]$/i;
 const arbitraryVariableRegex = /^\((?:(\w[\w-]*):)?(.+)\)$/i;
 const fractionRegex = /^\d+\/\d+$/;
 const tshirtUnitRegex = /^(\d+(\.\d+)?)?(xs|sm|md|lg|xl)$/;
-const lengthUnitRegex = /\d+(%|px|r?em|[sdl]?v([hwib]|min|max)|pt|pc|in|cm|mm|cap|ch|ex|r?lh|cq(w|h|i|b|min|max))|\b(calc|min|max|clamp)\(.+\)|^0$/;
+const lengthUnitRegex =
+  /\d+(%|px|r?em|[sdl]?v([hwib]|min|max)|pt|pc|in|cm|mm|cap|ch|ex|r?lh|cq(w|h|i|b|min|max))|\b(calc|min|max|clamp)\(.+\)|^0$/;
 const colorFunctionRegex = /^(rgba?|hsla?|hwb|(ok)?(lab|lch)|color-mix)\(.+\)$/;
-const shadowRegex = /^(inset_)?-?((\d+)?\.?(\d+)[a-z]+|0)_-?((\d+)?\.?(\d+)[a-z]+|0)/;
-const imageRegex = /^(url|image|image-set|cross-fade|element|(repeating-)?(linear|radial|conic)-gradient)\(.+\)$/;
+const shadowRegex =
+  /^(inset_)?-?((\d+)?\.?(\d+)[a-z]+|0)_-?((\d+)?\.?(\d+)[a-z]+|0)/;
+const imageRegex =
+  /^(url|image|image-set|cross-fade|element|(repeating-)?(linear|radial|conic)-gradient)\(.+\)$/;
 const isFraction = (value) => fractionRegex.test(value);
 const isNumber = (value) => !!value && !Number.isNaN(Number(value));
 const isInteger = (value) => !!value && Number.isInteger(Number(value));
-const isPercent = (value) => value.endsWith("%") && isNumber(value.slice(0, -1));
+const isPercent = (value) =>
+  value.endsWith("%") && isNumber(value.slice(0, -1));
 const isTshirtSize = (value) => tshirtUnitRegex.test(value);
 const isAny = () => true;
-const isLengthOnly = (value) => (
+const isLengthOnly = (value) =>
   // `colorFunctionRegex` check is necessary because color functions can have percentages in them which which would be incorrectly classified as lengths.
   // For example, `hsl(0 0% 0%)` would be classified as a length without this check.
   // I could also use lookbehind assertion in `lengthUnitRegex` but that isn't supported widely enough.
-  lengthUnitRegex.test(value) && !colorFunctionRegex.test(value)
-);
+  lengthUnitRegex.test(value) && !colorFunctionRegex.test(value);
 const isNever = () => false;
 const isShadow = (value) => shadowRegex.test(value);
 const isImage = (value) => imageRegex.test(value);
-const isAnyNonArbitrary = (value) => !isArbitraryValue(value) && !isArbitraryVariable(value);
-const isArbitrarySize = (value) => getIsArbitraryValue(value, isLabelSize, isNever);
+const isAnyNonArbitrary = (value) =>
+  !isArbitraryValue(value) && !isArbitraryVariable(value);
+const isArbitrarySize = (value) =>
+  getIsArbitraryValue(value, isLabelSize, isNever);
 const isArbitraryValue = (value) => arbitraryValueRegex.test(value);
-const isArbitraryLength = (value) => getIsArbitraryValue(value, isLabelLength, isLengthOnly);
-const isArbitraryNumber = (value) => getIsArbitraryValue(value, isLabelNumber, isNumber);
-const isArbitraryPosition = (value) => getIsArbitraryValue(value, isLabelPosition, isNever);
-const isArbitraryImage = (value) => getIsArbitraryValue(value, isLabelImage, isImage);
-const isArbitraryShadow = (value) => getIsArbitraryValue(value, isLabelShadow, isShadow);
+const isArbitraryLength = (value) =>
+  getIsArbitraryValue(value, isLabelLength, isLengthOnly);
+const isArbitraryNumber = (value) =>
+  getIsArbitraryValue(value, isLabelNumber, isNumber);
+const isArbitraryPosition = (value) =>
+  getIsArbitraryValue(value, isLabelPosition, isNever);
+const isArbitraryImage = (value) =>
+  getIsArbitraryValue(value, isLabelImage, isImage);
+const isArbitraryShadow = (value) =>
+  getIsArbitraryValue(value, isLabelShadow, isShadow);
 const isArbitraryVariable = (value) => arbitraryVariableRegex.test(value);
-const isArbitraryVariableLength = (value) => getIsArbitraryVariable(value, isLabelLength);
-const isArbitraryVariableFamilyName = (value) => getIsArbitraryVariable(value, isLabelFamilyName);
-const isArbitraryVariablePosition = (value) => getIsArbitraryVariable(value, isLabelPosition);
-const isArbitraryVariableSize = (value) => getIsArbitraryVariable(value, isLabelSize);
-const isArbitraryVariableImage = (value) => getIsArbitraryVariable(value, isLabelImage);
-const isArbitraryVariableShadow = (value) => getIsArbitraryVariable(value, isLabelShadow, true);
+const isArbitraryVariableLength = (value) =>
+  getIsArbitraryVariable(value, isLabelLength);
+const isArbitraryVariableFamilyName = (value) =>
+  getIsArbitraryVariable(value, isLabelFamilyName);
+const isArbitraryVariablePosition = (value) =>
+  getIsArbitraryVariable(value, isLabelPosition);
+const isArbitraryVariableSize = (value) =>
+  getIsArbitraryVariable(value, isLabelSize);
+const isArbitraryVariableImage = (value) =>
+  getIsArbitraryVariable(value, isLabelImage);
+const isArbitraryVariableShadow = (value) =>
+  getIsArbitraryVariable(value, isLabelShadow, true);
 const getIsArbitraryValue = (value, testLabel, testValue) => {
   const result = arbitraryValueRegex.exec(value);
   if (result) {
@@ -16701,7 +19443,11 @@ const getIsArbitraryValue = (value, testLabel, testValue) => {
   }
   return false;
 };
-const getIsArbitraryVariable = (value, testLabel, shouldMatchNoLabel = false) => {
+const getIsArbitraryVariable = (
+  value,
+  testLabel,
+  shouldMatchNoLabel = false,
+) => {
   const result = arbitraryVariableRegex.exec(value);
   if (result) {
     if (result[1]) {
@@ -16711,9 +19457,11 @@ const getIsArbitraryVariable = (value, testLabel, shouldMatchNoLabel = false) =>
   }
   return false;
 };
-const isLabelPosition = (label) => label === "position" || label === "percentage";
+const isLabelPosition = (label) =>
+  label === "position" || label === "percentage";
 const isLabelImage = (label) => label === "image" || label === "url";
-const isLabelSize = (label) => label === "length" || label === "size" || label === "bg-size";
+const isLabelSize = (label) =>
+  label === "length" || label === "size" || label === "bg-size";
 const isLabelLength = (label) => label === "length";
 const isLabelNumber = (label) => label === "number";
 const isLabelFamilyName = (label) => label === "family-name";
@@ -16738,7 +19486,16 @@ const getDefaultConfig = () => {
   const themeAspect = fromTheme("aspect");
   const themeEase = fromTheme("ease");
   const themeAnimate = fromTheme("animate");
-  const scaleBreak = () => ["auto", "avoid", "all", "avoid-page", "page", "left", "right", "column"];
+  const scaleBreak = () => [
+    "auto",
+    "avoid",
+    "all",
+    "avoid-page",
+    "page",
+    "left",
+    "right",
+    "column",
+  ];
   const scalePosition = () => [
     "center",
     "top",
@@ -16756,34 +19513,122 @@ const getDefaultConfig = () => {
     "right-bottom",
     "bottom-left",
     // Deprecated since Tailwind CSS v4.1.0, see https://github.com/tailwindlabs/tailwindcss/pull/17378
-    "left-bottom"
+    "left-bottom",
   ];
-  const scalePositionWithArbitrary = () => [...scalePosition(), isArbitraryVariable, isArbitraryValue];
+  const scalePositionWithArbitrary = () => [
+    ...scalePosition(),
+    isArbitraryVariable,
+    isArbitraryValue,
+  ];
   const scaleOverflow = () => ["auto", "hidden", "clip", "visible", "scroll"];
   const scaleOverscroll = () => ["auto", "contain", "none"];
-  const scaleUnambiguousSpacing = () => [isArbitraryVariable, isArbitraryValue, themeSpacing];
-  const scaleInset = () => [isFraction, "full", "auto", ...scaleUnambiguousSpacing()];
-  const scaleGridTemplateColsRows = () => [isInteger, "none", "subgrid", isArbitraryVariable, isArbitraryValue];
-  const scaleGridColRowStartAndEnd = () => ["auto", {
-    span: ["full", isInteger, isArbitraryVariable, isArbitraryValue]
-  }, isInteger, isArbitraryVariable, isArbitraryValue];
-  const scaleGridColRowStartOrEnd = () => [isInteger, "auto", isArbitraryVariable, isArbitraryValue];
-  const scaleGridAutoColsRows = () => ["auto", "min", "max", "fr", isArbitraryVariable, isArbitraryValue];
-  const scaleAlignPrimaryAxis = () => ["start", "end", "center", "between", "around", "evenly", "stretch", "baseline", "center-safe", "end-safe"];
-  const scaleAlignSecondaryAxis = () => ["start", "end", "center", "stretch", "center-safe", "end-safe"];
+  const scaleUnambiguousSpacing = () => [
+    isArbitraryVariable,
+    isArbitraryValue,
+    themeSpacing,
+  ];
+  const scaleInset = () => [
+    isFraction,
+    "full",
+    "auto",
+    ...scaleUnambiguousSpacing(),
+  ];
+  const scaleGridTemplateColsRows = () => [
+    isInteger,
+    "none",
+    "subgrid",
+    isArbitraryVariable,
+    isArbitraryValue,
+  ];
+  const scaleGridColRowStartAndEnd = () => [
+    "auto",
+    {
+      span: ["full", isInteger, isArbitraryVariable, isArbitraryValue],
+    },
+    isInteger,
+    isArbitraryVariable,
+    isArbitraryValue,
+  ];
+  const scaleGridColRowStartOrEnd = () => [
+    isInteger,
+    "auto",
+    isArbitraryVariable,
+    isArbitraryValue,
+  ];
+  const scaleGridAutoColsRows = () => [
+    "auto",
+    "min",
+    "max",
+    "fr",
+    isArbitraryVariable,
+    isArbitraryValue,
+  ];
+  const scaleAlignPrimaryAxis = () => [
+    "start",
+    "end",
+    "center",
+    "between",
+    "around",
+    "evenly",
+    "stretch",
+    "baseline",
+    "center-safe",
+    "end-safe",
+  ];
+  const scaleAlignSecondaryAxis = () => [
+    "start",
+    "end",
+    "center",
+    "stretch",
+    "center-safe",
+    "end-safe",
+  ];
   const scaleMargin = () => ["auto", ...scaleUnambiguousSpacing()];
-  const scaleSizing = () => [isFraction, "auto", "full", "dvw", "dvh", "lvw", "lvh", "svw", "svh", "min", "max", "fit", ...scaleUnambiguousSpacing()];
+  const scaleSizing = () => [
+    isFraction,
+    "auto",
+    "full",
+    "dvw",
+    "dvh",
+    "lvw",
+    "lvh",
+    "svw",
+    "svh",
+    "min",
+    "max",
+    "fit",
+    ...scaleUnambiguousSpacing(),
+  ];
   const scaleColor = () => [themeColor, isArbitraryVariable, isArbitraryValue];
-  const scaleBgPosition = () => [...scalePosition(), isArbitraryVariablePosition, isArbitraryPosition, {
-    position: [isArbitraryVariable, isArbitraryValue]
-  }];
-  const scaleBgRepeat = () => ["no-repeat", {
-    repeat: ["", "x", "y", "space", "round"]
-  }];
-  const scaleBgSize = () => ["auto", "cover", "contain", isArbitraryVariableSize, isArbitrarySize, {
-    size: [isArbitraryVariable, isArbitraryValue]
-  }];
-  const scaleGradientStopPosition = () => [isPercent, isArbitraryVariableLength, isArbitraryLength];
+  const scaleBgPosition = () => [
+    ...scalePosition(),
+    isArbitraryVariablePosition,
+    isArbitraryPosition,
+    {
+      position: [isArbitraryVariable, isArbitraryValue],
+    },
+  ];
+  const scaleBgRepeat = () => [
+    "no-repeat",
+    {
+      repeat: ["", "x", "y", "space", "round"],
+    },
+  ];
+  const scaleBgSize = () => [
+    "auto",
+    "cover",
+    "contain",
+    isArbitraryVariableSize,
+    isArbitrarySize,
+    {
+      size: [isArbitraryVariable, isArbitraryValue],
+    },
+  ];
+  const scaleGradientStopPosition = () => [
+    isPercent,
+    isArbitraryVariableLength,
+    isArbitraryLength,
+  ];
   const scaleRadius = () => [
     // Deprecated since Tailwind CSS v4.0.0
     "",
@@ -16791,24 +19636,65 @@ const getDefaultConfig = () => {
     "full",
     themeRadius,
     isArbitraryVariable,
-    isArbitraryValue
+    isArbitraryValue,
   ];
-  const scaleBorderWidth = () => ["", isNumber, isArbitraryVariableLength, isArbitraryLength];
+  const scaleBorderWidth = () => [
+    "",
+    isNumber,
+    isArbitraryVariableLength,
+    isArbitraryLength,
+  ];
   const scaleLineStyle = () => ["solid", "dashed", "dotted", "double"];
-  const scaleBlendMode = () => ["normal", "multiply", "screen", "overlay", "darken", "lighten", "color-dodge", "color-burn", "hard-light", "soft-light", "difference", "exclusion", "hue", "saturation", "color", "luminosity"];
-  const scaleMaskImagePosition = () => [isNumber, isPercent, isArbitraryVariablePosition, isArbitraryPosition];
+  const scaleBlendMode = () => [
+    "normal",
+    "multiply",
+    "screen",
+    "overlay",
+    "darken",
+    "lighten",
+    "color-dodge",
+    "color-burn",
+    "hard-light",
+    "soft-light",
+    "difference",
+    "exclusion",
+    "hue",
+    "saturation",
+    "color",
+    "luminosity",
+  ];
+  const scaleMaskImagePosition = () => [
+    isNumber,
+    isPercent,
+    isArbitraryVariablePosition,
+    isArbitraryPosition,
+  ];
   const scaleBlur = () => [
     // Deprecated since Tailwind CSS v4.0.0
     "",
     "none",
     themeBlur,
     isArbitraryVariable,
-    isArbitraryValue
+    isArbitraryValue,
   ];
-  const scaleRotate = () => ["none", isNumber, isArbitraryVariable, isArbitraryValue];
-  const scaleScale = () => ["none", isNumber, isArbitraryVariable, isArbitraryValue];
+  const scaleRotate = () => [
+    "none",
+    isNumber,
+    isArbitraryVariable,
+    isArbitraryValue,
+  ];
+  const scaleScale = () => [
+    "none",
+    isNumber,
+    isArbitraryVariable,
+    isArbitraryValue,
+  ];
   const scaleSkew = () => [isNumber, isArbitraryVariable, isArbitraryValue];
-  const scaleTranslate = () => [isFraction, "full", ...scaleUnambiguousSpacing()];
+  const scaleTranslate = () => [
+    isFraction,
+    "full",
+    ...scaleUnambiguousSpacing(),
+  ];
   return {
     cacheSize: 500,
     theme: {
@@ -16821,16 +19707,33 @@ const getDefaultConfig = () => {
       "drop-shadow": [isTshirtSize],
       ease: ["in", "out", "in-out"],
       font: [isAnyNonArbitrary],
-      "font-weight": ["thin", "extralight", "light", "normal", "medium", "semibold", "bold", "extrabold", "black"],
+      "font-weight": [
+        "thin",
+        "extralight",
+        "light",
+        "normal",
+        "medium",
+        "semibold",
+        "bold",
+        "extrabold",
+        "black",
+      ],
       "inset-shadow": [isTshirtSize],
       leading: ["none", "tight", "snug", "normal", "relaxed", "loose"],
-      perspective: ["dramatic", "near", "normal", "midrange", "distant", "none"],
+      perspective: [
+        "dramatic",
+        "near",
+        "normal",
+        "midrange",
+        "distant",
+        "none",
+      ],
       radius: [isTshirtSize],
       shadow: [isTshirtSize],
       spacing: ["px", isNumber],
       text: [isTshirtSize],
       "text-shadow": [isTshirtSize],
-      tracking: ["tighter", "tight", "normal", "wide", "wider", "widest"]
+      tracking: ["tighter", "tight", "normal", "wide", "wider", "widest"],
     },
     classGroups: {
       // --------------
@@ -16840,9 +19743,18 @@ const getDefaultConfig = () => {
        * Aspect Ratio
        * @see https://tailwindcss.com/docs/aspect-ratio
        */
-      aspect: [{
-        aspect: ["auto", "square", isFraction, isArbitraryValue, isArbitraryVariable, themeAspect]
-      }],
+      aspect: [
+        {
+          aspect: [
+            "auto",
+            "square",
+            isFraction,
+            isArbitraryValue,
+            isArbitraryVariable,
+            themeAspect,
+          ],
+        },
+      ],
       /**
        * Container
        * @see https://tailwindcss.com/docs/container
@@ -16853,49 +19765,88 @@ const getDefaultConfig = () => {
        * Columns
        * @see https://tailwindcss.com/docs/columns
        */
-      columns: [{
-        columns: [isNumber, isArbitraryValue, isArbitraryVariable, themeContainer]
-      }],
+      columns: [
+        {
+          columns: [
+            isNumber,
+            isArbitraryValue,
+            isArbitraryVariable,
+            themeContainer,
+          ],
+        },
+      ],
       /**
        * Break After
        * @see https://tailwindcss.com/docs/break-after
        */
-      "break-after": [{
-        "break-after": scaleBreak()
-      }],
+      "break-after": [
+        {
+          "break-after": scaleBreak(),
+        },
+      ],
       /**
        * Break Before
        * @see https://tailwindcss.com/docs/break-before
        */
-      "break-before": [{
-        "break-before": scaleBreak()
-      }],
+      "break-before": [
+        {
+          "break-before": scaleBreak(),
+        },
+      ],
       /**
        * Break Inside
        * @see https://tailwindcss.com/docs/break-inside
        */
-      "break-inside": [{
-        "break-inside": ["auto", "avoid", "avoid-page", "avoid-column"]
-      }],
+      "break-inside": [
+        {
+          "break-inside": ["auto", "avoid", "avoid-page", "avoid-column"],
+        },
+      ],
       /**
        * Box Decoration Break
        * @see https://tailwindcss.com/docs/box-decoration-break
        */
-      "box-decoration": [{
-        "box-decoration": ["slice", "clone"]
-      }],
+      "box-decoration": [
+        {
+          "box-decoration": ["slice", "clone"],
+        },
+      ],
       /**
        * Box Sizing
        * @see https://tailwindcss.com/docs/box-sizing
        */
-      box: [{
-        box: ["border", "content"]
-      }],
+      box: [
+        {
+          box: ["border", "content"],
+        },
+      ],
       /**
        * Display
        * @see https://tailwindcss.com/docs/display
        */
-      display: ["block", "inline-block", "inline", "flex", "inline-flex", "table", "inline-table", "table-caption", "table-cell", "table-column", "table-column-group", "table-footer-group", "table-header-group", "table-row-group", "table-row", "flow-root", "grid", "inline-grid", "contents", "list-item", "hidden"],
+      display: [
+        "block",
+        "inline-block",
+        "inline",
+        "flex",
+        "inline-flex",
+        "table",
+        "inline-table",
+        "table-caption",
+        "table-cell",
+        "table-column",
+        "table-column-group",
+        "table-footer-group",
+        "table-header-group",
+        "table-row-group",
+        "table-row",
+        "flow-root",
+        "grid",
+        "inline-grid",
+        "contents",
+        "list-item",
+        "hidden",
+      ],
       /**
        * Screen Reader Only
        * @see https://tailwindcss.com/docs/display#screen-reader-only
@@ -16905,16 +19856,20 @@ const getDefaultConfig = () => {
        * Floats
        * @see https://tailwindcss.com/docs/float
        */
-      float: [{
-        float: ["right", "left", "none", "start", "end"]
-      }],
+      float: [
+        {
+          float: ["right", "left", "none", "start", "end"],
+        },
+      ],
       /**
        * Clear
        * @see https://tailwindcss.com/docs/clear
        */
-      clear: [{
-        clear: ["left", "right", "both", "none", "start", "end"]
-      }],
+      clear: [
+        {
+          clear: ["left", "right", "both", "none", "start", "end"],
+        },
+      ],
       /**
        * Isolation
        * @see https://tailwindcss.com/docs/isolation
@@ -16924,58 +19879,74 @@ const getDefaultConfig = () => {
        * Object Fit
        * @see https://tailwindcss.com/docs/object-fit
        */
-      "object-fit": [{
-        object: ["contain", "cover", "fill", "none", "scale-down"]
-      }],
+      "object-fit": [
+        {
+          object: ["contain", "cover", "fill", "none", "scale-down"],
+        },
+      ],
       /**
        * Object Position
        * @see https://tailwindcss.com/docs/object-position
        */
-      "object-position": [{
-        object: scalePositionWithArbitrary()
-      }],
+      "object-position": [
+        {
+          object: scalePositionWithArbitrary(),
+        },
+      ],
       /**
        * Overflow
        * @see https://tailwindcss.com/docs/overflow
        */
-      overflow: [{
-        overflow: scaleOverflow()
-      }],
+      overflow: [
+        {
+          overflow: scaleOverflow(),
+        },
+      ],
       /**
        * Overflow X
        * @see https://tailwindcss.com/docs/overflow
        */
-      "overflow-x": [{
-        "overflow-x": scaleOverflow()
-      }],
+      "overflow-x": [
+        {
+          "overflow-x": scaleOverflow(),
+        },
+      ],
       /**
        * Overflow Y
        * @see https://tailwindcss.com/docs/overflow
        */
-      "overflow-y": [{
-        "overflow-y": scaleOverflow()
-      }],
+      "overflow-y": [
+        {
+          "overflow-y": scaleOverflow(),
+        },
+      ],
       /**
        * Overscroll Behavior
        * @see https://tailwindcss.com/docs/overscroll-behavior
        */
-      overscroll: [{
-        overscroll: scaleOverscroll()
-      }],
+      overscroll: [
+        {
+          overscroll: scaleOverscroll(),
+        },
+      ],
       /**
        * Overscroll Behavior X
        * @see https://tailwindcss.com/docs/overscroll-behavior
        */
-      "overscroll-x": [{
-        "overscroll-x": scaleOverscroll()
-      }],
+      "overscroll-x": [
+        {
+          "overscroll-x": scaleOverscroll(),
+        },
+      ],
       /**
        * Overscroll Behavior Y
        * @see https://tailwindcss.com/docs/overscroll-behavior
        */
-      "overscroll-y": [{
-        "overscroll-y": scaleOverscroll()
-      }],
+      "overscroll-y": [
+        {
+          "overscroll-y": scaleOverscroll(),
+        },
+      ],
       /**
        * Position
        * @see https://tailwindcss.com/docs/position
@@ -16985,65 +19956,83 @@ const getDefaultConfig = () => {
        * Top / Right / Bottom / Left
        * @see https://tailwindcss.com/docs/top-right-bottom-left
        */
-      inset: [{
-        inset: scaleInset()
-      }],
+      inset: [
+        {
+          inset: scaleInset(),
+        },
+      ],
       /**
        * Right / Left
        * @see https://tailwindcss.com/docs/top-right-bottom-left
        */
-      "inset-x": [{
-        "inset-x": scaleInset()
-      }],
+      "inset-x": [
+        {
+          "inset-x": scaleInset(),
+        },
+      ],
       /**
        * Top / Bottom
        * @see https://tailwindcss.com/docs/top-right-bottom-left
        */
-      "inset-y": [{
-        "inset-y": scaleInset()
-      }],
+      "inset-y": [
+        {
+          "inset-y": scaleInset(),
+        },
+      ],
       /**
        * Start
        * @see https://tailwindcss.com/docs/top-right-bottom-left
        */
-      start: [{
-        start: scaleInset()
-      }],
+      start: [
+        {
+          start: scaleInset(),
+        },
+      ],
       /**
        * End
        * @see https://tailwindcss.com/docs/top-right-bottom-left
        */
-      end: [{
-        end: scaleInset()
-      }],
+      end: [
+        {
+          end: scaleInset(),
+        },
+      ],
       /**
        * Top
        * @see https://tailwindcss.com/docs/top-right-bottom-left
        */
-      top: [{
-        top: scaleInset()
-      }],
+      top: [
+        {
+          top: scaleInset(),
+        },
+      ],
       /**
        * Right
        * @see https://tailwindcss.com/docs/top-right-bottom-left
        */
-      right: [{
-        right: scaleInset()
-      }],
+      right: [
+        {
+          right: scaleInset(),
+        },
+      ],
       /**
        * Bottom
        * @see https://tailwindcss.com/docs/top-right-bottom-left
        */
-      bottom: [{
-        bottom: scaleInset()
-      }],
+      bottom: [
+        {
+          bottom: scaleInset(),
+        },
+      ],
       /**
        * Left
        * @see https://tailwindcss.com/docs/top-right-bottom-left
        */
-      left: [{
-        left: scaleInset()
-      }],
+      left: [
+        {
+          left: scaleInset(),
+        },
+      ],
       /**
        * Visibility
        * @see https://tailwindcss.com/docs/visibility
@@ -17053,9 +20042,11 @@ const getDefaultConfig = () => {
        * Z-Index
        * @see https://tailwindcss.com/docs/z-index
        */
-      z: [{
-        z: [isInteger, "auto", isArbitraryVariable, isArbitraryValue]
-      }],
+      z: [
+        {
+          z: [isInteger, "auto", isArbitraryVariable, isArbitraryValue],
+        },
+      ],
       // ------------------------
       // --- Flexbox and Grid ---
       // ------------------------
@@ -17063,350 +20054,475 @@ const getDefaultConfig = () => {
        * Flex Basis
        * @see https://tailwindcss.com/docs/flex-basis
        */
-      basis: [{
-        basis: [isFraction, "full", "auto", themeContainer, ...scaleUnambiguousSpacing()]
-      }],
+      basis: [
+        {
+          basis: [
+            isFraction,
+            "full",
+            "auto",
+            themeContainer,
+            ...scaleUnambiguousSpacing(),
+          ],
+        },
+      ],
       /**
        * Flex Direction
        * @see https://tailwindcss.com/docs/flex-direction
        */
-      "flex-direction": [{
-        flex: ["row", "row-reverse", "col", "col-reverse"]
-      }],
+      "flex-direction": [
+        {
+          flex: ["row", "row-reverse", "col", "col-reverse"],
+        },
+      ],
       /**
        * Flex Wrap
        * @see https://tailwindcss.com/docs/flex-wrap
        */
-      "flex-wrap": [{
-        flex: ["nowrap", "wrap", "wrap-reverse"]
-      }],
+      "flex-wrap": [
+        {
+          flex: ["nowrap", "wrap", "wrap-reverse"],
+        },
+      ],
       /**
        * Flex
        * @see https://tailwindcss.com/docs/flex
        */
-      flex: [{
-        flex: [isNumber, isFraction, "auto", "initial", "none", isArbitraryValue]
-      }],
+      flex: [
+        {
+          flex: [
+            isNumber,
+            isFraction,
+            "auto",
+            "initial",
+            "none",
+            isArbitraryValue,
+          ],
+        },
+      ],
       /**
        * Flex Grow
        * @see https://tailwindcss.com/docs/flex-grow
        */
-      grow: [{
-        grow: ["", isNumber, isArbitraryVariable, isArbitraryValue]
-      }],
+      grow: [
+        {
+          grow: ["", isNumber, isArbitraryVariable, isArbitraryValue],
+        },
+      ],
       /**
        * Flex Shrink
        * @see https://tailwindcss.com/docs/flex-shrink
        */
-      shrink: [{
-        shrink: ["", isNumber, isArbitraryVariable, isArbitraryValue]
-      }],
+      shrink: [
+        {
+          shrink: ["", isNumber, isArbitraryVariable, isArbitraryValue],
+        },
+      ],
       /**
        * Order
        * @see https://tailwindcss.com/docs/order
        */
-      order: [{
-        order: [isInteger, "first", "last", "none", isArbitraryVariable, isArbitraryValue]
-      }],
+      order: [
+        {
+          order: [
+            isInteger,
+            "first",
+            "last",
+            "none",
+            isArbitraryVariable,
+            isArbitraryValue,
+          ],
+        },
+      ],
       /**
        * Grid Template Columns
        * @see https://tailwindcss.com/docs/grid-template-columns
        */
-      "grid-cols": [{
-        "grid-cols": scaleGridTemplateColsRows()
-      }],
+      "grid-cols": [
+        {
+          "grid-cols": scaleGridTemplateColsRows(),
+        },
+      ],
       /**
        * Grid Column Start / End
        * @see https://tailwindcss.com/docs/grid-column
        */
-      "col-start-end": [{
-        col: scaleGridColRowStartAndEnd()
-      }],
+      "col-start-end": [
+        {
+          col: scaleGridColRowStartAndEnd(),
+        },
+      ],
       /**
        * Grid Column Start
        * @see https://tailwindcss.com/docs/grid-column
        */
-      "col-start": [{
-        "col-start": scaleGridColRowStartOrEnd()
-      }],
+      "col-start": [
+        {
+          "col-start": scaleGridColRowStartOrEnd(),
+        },
+      ],
       /**
        * Grid Column End
        * @see https://tailwindcss.com/docs/grid-column
        */
-      "col-end": [{
-        "col-end": scaleGridColRowStartOrEnd()
-      }],
+      "col-end": [
+        {
+          "col-end": scaleGridColRowStartOrEnd(),
+        },
+      ],
       /**
        * Grid Template Rows
        * @see https://tailwindcss.com/docs/grid-template-rows
        */
-      "grid-rows": [{
-        "grid-rows": scaleGridTemplateColsRows()
-      }],
+      "grid-rows": [
+        {
+          "grid-rows": scaleGridTemplateColsRows(),
+        },
+      ],
       /**
        * Grid Row Start / End
        * @see https://tailwindcss.com/docs/grid-row
        */
-      "row-start-end": [{
-        row: scaleGridColRowStartAndEnd()
-      }],
+      "row-start-end": [
+        {
+          row: scaleGridColRowStartAndEnd(),
+        },
+      ],
       /**
        * Grid Row Start
        * @see https://tailwindcss.com/docs/grid-row
        */
-      "row-start": [{
-        "row-start": scaleGridColRowStartOrEnd()
-      }],
+      "row-start": [
+        {
+          "row-start": scaleGridColRowStartOrEnd(),
+        },
+      ],
       /**
        * Grid Row End
        * @see https://tailwindcss.com/docs/grid-row
        */
-      "row-end": [{
-        "row-end": scaleGridColRowStartOrEnd()
-      }],
+      "row-end": [
+        {
+          "row-end": scaleGridColRowStartOrEnd(),
+        },
+      ],
       /**
        * Grid Auto Flow
        * @see https://tailwindcss.com/docs/grid-auto-flow
        */
-      "grid-flow": [{
-        "grid-flow": ["row", "col", "dense", "row-dense", "col-dense"]
-      }],
+      "grid-flow": [
+        {
+          "grid-flow": ["row", "col", "dense", "row-dense", "col-dense"],
+        },
+      ],
       /**
        * Grid Auto Columns
        * @see https://tailwindcss.com/docs/grid-auto-columns
        */
-      "auto-cols": [{
-        "auto-cols": scaleGridAutoColsRows()
-      }],
+      "auto-cols": [
+        {
+          "auto-cols": scaleGridAutoColsRows(),
+        },
+      ],
       /**
        * Grid Auto Rows
        * @see https://tailwindcss.com/docs/grid-auto-rows
        */
-      "auto-rows": [{
-        "auto-rows": scaleGridAutoColsRows()
-      }],
+      "auto-rows": [
+        {
+          "auto-rows": scaleGridAutoColsRows(),
+        },
+      ],
       /**
        * Gap
        * @see https://tailwindcss.com/docs/gap
        */
-      gap: [{
-        gap: scaleUnambiguousSpacing()
-      }],
+      gap: [
+        {
+          gap: scaleUnambiguousSpacing(),
+        },
+      ],
       /**
        * Gap X
        * @see https://tailwindcss.com/docs/gap
        */
-      "gap-x": [{
-        "gap-x": scaleUnambiguousSpacing()
-      }],
+      "gap-x": [
+        {
+          "gap-x": scaleUnambiguousSpacing(),
+        },
+      ],
       /**
        * Gap Y
        * @see https://tailwindcss.com/docs/gap
        */
-      "gap-y": [{
-        "gap-y": scaleUnambiguousSpacing()
-      }],
+      "gap-y": [
+        {
+          "gap-y": scaleUnambiguousSpacing(),
+        },
+      ],
       /**
        * Justify Content
        * @see https://tailwindcss.com/docs/justify-content
        */
-      "justify-content": [{
-        justify: [...scaleAlignPrimaryAxis(), "normal"]
-      }],
+      "justify-content": [
+        {
+          justify: [...scaleAlignPrimaryAxis(), "normal"],
+        },
+      ],
       /**
        * Justify Items
        * @see https://tailwindcss.com/docs/justify-items
        */
-      "justify-items": [{
-        "justify-items": [...scaleAlignSecondaryAxis(), "normal"]
-      }],
+      "justify-items": [
+        {
+          "justify-items": [...scaleAlignSecondaryAxis(), "normal"],
+        },
+      ],
       /**
        * Justify Self
        * @see https://tailwindcss.com/docs/justify-self
        */
-      "justify-self": [{
-        "justify-self": ["auto", ...scaleAlignSecondaryAxis()]
-      }],
+      "justify-self": [
+        {
+          "justify-self": ["auto", ...scaleAlignSecondaryAxis()],
+        },
+      ],
       /**
        * Align Content
        * @see https://tailwindcss.com/docs/align-content
        */
-      "align-content": [{
-        content: ["normal", ...scaleAlignPrimaryAxis()]
-      }],
+      "align-content": [
+        {
+          content: ["normal", ...scaleAlignPrimaryAxis()],
+        },
+      ],
       /**
        * Align Items
        * @see https://tailwindcss.com/docs/align-items
        */
-      "align-items": [{
-        items: [...scaleAlignSecondaryAxis(), {
-          baseline: ["", "last"]
-        }]
-      }],
+      "align-items": [
+        {
+          items: [
+            ...scaleAlignSecondaryAxis(),
+            {
+              baseline: ["", "last"],
+            },
+          ],
+        },
+      ],
       /**
        * Align Self
        * @see https://tailwindcss.com/docs/align-self
        */
-      "align-self": [{
-        self: ["auto", ...scaleAlignSecondaryAxis(), {
-          baseline: ["", "last"]
-        }]
-      }],
+      "align-self": [
+        {
+          self: [
+            "auto",
+            ...scaleAlignSecondaryAxis(),
+            {
+              baseline: ["", "last"],
+            },
+          ],
+        },
+      ],
       /**
        * Place Content
        * @see https://tailwindcss.com/docs/place-content
        */
-      "place-content": [{
-        "place-content": scaleAlignPrimaryAxis()
-      }],
+      "place-content": [
+        {
+          "place-content": scaleAlignPrimaryAxis(),
+        },
+      ],
       /**
        * Place Items
        * @see https://tailwindcss.com/docs/place-items
        */
-      "place-items": [{
-        "place-items": [...scaleAlignSecondaryAxis(), "baseline"]
-      }],
+      "place-items": [
+        {
+          "place-items": [...scaleAlignSecondaryAxis(), "baseline"],
+        },
+      ],
       /**
        * Place Self
        * @see https://tailwindcss.com/docs/place-self
        */
-      "place-self": [{
-        "place-self": ["auto", ...scaleAlignSecondaryAxis()]
-      }],
+      "place-self": [
+        {
+          "place-self": ["auto", ...scaleAlignSecondaryAxis()],
+        },
+      ],
       // Spacing
       /**
        * Padding
        * @see https://tailwindcss.com/docs/padding
        */
-      p: [{
-        p: scaleUnambiguousSpacing()
-      }],
+      p: [
+        {
+          p: scaleUnambiguousSpacing(),
+        },
+      ],
       /**
        * Padding X
        * @see https://tailwindcss.com/docs/padding
        */
-      px: [{
-        px: scaleUnambiguousSpacing()
-      }],
+      px: [
+        {
+          px: scaleUnambiguousSpacing(),
+        },
+      ],
       /**
        * Padding Y
        * @see https://tailwindcss.com/docs/padding
        */
-      py: [{
-        py: scaleUnambiguousSpacing()
-      }],
+      py: [
+        {
+          py: scaleUnambiguousSpacing(),
+        },
+      ],
       /**
        * Padding Start
        * @see https://tailwindcss.com/docs/padding
        */
-      ps: [{
-        ps: scaleUnambiguousSpacing()
-      }],
+      ps: [
+        {
+          ps: scaleUnambiguousSpacing(),
+        },
+      ],
       /**
        * Padding End
        * @see https://tailwindcss.com/docs/padding
        */
-      pe: [{
-        pe: scaleUnambiguousSpacing()
-      }],
+      pe: [
+        {
+          pe: scaleUnambiguousSpacing(),
+        },
+      ],
       /**
        * Padding Top
        * @see https://tailwindcss.com/docs/padding
        */
-      pt: [{
-        pt: scaleUnambiguousSpacing()
-      }],
+      pt: [
+        {
+          pt: scaleUnambiguousSpacing(),
+        },
+      ],
       /**
        * Padding Right
        * @see https://tailwindcss.com/docs/padding
        */
-      pr: [{
-        pr: scaleUnambiguousSpacing()
-      }],
+      pr: [
+        {
+          pr: scaleUnambiguousSpacing(),
+        },
+      ],
       /**
        * Padding Bottom
        * @see https://tailwindcss.com/docs/padding
        */
-      pb: [{
-        pb: scaleUnambiguousSpacing()
-      }],
+      pb: [
+        {
+          pb: scaleUnambiguousSpacing(),
+        },
+      ],
       /**
        * Padding Left
        * @see https://tailwindcss.com/docs/padding
        */
-      pl: [{
-        pl: scaleUnambiguousSpacing()
-      }],
+      pl: [
+        {
+          pl: scaleUnambiguousSpacing(),
+        },
+      ],
       /**
        * Margin
        * @see https://tailwindcss.com/docs/margin
        */
-      m: [{
-        m: scaleMargin()
-      }],
+      m: [
+        {
+          m: scaleMargin(),
+        },
+      ],
       /**
        * Margin X
        * @see https://tailwindcss.com/docs/margin
        */
-      mx: [{
-        mx: scaleMargin()
-      }],
+      mx: [
+        {
+          mx: scaleMargin(),
+        },
+      ],
       /**
        * Margin Y
        * @see https://tailwindcss.com/docs/margin
        */
-      my: [{
-        my: scaleMargin()
-      }],
+      my: [
+        {
+          my: scaleMargin(),
+        },
+      ],
       /**
        * Margin Start
        * @see https://tailwindcss.com/docs/margin
        */
-      ms: [{
-        ms: scaleMargin()
-      }],
+      ms: [
+        {
+          ms: scaleMargin(),
+        },
+      ],
       /**
        * Margin End
        * @see https://tailwindcss.com/docs/margin
        */
-      me: [{
-        me: scaleMargin()
-      }],
+      me: [
+        {
+          me: scaleMargin(),
+        },
+      ],
       /**
        * Margin Top
        * @see https://tailwindcss.com/docs/margin
        */
-      mt: [{
-        mt: scaleMargin()
-      }],
+      mt: [
+        {
+          mt: scaleMargin(),
+        },
+      ],
       /**
        * Margin Right
        * @see https://tailwindcss.com/docs/margin
        */
-      mr: [{
-        mr: scaleMargin()
-      }],
+      mr: [
+        {
+          mr: scaleMargin(),
+        },
+      ],
       /**
        * Margin Bottom
        * @see https://tailwindcss.com/docs/margin
        */
-      mb: [{
-        mb: scaleMargin()
-      }],
+      mb: [
+        {
+          mb: scaleMargin(),
+        },
+      ],
       /**
        * Margin Left
        * @see https://tailwindcss.com/docs/margin
        */
-      ml: [{
-        ml: scaleMargin()
-      }],
+      ml: [
+        {
+          ml: scaleMargin(),
+        },
+      ],
       /**
        * Space Between X
        * @see https://tailwindcss.com/docs/margin#adding-space-between-children
        */
-      "space-x": [{
-        "space-x": scaleUnambiguousSpacing()
-      }],
+      "space-x": [
+        {
+          "space-x": scaleUnambiguousSpacing(),
+        },
+      ],
       /**
        * Space Between X Reverse
        * @see https://tailwindcss.com/docs/margin#adding-space-between-children
@@ -17416,9 +20532,11 @@ const getDefaultConfig = () => {
        * Space Between Y
        * @see https://tailwindcss.com/docs/margin#adding-space-between-children
        */
-      "space-y": [{
-        "space-y": scaleUnambiguousSpacing()
-      }],
+      "space-y": [
+        {
+          "space-y": scaleUnambiguousSpacing(),
+        },
+      ],
       /**
        * Space Between Y Reverse
        * @see https://tailwindcss.com/docs/margin#adding-space-between-children
@@ -17431,68 +20549,82 @@ const getDefaultConfig = () => {
        * Size
        * @see https://tailwindcss.com/docs/width#setting-both-width-and-height
        */
-      size: [{
-        size: scaleSizing()
-      }],
+      size: [
+        {
+          size: scaleSizing(),
+        },
+      ],
       /**
        * Width
        * @see https://tailwindcss.com/docs/width
        */
-      w: [{
-        w: [themeContainer, "screen", ...scaleSizing()]
-      }],
+      w: [
+        {
+          w: [themeContainer, "screen", ...scaleSizing()],
+        },
+      ],
       /**
        * Min-Width
        * @see https://tailwindcss.com/docs/min-width
        */
-      "min-w": [{
-        "min-w": [
-          themeContainer,
-          "screen",
-          /** Deprecated. @see https://github.com/tailwindlabs/tailwindcss.com/issues/2027#issuecomment-2620152757 */
-          "none",
-          ...scaleSizing()
-        ]
-      }],
+      "min-w": [
+        {
+          "min-w": [
+            themeContainer,
+            "screen",
+            /** Deprecated. @see https://github.com/tailwindlabs/tailwindcss.com/issues/2027#issuecomment-2620152757 */
+            "none",
+            ...scaleSizing(),
+          ],
+        },
+      ],
       /**
        * Max-Width
        * @see https://tailwindcss.com/docs/max-width
        */
-      "max-w": [{
-        "max-w": [
-          themeContainer,
-          "screen",
-          "none",
-          /** Deprecated since Tailwind CSS v4.0.0. @see https://github.com/tailwindlabs/tailwindcss.com/issues/2027#issuecomment-2620152757 */
-          "prose",
-          /** Deprecated since Tailwind CSS v4.0.0. @see https://github.com/tailwindlabs/tailwindcss.com/issues/2027#issuecomment-2620152757 */
-          {
-            screen: [themeBreakpoint]
-          },
-          ...scaleSizing()
-        ]
-      }],
+      "max-w": [
+        {
+          "max-w": [
+            themeContainer,
+            "screen",
+            "none",
+            /** Deprecated since Tailwind CSS v4.0.0. @see https://github.com/tailwindlabs/tailwindcss.com/issues/2027#issuecomment-2620152757 */
+            "prose",
+            /** Deprecated since Tailwind CSS v4.0.0. @see https://github.com/tailwindlabs/tailwindcss.com/issues/2027#issuecomment-2620152757 */
+            {
+              screen: [themeBreakpoint],
+            },
+            ...scaleSizing(),
+          ],
+        },
+      ],
       /**
        * Height
        * @see https://tailwindcss.com/docs/height
        */
-      h: [{
-        h: ["screen", "lh", ...scaleSizing()]
-      }],
+      h: [
+        {
+          h: ["screen", "lh", ...scaleSizing()],
+        },
+      ],
       /**
        * Min-Height
        * @see https://tailwindcss.com/docs/min-height
        */
-      "min-h": [{
-        "min-h": ["screen", "lh", "none", ...scaleSizing()]
-      }],
+      "min-h": [
+        {
+          "min-h": ["screen", "lh", "none", ...scaleSizing()],
+        },
+      ],
       /**
        * Max-Height
        * @see https://tailwindcss.com/docs/max-height
        */
-      "max-h": [{
-        "max-h": ["screen", "lh", ...scaleSizing()]
-      }],
+      "max-h": [
+        {
+          "max-h": ["screen", "lh", ...scaleSizing()],
+        },
+      ],
       // ------------------
       // --- Typography ---
       // ------------------
@@ -17500,9 +20632,16 @@ const getDefaultConfig = () => {
        * Font Size
        * @see https://tailwindcss.com/docs/font-size
        */
-      "font-size": [{
-        text: ["base", themeText, isArbitraryVariableLength, isArbitraryLength]
-      }],
+      "font-size": [
+        {
+          text: [
+            "base",
+            themeText,
+            isArbitraryVariableLength,
+            isArbitraryLength,
+          ],
+        },
+      ],
       /**
        * Font Smoothing
        * @see https://tailwindcss.com/docs/font-smoothing
@@ -17517,23 +20656,41 @@ const getDefaultConfig = () => {
        * Font Weight
        * @see https://tailwindcss.com/docs/font-weight
        */
-      "font-weight": [{
-        font: [themeFontWeight, isArbitraryVariable, isArbitraryNumber]
-      }],
+      "font-weight": [
+        {
+          font: [themeFontWeight, isArbitraryVariable, isArbitraryNumber],
+        },
+      ],
       /**
        * Font Stretch
        * @see https://tailwindcss.com/docs/font-stretch
        */
-      "font-stretch": [{
-        "font-stretch": ["ultra-condensed", "extra-condensed", "condensed", "semi-condensed", "normal", "semi-expanded", "expanded", "extra-expanded", "ultra-expanded", isPercent, isArbitraryValue]
-      }],
+      "font-stretch": [
+        {
+          "font-stretch": [
+            "ultra-condensed",
+            "extra-condensed",
+            "condensed",
+            "semi-condensed",
+            "normal",
+            "semi-expanded",
+            "expanded",
+            "extra-expanded",
+            "ultra-expanded",
+            isPercent,
+            isArbitraryValue,
+          ],
+        },
+      ],
       /**
        * Font Family
        * @see https://tailwindcss.com/docs/font-family
        */
-      "font-family": [{
-        font: [isArbitraryVariableFamilyName, isArbitraryValue, themeFont]
-      }],
+      "font-family": [
+        {
+          font: [isArbitraryVariableFamilyName, isArbitraryValue, themeFont],
+        },
+      ],
       /**
        * Font Variant Numeric
        * @see https://tailwindcss.com/docs/font-variant-numeric
@@ -17568,103 +20725,156 @@ const getDefaultConfig = () => {
        * Letter Spacing
        * @see https://tailwindcss.com/docs/letter-spacing
        */
-      tracking: [{
-        tracking: [themeTracking, isArbitraryVariable, isArbitraryValue]
-      }],
+      tracking: [
+        {
+          tracking: [themeTracking, isArbitraryVariable, isArbitraryValue],
+        },
+      ],
       /**
        * Line Clamp
        * @see https://tailwindcss.com/docs/line-clamp
        */
-      "line-clamp": [{
-        "line-clamp": [isNumber, "none", isArbitraryVariable, isArbitraryNumber]
-      }],
+      "line-clamp": [
+        {
+          "line-clamp": [
+            isNumber,
+            "none",
+            isArbitraryVariable,
+            isArbitraryNumber,
+          ],
+        },
+      ],
       /**
        * Line Height
        * @see https://tailwindcss.com/docs/line-height
        */
-      leading: [{
-        leading: [
-          /** Deprecated since Tailwind CSS v4.0.0. @see https://github.com/tailwindlabs/tailwindcss.com/issues/2027#issuecomment-2620152757 */
-          themeLeading,
-          ...scaleUnambiguousSpacing()
-        ]
-      }],
+      leading: [
+        {
+          leading: [
+            /** Deprecated since Tailwind CSS v4.0.0. @see https://github.com/tailwindlabs/tailwindcss.com/issues/2027#issuecomment-2620152757 */
+            themeLeading,
+            ...scaleUnambiguousSpacing(),
+          ],
+        },
+      ],
       /**
        * List Style Image
        * @see https://tailwindcss.com/docs/list-style-image
        */
-      "list-image": [{
-        "list-image": ["none", isArbitraryVariable, isArbitraryValue]
-      }],
+      "list-image": [
+        {
+          "list-image": ["none", isArbitraryVariable, isArbitraryValue],
+        },
+      ],
       /**
        * List Style Position
        * @see https://tailwindcss.com/docs/list-style-position
        */
-      "list-style-position": [{
-        list: ["inside", "outside"]
-      }],
+      "list-style-position": [
+        {
+          list: ["inside", "outside"],
+        },
+      ],
       /**
        * List Style Type
        * @see https://tailwindcss.com/docs/list-style-type
        */
-      "list-style-type": [{
-        list: ["disc", "decimal", "none", isArbitraryVariable, isArbitraryValue]
-      }],
+      "list-style-type": [
+        {
+          list: [
+            "disc",
+            "decimal",
+            "none",
+            isArbitraryVariable,
+            isArbitraryValue,
+          ],
+        },
+      ],
       /**
        * Text Alignment
        * @see https://tailwindcss.com/docs/text-align
        */
-      "text-alignment": [{
-        text: ["left", "center", "right", "justify", "start", "end"]
-      }],
+      "text-alignment": [
+        {
+          text: ["left", "center", "right", "justify", "start", "end"],
+        },
+      ],
       /**
        * Placeholder Color
        * @deprecated since Tailwind CSS v3.0.0
        * @see https://v3.tailwindcss.com/docs/placeholder-color
        */
-      "placeholder-color": [{
-        placeholder: scaleColor()
-      }],
+      "placeholder-color": [
+        {
+          placeholder: scaleColor(),
+        },
+      ],
       /**
        * Text Color
        * @see https://tailwindcss.com/docs/text-color
        */
-      "text-color": [{
-        text: scaleColor()
-      }],
+      "text-color": [
+        {
+          text: scaleColor(),
+        },
+      ],
       /**
        * Text Decoration
        * @see https://tailwindcss.com/docs/text-decoration
        */
-      "text-decoration": ["underline", "overline", "line-through", "no-underline"],
+      "text-decoration": [
+        "underline",
+        "overline",
+        "line-through",
+        "no-underline",
+      ],
       /**
        * Text Decoration Style
        * @see https://tailwindcss.com/docs/text-decoration-style
        */
-      "text-decoration-style": [{
-        decoration: [...scaleLineStyle(), "wavy"]
-      }],
+      "text-decoration-style": [
+        {
+          decoration: [...scaleLineStyle(), "wavy"],
+        },
+      ],
       /**
        * Text Decoration Thickness
        * @see https://tailwindcss.com/docs/text-decoration-thickness
        */
-      "text-decoration-thickness": [{
-        decoration: [isNumber, "from-font", "auto", isArbitraryVariable, isArbitraryLength]
-      }],
+      "text-decoration-thickness": [
+        {
+          decoration: [
+            isNumber,
+            "from-font",
+            "auto",
+            isArbitraryVariable,
+            isArbitraryLength,
+          ],
+        },
+      ],
       /**
        * Text Decoration Color
        * @see https://tailwindcss.com/docs/text-decoration-color
        */
-      "text-decoration-color": [{
-        decoration: scaleColor()
-      }],
+      "text-decoration-color": [
+        {
+          decoration: scaleColor(),
+        },
+      ],
       /**
        * Text Underline Offset
        * @see https://tailwindcss.com/docs/text-underline-offset
        */
-      "underline-offset": [{
-        "underline-offset": [isNumber, "auto", isArbitraryVariable, isArbitraryValue]
-      }],
+      "underline-offset": [
+        {
+          "underline-offset": [
+            isNumber,
+            "auto",
+            isArbitraryVariable,
+            isArbitraryValue,
+          ],
+        },
+      ],
       /**
        * Text Transform
        * @see https://tailwindcss.com/docs/text-transform
@@ -17679,58 +20889,92 @@ const getDefaultConfig = () => {
        * Text Wrap
        * @see https://tailwindcss.com/docs/text-wrap
        */
-      "text-wrap": [{
-        text: ["wrap", "nowrap", "balance", "pretty"]
-      }],
+      "text-wrap": [
+        {
+          text: ["wrap", "nowrap", "balance", "pretty"],
+        },
+      ],
       /**
        * Text Indent
        * @see https://tailwindcss.com/docs/text-indent
        */
-      indent: [{
-        indent: scaleUnambiguousSpacing()
-      }],
+      indent: [
+        {
+          indent: scaleUnambiguousSpacing(),
+        },
+      ],
       /**
        * Vertical Alignment
        * @see https://tailwindcss.com/docs/vertical-align
        */
-      "vertical-align": [{
-        align: ["baseline", "top", "middle", "bottom", "text-top", "text-bottom", "sub", "super", isArbitraryVariable, isArbitraryValue]
-      }],
+      "vertical-align": [
+        {
+          align: [
+            "baseline",
+            "top",
+            "middle",
+            "bottom",
+            "text-top",
+            "text-bottom",
+            "sub",
+            "super",
+            isArbitraryVariable,
+            isArbitraryValue,
+          ],
+        },
+      ],
       /**
        * Whitespace
        * @see https://tailwindcss.com/docs/whitespace
        */
-      whitespace: [{
-        whitespace: ["normal", "nowrap", "pre", "pre-line", "pre-wrap", "break-spaces"]
-      }],
+      whitespace: [
+        {
+          whitespace: [
+            "normal",
+            "nowrap",
+            "pre",
+            "pre-line",
+            "pre-wrap",
+            "break-spaces",
+          ],
+        },
+      ],
       /**
        * Word Break
        * @see https://tailwindcss.com/docs/word-break
        */
-      break: [{
-        break: ["normal", "words", "all", "keep"]
-      }],
+      break: [
+        {
+          break: ["normal", "words", "all", "keep"],
+        },
+      ],
       /**
        * Overflow Wrap
        * @see https://tailwindcss.com/docs/overflow-wrap
        */
-      wrap: [{
-        wrap: ["break-word", "anywhere", "normal"]
-      }],
+      wrap: [
+        {
+          wrap: ["break-word", "anywhere", "normal"],
+        },
+      ],
       /**
        * Hyphens
        * @see https://tailwindcss.com/docs/hyphens
        */
-      hyphens: [{
-        hyphens: ["none", "manual", "auto"]
-      }],
+      hyphens: [
+        {
+          hyphens: ["none", "manual", "auto"],
+        },
+      ],
       /**
        * Content
        * @see https://tailwindcss.com/docs/content
        */
-      content: [{
-        content: ["none", isArbitraryVariable, isArbitraryValue]
-      }],
+      content: [
+        {
+          content: ["none", isArbitraryVariable, isArbitraryValue],
+        },
+      ],
       // -------------------
       // --- Backgrounds ---
       // -------------------
@@ -17738,106 +20982,144 @@ const getDefaultConfig = () => {
        * Background Attachment
        * @see https://tailwindcss.com/docs/background-attachment
        */
-      "bg-attachment": [{
-        bg: ["fixed", "local", "scroll"]
-      }],
+      "bg-attachment": [
+        {
+          bg: ["fixed", "local", "scroll"],
+        },
+      ],
       /**
        * Background Clip
        * @see https://tailwindcss.com/docs/background-clip
        */
-      "bg-clip": [{
-        "bg-clip": ["border", "padding", "content", "text"]
-      }],
+      "bg-clip": [
+        {
+          "bg-clip": ["border", "padding", "content", "text"],
+        },
+      ],
       /**
        * Background Origin
        * @see https://tailwindcss.com/docs/background-origin
        */
-      "bg-origin": [{
-        "bg-origin": ["border", "padding", "content"]
-      }],
+      "bg-origin": [
+        {
+          "bg-origin": ["border", "padding", "content"],
+        },
+      ],
       /**
        * Background Position
        * @see https://tailwindcss.com/docs/background-position
        */
-      "bg-position": [{
-        bg: scaleBgPosition()
-      }],
+      "bg-position": [
+        {
+          bg: scaleBgPosition(),
+        },
+      ],
       /**
        * Background Repeat
        * @see https://tailwindcss.com/docs/background-repeat
        */
-      "bg-repeat": [{
-        bg: scaleBgRepeat()
-      }],
+      "bg-repeat": [
+        {
+          bg: scaleBgRepeat(),
+        },
+      ],
       /**
        * Background Size
        * @see https://tailwindcss.com/docs/background-size
        */
-      "bg-size": [{
-        bg: scaleBgSize()
-      }],
+      "bg-size": [
+        {
+          bg: scaleBgSize(),
+        },
+      ],
       /**
        * Background Image
        * @see https://tailwindcss.com/docs/background-image
        */
-      "bg-image": [{
-        bg: ["none", {
-          linear: [{
-            to: ["t", "tr", "r", "br", "b", "bl", "l", "tl"]
-          }, isInteger, isArbitraryVariable, isArbitraryValue],
-          radial: ["", isArbitraryVariable, isArbitraryValue],
-          conic: [isInteger, isArbitraryVariable, isArbitraryValue]
-        }, isArbitraryVariableImage, isArbitraryImage]
-      }],
+      "bg-image": [
+        {
+          bg: [
+            "none",
+            {
+              linear: [
+                {
+                  to: ["t", "tr", "r", "br", "b", "bl", "l", "tl"],
+                },
+                isInteger,
+                isArbitraryVariable,
+                isArbitraryValue,
+              ],
+              radial: ["", isArbitraryVariable, isArbitraryValue],
+              conic: [isInteger, isArbitraryVariable, isArbitraryValue],
+            },
+            isArbitraryVariableImage,
+            isArbitraryImage,
+          ],
+        },
+      ],
       /**
        * Background Color
        * @see https://tailwindcss.com/docs/background-color
        */
-      "bg-color": [{
-        bg: scaleColor()
-      }],
+      "bg-color": [
+        {
+          bg: scaleColor(),
+        },
+      ],
       /**
        * Gradient Color Stops From Position
        * @see https://tailwindcss.com/docs/gradient-color-stops
        */
-      "gradient-from-pos": [{
-        from: scaleGradientStopPosition()
-      }],
+      "gradient-from-pos": [
+        {
+          from: scaleGradientStopPosition(),
+        },
+      ],
       /**
        * Gradient Color Stops Via Position
        * @see https://tailwindcss.com/docs/gradient-color-stops
        */
-      "gradient-via-pos": [{
-        via: scaleGradientStopPosition()
-      }],
+      "gradient-via-pos": [
+        {
+          via: scaleGradientStopPosition(),
+        },
+      ],
       /**
        * Gradient Color Stops To Position
        * @see https://tailwindcss.com/docs/gradient-color-stops
        */
-      "gradient-to-pos": [{
-        to: scaleGradientStopPosition()
-      }],
+      "gradient-to-pos": [
+        {
+          to: scaleGradientStopPosition(),
+        },
+      ],
       /**
        * Gradient Color Stops From
        * @see https://tailwindcss.com/docs/gradient-color-stops
        */
-      "gradient-from": [{
-        from: scaleColor()
-      }],
+      "gradient-from": [
+        {
+          from: scaleColor(),
+        },
+      ],
       /**
        * Gradient Color Stops Via
        * @see https://tailwindcss.com/docs/gradient-color-stops
        */
-      "gradient-via": [{
-        via: scaleColor()
-      }],
+      "gradient-via": [
+        {
+          via: scaleColor(),
+        },
+      ],
       /**
        * Gradient Color Stops To
        * @see https://tailwindcss.com/docs/gradient-color-stops
        */
-      "gradient-to": [{
-        to: scaleColor()
-      }],
+      "gradient-to": [
+        {
+          to: scaleColor(),
+        },
+      ],
       // ---------------
       // --- Borders ---
       // ---------------
@@ -17845,177 +21127,227 @@ const getDefaultConfig = () => {
        * Border Radius
        * @see https://tailwindcss.com/docs/border-radius
        */
-      rounded: [{
-        rounded: scaleRadius()
-      }],
+      rounded: [
+        {
+          rounded: scaleRadius(),
+        },
+      ],
       /**
        * Border Radius Start
        * @see https://tailwindcss.com/docs/border-radius
        */
-      "rounded-s": [{
-        "rounded-s": scaleRadius()
-      }],
+      "rounded-s": [
+        {
+          "rounded-s": scaleRadius(),
+        },
+      ],
       /**
        * Border Radius End
        * @see https://tailwindcss.com/docs/border-radius
        */
-      "rounded-e": [{
-        "rounded-e": scaleRadius()
-      }],
+      "rounded-e": [
+        {
+          "rounded-e": scaleRadius(),
+        },
+      ],
       /**
        * Border Radius Top
        * @see https://tailwindcss.com/docs/border-radius
        */
-      "rounded-t": [{
-        "rounded-t": scaleRadius()
-      }],
+      "rounded-t": [
+        {
+          "rounded-t": scaleRadius(),
+        },
+      ],
       /**
        * Border Radius Right
        * @see https://tailwindcss.com/docs/border-radius
        */
-      "rounded-r": [{
-        "rounded-r": scaleRadius()
-      }],
+      "rounded-r": [
+        {
+          "rounded-r": scaleRadius(),
+        },
+      ],
       /**
        * Border Radius Bottom
        * @see https://tailwindcss.com/docs/border-radius
        */
-      "rounded-b": [{
-        "rounded-b": scaleRadius()
-      }],
+      "rounded-b": [
+        {
+          "rounded-b": scaleRadius(),
+        },
+      ],
       /**
        * Border Radius Left
        * @see https://tailwindcss.com/docs/border-radius
        */
-      "rounded-l": [{
-        "rounded-l": scaleRadius()
-      }],
+      "rounded-l": [
+        {
+          "rounded-l": scaleRadius(),
+        },
+      ],
       /**
        * Border Radius Start Start
        * @see https://tailwindcss.com/docs/border-radius
        */
-      "rounded-ss": [{
-        "rounded-ss": scaleRadius()
-      }],
+      "rounded-ss": [
+        {
+          "rounded-ss": scaleRadius(),
+        },
+      ],
       /**
        * Border Radius Start End
        * @see https://tailwindcss.com/docs/border-radius
        */
-      "rounded-se": [{
-        "rounded-se": scaleRadius()
-      }],
+      "rounded-se": [
+        {
+          "rounded-se": scaleRadius(),
+        },
+      ],
       /**
        * Border Radius End End
        * @see https://tailwindcss.com/docs/border-radius
        */
-      "rounded-ee": [{
-        "rounded-ee": scaleRadius()
-      }],
+      "rounded-ee": [
+        {
+          "rounded-ee": scaleRadius(),
+        },
+      ],
       /**
        * Border Radius End Start
        * @see https://tailwindcss.com/docs/border-radius
        */
-      "rounded-es": [{
-        "rounded-es": scaleRadius()
-      }],
+      "rounded-es": [
+        {
+          "rounded-es": scaleRadius(),
+        },
+      ],
       /**
        * Border Radius Top Left
        * @see https://tailwindcss.com/docs/border-radius
        */
-      "rounded-tl": [{
-        "rounded-tl": scaleRadius()
-      }],
+      "rounded-tl": [
+        {
+          "rounded-tl": scaleRadius(),
+        },
+      ],
       /**
        * Border Radius Top Right
        * @see https://tailwindcss.com/docs/border-radius
        */
-      "rounded-tr": [{
-        "rounded-tr": scaleRadius()
-      }],
+      "rounded-tr": [
+        {
+          "rounded-tr": scaleRadius(),
+        },
+      ],
       /**
        * Border Radius Bottom Right
        * @see https://tailwindcss.com/docs/border-radius
        */
-      "rounded-br": [{
-        "rounded-br": scaleRadius()
-      }],
+      "rounded-br": [
+        {
+          "rounded-br": scaleRadius(),
+        },
+      ],
       /**
        * Border Radius Bottom Left
        * @see https://tailwindcss.com/docs/border-radius
        */
-      "rounded-bl": [{
-        "rounded-bl": scaleRadius()
-      }],
+      "rounded-bl": [
+        {
+          "rounded-bl": scaleRadius(),
+        },
+      ],
       /**
        * Border Width
        * @see https://tailwindcss.com/docs/border-width
        */
-      "border-w": [{
-        border: scaleBorderWidth()
-      }],
+      "border-w": [
+        {
+          border: scaleBorderWidth(),
+        },
+      ],
       /**
        * Border Width X
        * @see https://tailwindcss.com/docs/border-width
        */
-      "border-w-x": [{
-        "border-x": scaleBorderWidth()
-      }],
+      "border-w-x": [
+        {
+          "border-x": scaleBorderWidth(),
+        },
+      ],
       /**
        * Border Width Y
        * @see https://tailwindcss.com/docs/border-width
        */
-      "border-w-y": [{
-        "border-y": scaleBorderWidth()
-      }],
+      "border-w-y": [
+        {
+          "border-y": scaleBorderWidth(),
+        },
+      ],
       /**
        * Border Width Start
        * @see https://tailwindcss.com/docs/border-width
        */
-      "border-w-s": [{
-        "border-s": scaleBorderWidth()
-      }],
+      "border-w-s": [
+        {
+          "border-s": scaleBorderWidth(),
+        },
+      ],
       /**
        * Border Width End
        * @see https://tailwindcss.com/docs/border-width
        */
-      "border-w-e": [{
-        "border-e": scaleBorderWidth()
-      }],
+      "border-w-e": [
+        {
+          "border-e": scaleBorderWidth(),
+        },
+      ],
       /**
        * Border Width Top
        * @see https://tailwindcss.com/docs/border-width
        */
-      "border-w-t": [{
-        "border-t": scaleBorderWidth()
-      }],
+      "border-w-t": [
+        {
+          "border-t": scaleBorderWidth(),
+        },
+      ],
       /**
        * Border Width Right
        * @see https://tailwindcss.com/docs/border-width
        */
-      "border-w-r": [{
-        "border-r": scaleBorderWidth()
-      }],
+      "border-w-r": [
+        {
+          "border-r": scaleBorderWidth(),
+        },
+      ],
       /**
        * Border Width Bottom
        * @see https://tailwindcss.com/docs/border-width
        */
-      "border-w-b": [{
-        "border-b": scaleBorderWidth()
-      }],
+      "border-w-b": [
+        {
+          "border-b": scaleBorderWidth(),
+        },
+      ],
       /**
        * Border Width Left
        * @see https://tailwindcss.com/docs/border-width
        */
-      "border-w-l": [{
-        "border-l": scaleBorderWidth()
-      }],
+      "border-w-l": [
+        {
+          "border-l": scaleBorderWidth(),
+        },
+      ],
       /**
        * Divide Width X
        * @see https://tailwindcss.com/docs/border-width#between-children
        */
-      "divide-x": [{
-        "divide-x": scaleBorderWidth()
-      }],
+      "divide-x": [
+        {
+          "divide-x": scaleBorderWidth(),
+        },
+      ],
       /**
        * Divide Width X Reverse
        * @see https://tailwindcss.com/docs/border-width#between-children
@@ -18025,9 +21357,11 @@ const getDefaultConfig = () => {
        * Divide Width Y
        * @see https://tailwindcss.com/docs/border-width#between-children
        */
-      "divide-y": [{
-        "divide-y": scaleBorderWidth()
-      }],
+      "divide-y": [
+        {
+          "divide-y": scaleBorderWidth(),
+        },
+      ],
       /**
        * Divide Width Y Reverse
        * @see https://tailwindcss.com/docs/border-width#between-children
@@ -18037,114 +21371,146 @@ const getDefaultConfig = () => {
        * Border Style
        * @see https://tailwindcss.com/docs/border-style
        */
-      "border-style": [{
-        border: [...scaleLineStyle(), "hidden", "none"]
-      }],
+      "border-style": [
+        {
+          border: [...scaleLineStyle(), "hidden", "none"],
+        },
+      ],
       /**
        * Divide Style
        * @see https://tailwindcss.com/docs/border-style#setting-the-divider-style
        */
-      "divide-style": [{
-        divide: [...scaleLineStyle(), "hidden", "none"]
-      }],
+      "divide-style": [
+        {
+          divide: [...scaleLineStyle(), "hidden", "none"],
+        },
+      ],
       /**
        * Border Color
        * @see https://tailwindcss.com/docs/border-color
        */
-      "border-color": [{
-        border: scaleColor()
-      }],
+      "border-color": [
+        {
+          border: scaleColor(),
+        },
+      ],
       /**
        * Border Color X
        * @see https://tailwindcss.com/docs/border-color
        */
-      "border-color-x": [{
-        "border-x": scaleColor()
-      }],
+      "border-color-x": [
+        {
+          "border-x": scaleColor(),
+        },
+      ],
       /**
        * Border Color Y
        * @see https://tailwindcss.com/docs/border-color
        */
-      "border-color-y": [{
-        "border-y": scaleColor()
-      }],
+      "border-color-y": [
+        {
+          "border-y": scaleColor(),
+        },
+      ],
       /**
        * Border Color S
        * @see https://tailwindcss.com/docs/border-color
        */
-      "border-color-s": [{
-        "border-s": scaleColor()
-      }],
+      "border-color-s": [
+        {
+          "border-s": scaleColor(),
+        },
+      ],
       /**
        * Border Color E
        * @see https://tailwindcss.com/docs/border-color
        */
-      "border-color-e": [{
-        "border-e": scaleColor()
-      }],
+      "border-color-e": [
+        {
+          "border-e": scaleColor(),
+        },
+      ],
       /**
        * Border Color Top
        * @see https://tailwindcss.com/docs/border-color
        */
-      "border-color-t": [{
-        "border-t": scaleColor()
-      }],
+      "border-color-t": [
+        {
+          "border-t": scaleColor(),
+        },
+      ],
       /**
        * Border Color Right
        * @see https://tailwindcss.com/docs/border-color
        */
-      "border-color-r": [{
-        "border-r": scaleColor()
-      }],
+      "border-color-r": [
+        {
+          "border-r": scaleColor(),
+        },
+      ],
       /**
        * Border Color Bottom
        * @see https://tailwindcss.com/docs/border-color
        */
-      "border-color-b": [{
-        "border-b": scaleColor()
-      }],
+      "border-color-b": [
+        {
+          "border-b": scaleColor(),
+        },
+      ],
       /**
        * Border Color Left
        * @see https://tailwindcss.com/docs/border-color
        */
-      "border-color-l": [{
-        "border-l": scaleColor()
-      }],
+      "border-color-l": [
+        {
+          "border-l": scaleColor(),
+        },
+      ],
       /**
        * Divide Color
        * @see https://tailwindcss.com/docs/divide-color
        */
-      "divide-color": [{
-        divide: scaleColor()
-      }],
+      "divide-color": [
+        {
+          divide: scaleColor(),
+        },
+      ],
       /**
        * Outline Style
        * @see https://tailwindcss.com/docs/outline-style
        */
-      "outline-style": [{
-        outline: [...scaleLineStyle(), "none", "hidden"]
-      }],
+      "outline-style": [
+        {
+          outline: [...scaleLineStyle(), "none", "hidden"],
+        },
+      ],
       /**
        * Outline Offset
        * @see https://tailwindcss.com/docs/outline-offset
        */
-      "outline-offset": [{
-        "outline-offset": [isNumber, isArbitraryVariable, isArbitraryValue]
-      }],
+      "outline-offset": [
+        {
+          "outline-offset": [isNumber, isArbitraryVariable, isArbitraryValue],
+        },
+      ],
       /**
        * Outline Width
        * @see https://tailwindcss.com/docs/outline-width
        */
-      "outline-w": [{
-        outline: ["", isNumber, isArbitraryVariableLength, isArbitraryLength]
-      }],
+      "outline-w": [
+        {
+          outline: ["", isNumber, isArbitraryVariableLength, isArbitraryLength],
+        },
+      ],
       /**
        * Outline Color
        * @see https://tailwindcss.com/docs/outline-color
        */
-      "outline-color": [{
-        outline: scaleColor()
-      }],
+      "outline-color": [
+        {
+          outline: scaleColor(),
+        },
+      ],
       // ---------------
       // --- Effects ---
       // ---------------
@@ -18152,44 +21518,59 @@ const getDefaultConfig = () => {
        * Box Shadow
        * @see https://tailwindcss.com/docs/box-shadow
        */
-      shadow: [{
-        shadow: [
-          // Deprecated since Tailwind CSS v4.0.0
-          "",
-          "none",
-          themeShadow,
-          isArbitraryVariableShadow,
-          isArbitraryShadow
-        ]
-      }],
+      shadow: [
+        {
+          shadow: [
+            // Deprecated since Tailwind CSS v4.0.0
+            "",
+            "none",
+            themeShadow,
+            isArbitraryVariableShadow,
+            isArbitraryShadow,
+          ],
+        },
+      ],
       /**
        * Box Shadow Color
        * @see https://tailwindcss.com/docs/box-shadow#setting-the-shadow-color
        */
-      "shadow-color": [{
-        shadow: scaleColor()
-      }],
+      "shadow-color": [
+        {
+          shadow: scaleColor(),
+        },
+      ],
       /**
        * Inset Box Shadow
        * @see https://tailwindcss.com/docs/box-shadow#adding-an-inset-shadow
        */
-      "inset-shadow": [{
-        "inset-shadow": ["none", themeInsetShadow, isArbitraryVariableShadow, isArbitraryShadow]
-      }],
+      "inset-shadow": [
+        {
+          "inset-shadow": [
+            "none",
+            themeInsetShadow,
+            isArbitraryVariableShadow,
+            isArbitraryShadow,
+          ],
+        },
+      ],
       /**
        * Inset Box Shadow Color
        * @see https://tailwindcss.com/docs/box-shadow#setting-the-inset-shadow-color
        */
-      "inset-shadow-color": [{
-        "inset-shadow": scaleColor()
-      }],
+      "inset-shadow-color": [
+        {
+          "inset-shadow": scaleColor(),
+        },
+      ],
       /**
        * Ring Width
        * @see https://tailwindcss.com/docs/box-shadow#adding-a-ring
        */
-      "ring-w": [{
-        ring: scaleBorderWidth()
-      }],
+      "ring-w": [
+        {
+          ring: scaleBorderWidth(),
+        },
+      ],
       /**
        * Ring Width Inset
        * @see https://v3.tailwindcss.com/docs/ring-width#inset-rings
@@ -18201,272 +21582,416 @@ const getDefaultConfig = () => {
        * Ring Color
        * @see https://tailwindcss.com/docs/box-shadow#setting-the-ring-color
        */
-      "ring-color": [{
-        ring: scaleColor()
-      }],
+      "ring-color": [
+        {
+          ring: scaleColor(),
+        },
+      ],
       /**
        * Ring Offset Width
        * @see https://v3.tailwindcss.com/docs/ring-offset-width
        * @deprecated since Tailwind CSS v4.0.0
        * @see https://github.com/tailwindlabs/tailwindcss/blob/v4.0.0/packages/tailwindcss/src/utilities.ts#L4158
        */
-      "ring-offset-w": [{
-        "ring-offset": [isNumber, isArbitraryLength]
-      }],
+      "ring-offset-w": [
+        {
+          "ring-offset": [isNumber, isArbitraryLength],
+        },
+      ],
       /**
        * Ring Offset Color
        * @see https://v3.tailwindcss.com/docs/ring-offset-color
        * @deprecated since Tailwind CSS v4.0.0
        * @see https://github.com/tailwindlabs/tailwindcss/blob/v4.0.0/packages/tailwindcss/src/utilities.ts#L4158
        */
-      "ring-offset-color": [{
-        "ring-offset": scaleColor()
-      }],
+      "ring-offset-color": [
+        {
+          "ring-offset": scaleColor(),
+        },
+      ],
       /**
        * Inset Ring Width
        * @see https://tailwindcss.com/docs/box-shadow#adding-an-inset-ring
        */
-      "inset-ring-w": [{
-        "inset-ring": scaleBorderWidth()
-      }],
+      "inset-ring-w": [
+        {
+          "inset-ring": scaleBorderWidth(),
+        },
+      ],
       /**
        * Inset Ring Color
        * @see https://tailwindcss.com/docs/box-shadow#setting-the-inset-ring-color
        */
-      "inset-ring-color": [{
-        "inset-ring": scaleColor()
-      }],
+      "inset-ring-color": [
+        {
+          "inset-ring": scaleColor(),
+        },
+      ],
       /**
        * Text Shadow
        * @see https://tailwindcss.com/docs/text-shadow
        */
-      "text-shadow": [{
-        "text-shadow": ["none", themeTextShadow, isArbitraryVariableShadow, isArbitraryShadow]
-      }],
+      "text-shadow": [
+        {
+          "text-shadow": [
+            "none",
+            themeTextShadow,
+            isArbitraryVariableShadow,
+            isArbitraryShadow,
+          ],
+        },
+      ],
       /**
        * Text Shadow Color
        * @see https://tailwindcss.com/docs/text-shadow#setting-the-shadow-color
        */
-      "text-shadow-color": [{
-        "text-shadow": scaleColor()
-      }],
+      "text-shadow-color": [
+        {
+          "text-shadow": scaleColor(),
+        },
+      ],
       /**
        * Opacity
        * @see https://tailwindcss.com/docs/opacity
        */
-      opacity: [{
-        opacity: [isNumber, isArbitraryVariable, isArbitraryValue]
-      }],
+      opacity: [
+        {
+          opacity: [isNumber, isArbitraryVariable, isArbitraryValue],
+        },
+      ],
       /**
        * Mix Blend Mode
        * @see https://tailwindcss.com/docs/mix-blend-mode
        */
-      "mix-blend": [{
-        "mix-blend": [...scaleBlendMode(), "plus-darker", "plus-lighter"]
-      }],
+      "mix-blend": [
+        {
+          "mix-blend": [...scaleBlendMode(), "plus-darker", "plus-lighter"],
+        },
+      ],
       /**
        * Background Blend Mode
        * @see https://tailwindcss.com/docs/background-blend-mode
        */
-      "bg-blend": [{
-        "bg-blend": scaleBlendMode()
-      }],
+      "bg-blend": [
+        {
+          "bg-blend": scaleBlendMode(),
+        },
+      ],
       /**
        * Mask Clip
        * @see https://tailwindcss.com/docs/mask-clip
        */
-      "mask-clip": [{
-        "mask-clip": ["border", "padding", "content", "fill", "stroke", "view"]
-      }, "mask-no-clip"],
+      "mask-clip": [
+        {
+          "mask-clip": [
+            "border",
+            "padding",
+            "content",
+            "fill",
+            "stroke",
+            "view",
+          ],
+        },
+        "mask-no-clip",
+      ],
       /**
        * Mask Composite
        * @see https://tailwindcss.com/docs/mask-composite
        */
-      "mask-composite": [{
-        mask: ["add", "subtract", "intersect", "exclude"]
-      }],
+      "mask-composite": [
+        {
+          mask: ["add", "subtract", "intersect", "exclude"],
+        },
+      ],
       /**
        * Mask Image
        * @see https://tailwindcss.com/docs/mask-image
        */
-      "mask-image-linear-pos": [{
-        "mask-linear": [isNumber]
-      }],
-      "mask-image-linear-from-pos": [{
-        "mask-linear-from": scaleMaskImagePosition()
-      }],
-      "mask-image-linear-to-pos": [{
-        "mask-linear-to": scaleMaskImagePosition()
-      }],
-      "mask-image-linear-from-color": [{
-        "mask-linear-from": scaleColor()
-      }],
-      "mask-image-linear-to-color": [{
-        "mask-linear-to": scaleColor()
-      }],
-      "mask-image-t-from-pos": [{
-        "mask-t-from": scaleMaskImagePosition()
-      }],
-      "mask-image-t-to-pos": [{
-        "mask-t-to": scaleMaskImagePosition()
-      }],
-      "mask-image-t-from-color": [{
-        "mask-t-from": scaleColor()
-      }],
-      "mask-image-t-to-color": [{
-        "mask-t-to": scaleColor()
-      }],
-      "mask-image-r-from-pos": [{
-        "mask-r-from": scaleMaskImagePosition()
-      }],
-      "mask-image-r-to-pos": [{
-        "mask-r-to": scaleMaskImagePosition()
-      }],
-      "mask-image-r-from-color": [{
-        "mask-r-from": scaleColor()
-      }],
-      "mask-image-r-to-color": [{
-        "mask-r-to": scaleColor()
-      }],
-      "mask-image-b-from-pos": [{
-        "mask-b-from": scaleMaskImagePosition()
-      }],
-      "mask-image-b-to-pos": [{
-        "mask-b-to": scaleMaskImagePosition()
-      }],
-      "mask-image-b-from-color": [{
-        "mask-b-from": scaleColor()
-      }],
-      "mask-image-b-to-color": [{
-        "mask-b-to": scaleColor()
-      }],
-      "mask-image-l-from-pos": [{
-        "mask-l-from": scaleMaskImagePosition()
-      }],
-      "mask-image-l-to-pos": [{
-        "mask-l-to": scaleMaskImagePosition()
-      }],
-      "mask-image-l-from-color": [{
-        "mask-l-from": scaleColor()
-      }],
-      "mask-image-l-to-color": [{
-        "mask-l-to": scaleColor()
-      }],
-      "mask-image-x-from-pos": [{
-        "mask-x-from": scaleMaskImagePosition()
-      }],
-      "mask-image-x-to-pos": [{
-        "mask-x-to": scaleMaskImagePosition()
-      }],
-      "mask-image-x-from-color": [{
-        "mask-x-from": scaleColor()
-      }],
-      "mask-image-x-to-color": [{
-        "mask-x-to": scaleColor()
-      }],
-      "mask-image-y-from-pos": [{
-        "mask-y-from": scaleMaskImagePosition()
-      }],
-      "mask-image-y-to-pos": [{
-        "mask-y-to": scaleMaskImagePosition()
-      }],
-      "mask-image-y-from-color": [{
-        "mask-y-from": scaleColor()
-      }],
-      "mask-image-y-to-color": [{
-        "mask-y-to": scaleColor()
-      }],
-      "mask-image-radial": [{
-        "mask-radial": [isArbitraryVariable, isArbitraryValue]
-      }],
-      "mask-image-radial-from-pos": [{
-        "mask-radial-from": scaleMaskImagePosition()
-      }],
-      "mask-image-radial-to-pos": [{
-        "mask-radial-to": scaleMaskImagePosition()
-      }],
-      "mask-image-radial-from-color": [{
-        "mask-radial-from": scaleColor()
-      }],
-      "mask-image-radial-to-color": [{
-        "mask-radial-to": scaleColor()
-      }],
-      "mask-image-radial-shape": [{
-        "mask-radial": ["circle", "ellipse"]
-      }],
-      "mask-image-radial-size": [{
-        "mask-radial": [{
-          closest: ["side", "corner"],
-          farthest: ["side", "corner"]
-        }]
-      }],
-      "mask-image-radial-pos": [{
-        "mask-radial-at": scalePosition()
-      }],
-      "mask-image-conic-pos": [{
-        "mask-conic": [isNumber]
-      }],
-      "mask-image-conic-from-pos": [{
-        "mask-conic-from": scaleMaskImagePosition()
-      }],
-      "mask-image-conic-to-pos": [{
-        "mask-conic-to": scaleMaskImagePosition()
-      }],
-      "mask-image-conic-from-color": [{
-        "mask-conic-from": scaleColor()
-      }],
-      "mask-image-conic-to-color": [{
-        "mask-conic-to": scaleColor()
-      }],
+      "mask-image-linear-pos": [
+        {
+          "mask-linear": [isNumber],
+        },
+      ],
+      "mask-image-linear-from-pos": [
+        {
+          "mask-linear-from": scaleMaskImagePosition(),
+        },
+      ],
+      "mask-image-linear-to-pos": [
+        {
+          "mask-linear-to": scaleMaskImagePosition(),
+        },
+      ],
+      "mask-image-linear-from-color": [
+        {
+          "mask-linear-from": scaleColor(),
+        },
+      ],
+      "mask-image-linear-to-color": [
+        {
+          "mask-linear-to": scaleColor(),
+        },
+      ],
+      "mask-image-t-from-pos": [
+        {
+          "mask-t-from": scaleMaskImagePosition(),
+        },
+      ],
+      "mask-image-t-to-pos": [
+        {
+          "mask-t-to": scaleMaskImagePosition(),
+        },
+      ],
+      "mask-image-t-from-color": [
+        {
+          "mask-t-from": scaleColor(),
+        },
+      ],
+      "mask-image-t-to-color": [
+        {
+          "mask-t-to": scaleColor(),
+        },
+      ],
+      "mask-image-r-from-pos": [
+        {
+          "mask-r-from": scaleMaskImagePosition(),
+        },
+      ],
+      "mask-image-r-to-pos": [
+        {
+          "mask-r-to": scaleMaskImagePosition(),
+        },
+      ],
+      "mask-image-r-from-color": [
+        {
+          "mask-r-from": scaleColor(),
+        },
+      ],
+      "mask-image-r-to-color": [
+        {
+          "mask-r-to": scaleColor(),
+        },
+      ],
+      "mask-image-b-from-pos": [
+        {
+          "mask-b-from": scaleMaskImagePosition(),
+        },
+      ],
+      "mask-image-b-to-pos": [
+        {
+          "mask-b-to": scaleMaskImagePosition(),
+        },
+      ],
+      "mask-image-b-from-color": [
+        {
+          "mask-b-from": scaleColor(),
+        },
+      ],
+      "mask-image-b-to-color": [
+        {
+          "mask-b-to": scaleColor(),
+        },
+      ],
+      "mask-image-l-from-pos": [
+        {
+          "mask-l-from": scaleMaskImagePosition(),
+        },
+      ],
+      "mask-image-l-to-pos": [
+        {
+          "mask-l-to": scaleMaskImagePosition(),
+        },
+      ],
+      "mask-image-l-from-color": [
+        {
+          "mask-l-from": scaleColor(),
+        },
+      ],
+      "mask-image-l-to-color": [
+        {
+          "mask-l-to": scaleColor(),
+        },
+      ],
+      "mask-image-x-from-pos": [
+        {
+          "mask-x-from": scaleMaskImagePosition(),
+        },
+      ],
+      "mask-image-x-to-pos": [
+        {
+          "mask-x-to": scaleMaskImagePosition(),
+        },
+      ],
+      "mask-image-x-from-color": [
+        {
+          "mask-x-from": scaleColor(),
+        },
+      ],
+      "mask-image-x-to-color": [
+        {
+          "mask-x-to": scaleColor(),
+        },
+      ],
+      "mask-image-y-from-pos": [
+        {
+          "mask-y-from": scaleMaskImagePosition(),
+        },
+      ],
+      "mask-image-y-to-pos": [
+        {
+          "mask-y-to": scaleMaskImagePosition(),
+        },
+      ],
+      "mask-image-y-from-color": [
+        {
+          "mask-y-from": scaleColor(),
+        },
+      ],
+      "mask-image-y-to-color": [
+        {
+          "mask-y-to": scaleColor(),
+        },
+      ],
+      "mask-image-radial": [
+        {
+          "mask-radial": [isArbitraryVariable, isArbitraryValue],
+        },
+      ],
+      "mask-image-radial-from-pos": [
+        {
+          "mask-radial-from": scaleMaskImagePosition(),
+        },
+      ],
+      "mask-image-radial-to-pos": [
+        {
+          "mask-radial-to": scaleMaskImagePosition(),
+        },
+      ],
+      "mask-image-radial-from-color": [
+        {
+          "mask-radial-from": scaleColor(),
+        },
+      ],
+      "mask-image-radial-to-color": [
+        {
+          "mask-radial-to": scaleColor(),
+        },
+      ],
+      "mask-image-radial-shape": [
+        {
+          "mask-radial": ["circle", "ellipse"],
+        },
+      ],
+      "mask-image-radial-size": [
+        {
+          "mask-radial": [
+            {
+              closest: ["side", "corner"],
+              farthest: ["side", "corner"],
+            },
+          ],
+        },
+      ],
+      "mask-image-radial-pos": [
+        {
+          "mask-radial-at": scalePosition(),
+        },
+      ],
+      "mask-image-conic-pos": [
+        {
+          "mask-conic": [isNumber],
+        },
+      ],
+      "mask-image-conic-from-pos": [
+        {
+          "mask-conic-from": scaleMaskImagePosition(),
+        },
+      ],
+      "mask-image-conic-to-pos": [
+        {
+          "mask-conic-to": scaleMaskImagePosition(),
+        },
+      ],
+      "mask-image-conic-from-color": [
+        {
+          "mask-conic-from": scaleColor(),
+        },
+      ],
+      "mask-image-conic-to-color": [
+        {
+          "mask-conic-to": scaleColor(),
+        },
+      ],
       /**
        * Mask Mode
        * @see https://tailwindcss.com/docs/mask-mode
        */
-      "mask-mode": [{
-        mask: ["alpha", "luminance", "match"]
-      }],
+      "mask-mode": [
+        {
+          mask: ["alpha", "luminance", "match"],
+        },
+      ],
       /**
        * Mask Origin
        * @see https://tailwindcss.com/docs/mask-origin
        */
-      "mask-origin": [{
-        "mask-origin": ["border", "padding", "content", "fill", "stroke", "view"]
-      }],
+      "mask-origin": [
+        {
+          "mask-origin": [
+            "border",
+            "padding",
+            "content",
+            "fill",
+            "stroke",
+            "view",
+          ],
+        },
+      ],
       /**
        * Mask Position
        * @see https://tailwindcss.com/docs/mask-position
        */
-      "mask-position": [{
-        mask: scaleBgPosition()
-      }],
+      "mask-position": [
+        {
+          mask: scaleBgPosition(),
+        },
+      ],
       /**
        * Mask Repeat
        * @see https://tailwindcss.com/docs/mask-repeat
        */
-      "mask-repeat": [{
-        mask: scaleBgRepeat()
-      }],
+      "mask-repeat": [
+        {
+          mask: scaleBgRepeat(),
+        },
+      ],
       /**
        * Mask Size
        * @see https://tailwindcss.com/docs/mask-size
        */
-      "mask-size": [{
-        mask: scaleBgSize()
-      }],
+      "mask-size": [
+        {
+          mask: scaleBgSize(),
+        },
+      ],
       /**
        * Mask Type
        * @see https://tailwindcss.com/docs/mask-type
        */
-      "mask-type": [{
-        "mask-type": ["alpha", "luminance"]
-      }],
+      "mask-type": [
+        {
+          "mask-type": ["alpha", "luminance"],
+        },
+      ],
       /**
        * Mask Image
        * @see https://tailwindcss.com/docs/mask-image
        */
-      "mask-image": [{
-        mask: ["none", isArbitraryVariable, isArbitraryValue]
-      }],
+      "mask-image": [
+        {
+          mask: ["none", isArbitraryVariable, isArbitraryValue],
+        },
+      ],
       // ---------------
       // --- Filters ---
       // ---------------
@@ -18474,168 +21999,241 @@ const getDefaultConfig = () => {
        * Filter
        * @see https://tailwindcss.com/docs/filter
        */
-      filter: [{
-        filter: [
-          // Deprecated since Tailwind CSS v3.0.0
-          "",
-          "none",
-          isArbitraryVariable,
-          isArbitraryValue
-        ]
-      }],
+      filter: [
+        {
+          filter: [
+            // Deprecated since Tailwind CSS v3.0.0
+            "",
+            "none",
+            isArbitraryVariable,
+            isArbitraryValue,
+          ],
+        },
+      ],
       /**
        * Blur
        * @see https://tailwindcss.com/docs/blur
        */
-      blur: [{
-        blur: scaleBlur()
-      }],
+      blur: [
+        {
+          blur: scaleBlur(),
+        },
+      ],
       /**
        * Brightness
        * @see https://tailwindcss.com/docs/brightness
        */
-      brightness: [{
-        brightness: [isNumber, isArbitraryVariable, isArbitraryValue]
-      }],
+      brightness: [
+        {
+          brightness: [isNumber, isArbitraryVariable, isArbitraryValue],
+        },
+      ],
       /**
        * Contrast
        * @see https://tailwindcss.com/docs/contrast
        */
-      contrast: [{
-        contrast: [isNumber, isArbitraryVariable, isArbitraryValue]
-      }],
+      contrast: [
+        {
+          contrast: [isNumber, isArbitraryVariable, isArbitraryValue],
+        },
+      ],
       /**
        * Drop Shadow
        * @see https://tailwindcss.com/docs/drop-shadow
        */
-      "drop-shadow": [{
-        "drop-shadow": [
-          // Deprecated since Tailwind CSS v4.0.0
-          "",
-          "none",
-          themeDropShadow,
-          isArbitraryVariableShadow,
-          isArbitraryShadow
-        ]
-      }],
+      "drop-shadow": [
+        {
+          "drop-shadow": [
+            // Deprecated since Tailwind CSS v4.0.0
+            "",
+            "none",
+            themeDropShadow,
+            isArbitraryVariableShadow,
+            isArbitraryShadow,
+          ],
+        },
+      ],
       /**
        * Drop Shadow Color
        * @see https://tailwindcss.com/docs/filter-drop-shadow#setting-the-shadow-color
        */
-      "drop-shadow-color": [{
-        "drop-shadow": scaleColor()
-      }],
+      "drop-shadow-color": [
+        {
+          "drop-shadow": scaleColor(),
+        },
+      ],
       /**
        * Grayscale
        * @see https://tailwindcss.com/docs/grayscale
        */
-      grayscale: [{
-        grayscale: ["", isNumber, isArbitraryVariable, isArbitraryValue]
-      }],
+      grayscale: [
+        {
+          grayscale: ["", isNumber, isArbitraryVariable, isArbitraryValue],
+        },
+      ],
       /**
        * Hue Rotate
        * @see https://tailwindcss.com/docs/hue-rotate
        */
-      "hue-rotate": [{
-        "hue-rotate": [isNumber, isArbitraryVariable, isArbitraryValue]
-      }],
+      "hue-rotate": [
+        {
+          "hue-rotate": [isNumber, isArbitraryVariable, isArbitraryValue],
+        },
+      ],
       /**
        * Invert
        * @see https://tailwindcss.com/docs/invert
        */
-      invert: [{
-        invert: ["", isNumber, isArbitraryVariable, isArbitraryValue]
-      }],
+      invert: [
+        {
+          invert: ["", isNumber, isArbitraryVariable, isArbitraryValue],
+        },
+      ],
       /**
        * Saturate
        * @see https://tailwindcss.com/docs/saturate
        */
-      saturate: [{
-        saturate: [isNumber, isArbitraryVariable, isArbitraryValue]
-      }],
+      saturate: [
+        {
+          saturate: [isNumber, isArbitraryVariable, isArbitraryValue],
+        },
+      ],
       /**
        * Sepia
        * @see https://tailwindcss.com/docs/sepia
        */
-      sepia: [{
-        sepia: ["", isNumber, isArbitraryVariable, isArbitraryValue]
-      }],
+      sepia: [
+        {
+          sepia: ["", isNumber, isArbitraryVariable, isArbitraryValue],
+        },
+      ],
       /**
        * Backdrop Filter
        * @see https://tailwindcss.com/docs/backdrop-filter
        */
-      "backdrop-filter": [{
-        "backdrop-filter": [
-          // Deprecated since Tailwind CSS v3.0.0
-          "",
-          "none",
-          isArbitraryVariable,
-          isArbitraryValue
-        ]
-      }],
+      "backdrop-filter": [
+        {
+          "backdrop-filter": [
+            // Deprecated since Tailwind CSS v3.0.0
+            "",
+            "none",
+            isArbitraryVariable,
+            isArbitraryValue,
+          ],
+        },
+      ],
       /**
        * Backdrop Blur
        * @see https://tailwindcss.com/docs/backdrop-blur
        */
-      "backdrop-blur": [{
-        "backdrop-blur": scaleBlur()
-      }],
+      "backdrop-blur": [
+        {
+          "backdrop-blur": scaleBlur(),
+        },
+      ],
       /**
        * Backdrop Brightness
        * @see https://tailwindcss.com/docs/backdrop-brightness
        */
-      "backdrop-brightness": [{
-        "backdrop-brightness": [isNumber, isArbitraryVariable, isArbitraryValue]
-      }],
+      "backdrop-brightness": [
+        {
+          "backdrop-brightness": [
+            isNumber,
+            isArbitraryVariable,
+            isArbitraryValue,
+          ],
+        },
+      ],
       /**
        * Backdrop Contrast
        * @see https://tailwindcss.com/docs/backdrop-contrast
        */
-      "backdrop-contrast": [{
-        "backdrop-contrast": [isNumber, isArbitraryVariable, isArbitraryValue]
-      }],
+      "backdrop-contrast": [
+        {
+          "backdrop-contrast": [
+            isNumber,
+            isArbitraryVariable,
+            isArbitraryValue,
+          ],
+        },
+      ],
       /**
        * Backdrop Grayscale
        * @see https://tailwindcss.com/docs/backdrop-grayscale
        */
-      "backdrop-grayscale": [{
-        "backdrop-grayscale": ["", isNumber, isArbitraryVariable, isArbitraryValue]
-      }],
+      "backdrop-grayscale": [
+        {
+          "backdrop-grayscale": [
+            "",
+            isNumber,
+            isArbitraryVariable,
+            isArbitraryValue,
+          ],
+        },
+      ],
       /**
        * Backdrop Hue Rotate
        * @see https://tailwindcss.com/docs/backdrop-hue-rotate
        */
-      "backdrop-hue-rotate": [{
-        "backdrop-hue-rotate": [isNumber, isArbitraryVariable, isArbitraryValue]
-      }],
+      "backdrop-hue-rotate": [
+        {
+          "backdrop-hue-rotate": [
+            isNumber,
+            isArbitraryVariable,
+            isArbitraryValue,
+          ],
+        },
+      ],
       /**
        * Backdrop Invert
        * @see https://tailwindcss.com/docs/backdrop-invert
        */
-      "backdrop-invert": [{
-        "backdrop-invert": ["", isNumber, isArbitraryVariable, isArbitraryValue]
-      }],
+      "backdrop-invert": [
+        {
+          "backdrop-invert": [
+            "",
+            isNumber,
+            isArbitraryVariable,
+            isArbitraryValue,
+          ],
+        },
+      ],
       /**
        * Backdrop Opacity
        * @see https://tailwindcss.com/docs/backdrop-opacity
        */
-      "backdrop-opacity": [{
-        "backdrop-opacity": [isNumber, isArbitraryVariable, isArbitraryValue]
-      }],
+      "backdrop-opacity": [
+        {
+          "backdrop-opacity": [isNumber, isArbitraryVariable, isArbitraryValue],
+        },
+      ],
       /**
        * Backdrop Saturate
        * @see https://tailwindcss.com/docs/backdrop-saturate
        */
-      "backdrop-saturate": [{
-        "backdrop-saturate": [isNumber, isArbitraryVariable, isArbitraryValue]
-      }],
+      "backdrop-saturate": [
+        {
+          "backdrop-saturate": [
+            isNumber,
+            isArbitraryVariable,
+            isArbitraryValue,
+          ],
+        },
+      ],
       /**
        * Backdrop Sepia
        * @see https://tailwindcss.com/docs/backdrop-sepia
        */
-      "backdrop-sepia": [{
-        "backdrop-sepia": ["", isNumber, isArbitraryVariable, isArbitraryValue]
-      }],
+      "backdrop-sepia": [
+        {
+          "backdrop-sepia": [
+            "",
+            isNumber,
+            isArbitraryVariable,
+            isArbitraryValue,
+          ],
+        },
+      ],
       // --------------
       // --- Tables ---
       // --------------
@@ -18643,44 +22241,56 @@ const getDefaultConfig = () => {
        * Border Collapse
        * @see https://tailwindcss.com/docs/border-collapse
        */
-      "border-collapse": [{
-        border: ["collapse", "separate"]
-      }],
+      "border-collapse": [
+        {
+          border: ["collapse", "separate"],
+        },
+      ],
       /**
        * Border Spacing
        * @see https://tailwindcss.com/docs/border-spacing
        */
-      "border-spacing": [{
-        "border-spacing": scaleUnambiguousSpacing()
-      }],
+      "border-spacing": [
+        {
+          "border-spacing": scaleUnambiguousSpacing(),
+        },
+      ],
       /**
        * Border Spacing X
        * @see https://tailwindcss.com/docs/border-spacing
        */
-      "border-spacing-x": [{
-        "border-spacing-x": scaleUnambiguousSpacing()
-      }],
+      "border-spacing-x": [
+        {
+          "border-spacing-x": scaleUnambiguousSpacing(),
+        },
+      ],
       /**
        * Border Spacing Y
        * @see https://tailwindcss.com/docs/border-spacing
        */
-      "border-spacing-y": [{
-        "border-spacing-y": scaleUnambiguousSpacing()
-      }],
+      "border-spacing-y": [
+        {
+          "border-spacing-y": scaleUnambiguousSpacing(),
+        },
+      ],
       /**
        * Table Layout
        * @see https://tailwindcss.com/docs/table-layout
        */
-      "table-layout": [{
-        table: ["auto", "fixed"]
-      }],
+      "table-layout": [
+        {
+          table: ["auto", "fixed"],
+        },
+      ],
       /**
        * Caption Side
        * @see https://tailwindcss.com/docs/caption-side
        */
-      caption: [{
-        caption: ["top", "bottom"]
-      }],
+      caption: [
+        {
+          caption: ["top", "bottom"],
+        },
+      ],
       // ---------------------------------
       // --- Transitions and Animation ---
       // ---------------------------------
@@ -18688,44 +22298,82 @@ const getDefaultConfig = () => {
        * Transition Property
        * @see https://tailwindcss.com/docs/transition-property
        */
-      transition: [{
-        transition: ["", "all", "colors", "opacity", "shadow", "transform", "none", isArbitraryVariable, isArbitraryValue]
-      }],
+      transition: [
+        {
+          transition: [
+            "",
+            "all",
+            "colors",
+            "opacity",
+            "shadow",
+            "transform",
+            "none",
+            isArbitraryVariable,
+            isArbitraryValue,
+          ],
+        },
+      ],
       /**
        * Transition Behavior
        * @see https://tailwindcss.com/docs/transition-behavior
        */
-      "transition-behavior": [{
-        transition: ["normal", "discrete"]
-      }],
+      "transition-behavior": [
+        {
+          transition: ["normal", "discrete"],
+        },
+      ],
       /**
        * Transition Duration
        * @see https://tailwindcss.com/docs/transition-duration
        */
-      duration: [{
-        duration: [isNumber, "initial", isArbitraryVariable, isArbitraryValue]
-      }],
+      duration: [
+        {
+          duration: [
+            isNumber,
+            "initial",
+            isArbitraryVariable,
+            isArbitraryValue,
+          ],
+        },
+      ],
       /**
        * Transition Timing Function
        * @see https://tailwindcss.com/docs/transition-timing-function
        */
-      ease: [{
-        ease: ["linear", "initial", themeEase, isArbitraryVariable, isArbitraryValue]
-      }],
+      ease: [
+        {
+          ease: [
+            "linear",
+            "initial",
+            themeEase,
+            isArbitraryVariable,
+            isArbitraryValue,
+          ],
+        },
+      ],
       /**
        * Transition Delay
        * @see https://tailwindcss.com/docs/transition-delay
        */
-      delay: [{
-        delay: [isNumber, isArbitraryVariable, isArbitraryValue]
-      }],
+      delay: [
+        {
+          delay: [isNumber, isArbitraryVariable, isArbitraryValue],
+        },
+      ],
       /**
        * Animation
        * @see https://tailwindcss.com/docs/animation
        */
-      animate: [{
-        animate: ["none", themeAnimate, isArbitraryVariable, isArbitraryValue]
-      }],
+      animate: [
+        {
+          animate: [
+            "none",
+            themeAnimate,
+            isArbitraryVariable,
+            isArbitraryValue,
+          ],
+        },
+      ],
       // ------------------
       // --- Transforms ---
       // ------------------
@@ -18733,79 +22381,105 @@ const getDefaultConfig = () => {
        * Backface Visibility
        * @see https://tailwindcss.com/docs/backface-visibility
        */
-      backface: [{
-        backface: ["hidden", "visible"]
-      }],
+      backface: [
+        {
+          backface: ["hidden", "visible"],
+        },
+      ],
       /**
        * Perspective
        * @see https://tailwindcss.com/docs/perspective
        */
-      perspective: [{
-        perspective: [themePerspective, isArbitraryVariable, isArbitraryValue]
-      }],
+      perspective: [
+        {
+          perspective: [
+            themePerspective,
+            isArbitraryVariable,
+            isArbitraryValue,
+          ],
+        },
+      ],
       /**
        * Perspective Origin
        * @see https://tailwindcss.com/docs/perspective-origin
        */
-      "perspective-origin": [{
-        "perspective-origin": scalePositionWithArbitrary()
-      }],
+      "perspective-origin": [
+        {
+          "perspective-origin": scalePositionWithArbitrary(),
+        },
+      ],
       /**
        * Rotate
        * @see https://tailwindcss.com/docs/rotate
        */
-      rotate: [{
-        rotate: scaleRotate()
-      }],
+      rotate: [
+        {
+          rotate: scaleRotate(),
+        },
+      ],
       /**
        * Rotate X
        * @see https://tailwindcss.com/docs/rotate
        */
-      "rotate-x": [{
-        "rotate-x": scaleRotate()
-      }],
+      "rotate-x": [
+        {
+          "rotate-x": scaleRotate(),
+        },
+      ],
       /**
        * Rotate Y
        * @see https://tailwindcss.com/docs/rotate
        */
-      "rotate-y": [{
-        "rotate-y": scaleRotate()
-      }],
+      "rotate-y": [
+        {
+          "rotate-y": scaleRotate(),
+        },
+      ],
       /**
        * Rotate Z
        * @see https://tailwindcss.com/docs/rotate
        */
-      "rotate-z": [{
-        "rotate-z": scaleRotate()
-      }],
+      "rotate-z": [
+        {
+          "rotate-z": scaleRotate(),
+        },
+      ],
       /**
        * Scale
        * @see https://tailwindcss.com/docs/scale
        */
-      scale: [{
-        scale: scaleScale()
-      }],
+      scale: [
+        {
+          scale: scaleScale(),
+        },
+      ],
       /**
        * Scale X
        * @see https://tailwindcss.com/docs/scale
        */
-      "scale-x": [{
-        "scale-x": scaleScale()
-      }],
+      "scale-x": [
+        {
+          "scale-x": scaleScale(),
+        },
+      ],
       /**
        * Scale Y
        * @see https://tailwindcss.com/docs/scale
        */
-      "scale-y": [{
-        "scale-y": scaleScale()
-      }],
+      "scale-y": [
+        {
+          "scale-y": scaleScale(),
+        },
+      ],
       /**
        * Scale Z
        * @see https://tailwindcss.com/docs/scale
        */
-      "scale-z": [{
-        "scale-z": scaleScale()
-      }],
+      "scale-z": [
+        {
+          "scale-z": scaleScale(),
+        },
+      ],
       /**
        * Scale 3D
        * @see https://tailwindcss.com/docs/scale
@@ -18815,72 +22489,99 @@ const getDefaultConfig = () => {
        * Skew
        * @see https://tailwindcss.com/docs/skew
        */
-      skew: [{
-        skew: scaleSkew()
-      }],
+      skew: [
+        {
+          skew: scaleSkew(),
+        },
+      ],
       /**
        * Skew X
        * @see https://tailwindcss.com/docs/skew
        */
-      "skew-x": [{
-        "skew-x": scaleSkew()
-      }],
+      "skew-x": [
+        {
+          "skew-x": scaleSkew(),
+        },
+      ],
       /**
        * Skew Y
        * @see https://tailwindcss.com/docs/skew
        */
-      "skew-y": [{
-        "skew-y": scaleSkew()
-      }],
+      "skew-y": [
+        {
+          "skew-y": scaleSkew(),
+        },
+      ],
       /**
        * Transform
        * @see https://tailwindcss.com/docs/transform
        */
-      transform: [{
-        transform: [isArbitraryVariable, isArbitraryValue, "", "none", "gpu", "cpu"]
-      }],
+      transform: [
+        {
+          transform: [
+            isArbitraryVariable,
+            isArbitraryValue,
+            "",
+            "none",
+            "gpu",
+            "cpu",
+          ],
+        },
+      ],
       /**
        * Transform Origin
        * @see https://tailwindcss.com/docs/transform-origin
        */
-      "transform-origin": [{
-        origin: scalePositionWithArbitrary()
-      }],
+      "transform-origin": [
+        {
+          origin: scalePositionWithArbitrary(),
+        },
+      ],
       /**
        * Transform Style
        * @see https://tailwindcss.com/docs/transform-style
        */
-      "transform-style": [{
-        transform: ["3d", "flat"]
-      }],
+      "transform-style": [
+        {
+          transform: ["3d", "flat"],
+        },
+      ],
       /**
        * Translate
        * @see https://tailwindcss.com/docs/translate
        */
-      translate: [{
-        translate: scaleTranslate()
-      }],
+      translate: [
+        {
+          translate: scaleTranslate(),
+        },
+      ],
       /**
        * Translate X
        * @see https://tailwindcss.com/docs/translate
        */
-      "translate-x": [{
-        "translate-x": scaleTranslate()
-      }],
+      "translate-x": [
+        {
+          "translate-x": scaleTranslate(),
+        },
+      ],
       /**
        * Translate Y
        * @see https://tailwindcss.com/docs/translate
        */
-      "translate-y": [{
-        "translate-y": scaleTranslate()
-      }],
+      "translate-y": [
+        {
+          "translate-y": scaleTranslate(),
+        },
+      ],
       /**
        * Translate Z
        * @see https://tailwindcss.com/docs/translate
        */
-      "translate-z": [{
-        "translate-z": scaleTranslate()
-      }],
+      "translate-z": [
+        {
+          "translate-z": scaleTranslate(),
+        },
+      ],
       /**
        * Translate None
        * @see https://tailwindcss.com/docs/translate
@@ -18893,240 +22594,354 @@ const getDefaultConfig = () => {
        * Accent Color
        * @see https://tailwindcss.com/docs/accent-color
        */
-      accent: [{
-        accent: scaleColor()
-      }],
+      accent: [
+        {
+          accent: scaleColor(),
+        },
+      ],
       /**
        * Appearance
        * @see https://tailwindcss.com/docs/appearance
        */
-      appearance: [{
-        appearance: ["none", "auto"]
-      }],
+      appearance: [
+        {
+          appearance: ["none", "auto"],
+        },
+      ],
       /**
        * Caret Color
        * @see https://tailwindcss.com/docs/just-in-time-mode#caret-color-utilities
        */
-      "caret-color": [{
-        caret: scaleColor()
-      }],
+      "caret-color": [
+        {
+          caret: scaleColor(),
+        },
+      ],
       /**
        * Color Scheme
        * @see https://tailwindcss.com/docs/color-scheme
        */
-      "color-scheme": [{
-        scheme: ["normal", "dark", "light", "light-dark", "only-dark", "only-light"]
-      }],
+      "color-scheme": [
+        {
+          scheme: [
+            "normal",
+            "dark",
+            "light",
+            "light-dark",
+            "only-dark",
+            "only-light",
+          ],
+        },
+      ],
       /**
        * Cursor
        * @see https://tailwindcss.com/docs/cursor
        */
-      cursor: [{
-        cursor: ["auto", "default", "pointer", "wait", "text", "move", "help", "not-allowed", "none", "context-menu", "progress", "cell", "crosshair", "vertical-text", "alias", "copy", "no-drop", "grab", "grabbing", "all-scroll", "col-resize", "row-resize", "n-resize", "e-resize", "s-resize", "w-resize", "ne-resize", "nw-resize", "se-resize", "sw-resize", "ew-resize", "ns-resize", "nesw-resize", "nwse-resize", "zoom-in", "zoom-out", isArbitraryVariable, isArbitraryValue]
-      }],
+      cursor: [
+        {
+          cursor: [
+            "auto",
+            "default",
+            "pointer",
+            "wait",
+            "text",
+            "move",
+            "help",
+            "not-allowed",
+            "none",
+            "context-menu",
+            "progress",
+            "cell",
+            "crosshair",
+            "vertical-text",
+            "alias",
+            "copy",
+            "no-drop",
+            "grab",
+            "grabbing",
+            "all-scroll",
+            "col-resize",
+            "row-resize",
+            "n-resize",
+            "e-resize",
+            "s-resize",
+            "w-resize",
+            "ne-resize",
+            "nw-resize",
+            "se-resize",
+            "sw-resize",
+            "ew-resize",
+            "ns-resize",
+            "nesw-resize",
+            "nwse-resize",
+            "zoom-in",
+            "zoom-out",
+            isArbitraryVariable,
+            isArbitraryValue,
+          ],
+        },
+      ],
       /**
        * Field Sizing
        * @see https://tailwindcss.com/docs/field-sizing
        */
-      "field-sizing": [{
-        "field-sizing": ["fixed", "content"]
-      }],
+      "field-sizing": [
+        {
+          "field-sizing": ["fixed", "content"],
+        },
+      ],
       /**
        * Pointer Events
        * @see https://tailwindcss.com/docs/pointer-events
        */
-      "pointer-events": [{
-        "pointer-events": ["auto", "none"]
-      }],
+      "pointer-events": [
+        {
+          "pointer-events": ["auto", "none"],
+        },
+      ],
       /**
        * Resize
        * @see https://tailwindcss.com/docs/resize
        */
-      resize: [{
-        resize: ["none", "", "y", "x"]
-      }],
+      resize: [
+        {
+          resize: ["none", "", "y", "x"],
+        },
+      ],
       /**
        * Scroll Behavior
        * @see https://tailwindcss.com/docs/scroll-behavior
        */
-      "scroll-behavior": [{
-        scroll: ["auto", "smooth"]
-      }],
+      "scroll-behavior": [
+        {
+          scroll: ["auto", "smooth"],
+        },
+      ],
       /**
        * Scroll Margin
        * @see https://tailwindcss.com/docs/scroll-margin
        */
-      "scroll-m": [{
-        "scroll-m": scaleUnambiguousSpacing()
-      }],
+      "scroll-m": [
+        {
+          "scroll-m": scaleUnambiguousSpacing(),
+        },
+      ],
       /**
        * Scroll Margin X
        * @see https://tailwindcss.com/docs/scroll-margin
        */
-      "scroll-mx": [{
-        "scroll-mx": scaleUnambiguousSpacing()
-      }],
+      "scroll-mx": [
+        {
+          "scroll-mx": scaleUnambiguousSpacing(),
+        },
+      ],
       /**
        * Scroll Margin Y
        * @see https://tailwindcss.com/docs/scroll-margin
        */
-      "scroll-my": [{
-        "scroll-my": scaleUnambiguousSpacing()
-      }],
+      "scroll-my": [
+        {
+          "scroll-my": scaleUnambiguousSpacing(),
+        },
+      ],
       /**
        * Scroll Margin Start
        * @see https://tailwindcss.com/docs/scroll-margin
        */
-      "scroll-ms": [{
-        "scroll-ms": scaleUnambiguousSpacing()
-      }],
+      "scroll-ms": [
+        {
+          "scroll-ms": scaleUnambiguousSpacing(),
+        },
+      ],
       /**
        * Scroll Margin End
        * @see https://tailwindcss.com/docs/scroll-margin
        */
-      "scroll-me": [{
-        "scroll-me": scaleUnambiguousSpacing()
-      }],
+      "scroll-me": [
+        {
+          "scroll-me": scaleUnambiguousSpacing(),
+        },
+      ],
       /**
        * Scroll Margin Top
        * @see https://tailwindcss.com/docs/scroll-margin
        */
-      "scroll-mt": [{
-        "scroll-mt": scaleUnambiguousSpacing()
-      }],
+      "scroll-mt": [
+        {
+          "scroll-mt": scaleUnambiguousSpacing(),
+        },
+      ],
       /**
        * Scroll Margin Right
        * @see https://tailwindcss.com/docs/scroll-margin
        */
-      "scroll-mr": [{
-        "scroll-mr": scaleUnambiguousSpacing()
-      }],
+      "scroll-mr": [
+        {
+          "scroll-mr": scaleUnambiguousSpacing(),
+        },
+      ],
       /**
        * Scroll Margin Bottom
        * @see https://tailwindcss.com/docs/scroll-margin
        */
-      "scroll-mb": [{
-        "scroll-mb": scaleUnambiguousSpacing()
-      }],
+      "scroll-mb": [
+        {
+          "scroll-mb": scaleUnambiguousSpacing(),
+        },
+      ],
       /**
        * Scroll Margin Left
        * @see https://tailwindcss.com/docs/scroll-margin
        */
-      "scroll-ml": [{
-        "scroll-ml": scaleUnambiguousSpacing()
-      }],
+      "scroll-ml": [
+        {
+          "scroll-ml": scaleUnambiguousSpacing(),
+        },
+      ],
       /**
        * Scroll Padding
        * @see https://tailwindcss.com/docs/scroll-padding
        */
-      "scroll-p": [{
-        "scroll-p": scaleUnambiguousSpacing()
-      }],
+      "scroll-p": [
+        {
+          "scroll-p": scaleUnambiguousSpacing(),
+        },
+      ],
       /**
        * Scroll Padding X
        * @see https://tailwindcss.com/docs/scroll-padding
        */
-      "scroll-px": [{
-        "scroll-px": scaleUnambiguousSpacing()
-      }],
+      "scroll-px": [
+        {
+          "scroll-px": scaleUnambiguousSpacing(),
+        },
+      ],
       /**
        * Scroll Padding Y
        * @see https://tailwindcss.com/docs/scroll-padding
        */
-      "scroll-py": [{
-        "scroll-py": scaleUnambiguousSpacing()
-      }],
+      "scroll-py": [
+        {
+          "scroll-py": scaleUnambiguousSpacing(),
+        },
+      ],
       /**
        * Scroll Padding Start
        * @see https://tailwindcss.com/docs/scroll-padding
        */
-      "scroll-ps": [{
-        "scroll-ps": scaleUnambiguousSpacing()
-      }],
+      "scroll-ps": [
+        {
+          "scroll-ps": scaleUnambiguousSpacing(),
+        },
+      ],
       /**
        * Scroll Padding End
        * @see https://tailwindcss.com/docs/scroll-padding
        */
-      "scroll-pe": [{
-        "scroll-pe": scaleUnambiguousSpacing()
-      }],
+      "scroll-pe": [
+        {
+          "scroll-pe": scaleUnambiguousSpacing(),
+        },
+      ],
       /**
        * Scroll Padding Top
        * @see https://tailwindcss.com/docs/scroll-padding
        */
-      "scroll-pt": [{
-        "scroll-pt": scaleUnambiguousSpacing()
-      }],
+      "scroll-pt": [
+        {
+          "scroll-pt": scaleUnambiguousSpacing(),
+        },
+      ],
       /**
        * Scroll Padding Right
        * @see https://tailwindcss.com/docs/scroll-padding
        */
-      "scroll-pr": [{
-        "scroll-pr": scaleUnambiguousSpacing()
-      }],
+      "scroll-pr": [
+        {
+          "scroll-pr": scaleUnambiguousSpacing(),
+        },
+      ],
       /**
        * Scroll Padding Bottom
        * @see https://tailwindcss.com/docs/scroll-padding
        */
-      "scroll-pb": [{
-        "scroll-pb": scaleUnambiguousSpacing()
-      }],
+      "scroll-pb": [
+        {
+          "scroll-pb": scaleUnambiguousSpacing(),
+        },
+      ],
       /**
        * Scroll Padding Left
        * @see https://tailwindcss.com/docs/scroll-padding
        */
-      "scroll-pl": [{
-        "scroll-pl": scaleUnambiguousSpacing()
-      }],
+      "scroll-pl": [
+        {
+          "scroll-pl": scaleUnambiguousSpacing(),
+        },
+      ],
       /**
        * Scroll Snap Align
        * @see https://tailwindcss.com/docs/scroll-snap-align
        */
-      "snap-align": [{
-        snap: ["start", "end", "center", "align-none"]
-      }],
+      "snap-align": [
+        {
+          snap: ["start", "end", "center", "align-none"],
+        },
+      ],
       /**
        * Scroll Snap Stop
        * @see https://tailwindcss.com/docs/scroll-snap-stop
        */
-      "snap-stop": [{
-        snap: ["normal", "always"]
-      }],
+      "snap-stop": [
+        {
+          snap: ["normal", "always"],
+        },
+      ],
       /**
        * Scroll Snap Type
        * @see https://tailwindcss.com/docs/scroll-snap-type
        */
-      "snap-type": [{
-        snap: ["none", "x", "y", "both"]
-      }],
+      "snap-type": [
+        {
+          snap: ["none", "x", "y", "both"],
+        },
+      ],
       /**
        * Scroll Snap Type Strictness
        * @see https://tailwindcss.com/docs/scroll-snap-type
        */
-      "snap-strictness": [{
-        snap: ["mandatory", "proximity"]
-      }],
+      "snap-strictness": [
+        {
+          snap: ["mandatory", "proximity"],
+        },
+      ],
       /**
        * Touch Action
        * @see https://tailwindcss.com/docs/touch-action
        */
-      touch: [{
-        touch: ["auto", "none", "manipulation"]
-      }],
+      touch: [
+        {
+          touch: ["auto", "none", "manipulation"],
+        },
+      ],
       /**
        * Touch Action X
        * @see https://tailwindcss.com/docs/touch-action
        */
-      "touch-x": [{
-        "touch-pan": ["x", "left", "right"]
-      }],
+      "touch-x": [
+        {
+          "touch-pan": ["x", "left", "right"],
+        },
+      ],
       /**
        * Touch Action Y
        * @see https://tailwindcss.com/docs/touch-action
        */
-      "touch-y": [{
-        "touch-pan": ["y", "up", "down"]
-      }],
+      "touch-y": [
+        {
+          "touch-pan": ["y", "up", "down"],
+        },
+      ],
       /**
        * Touch Action Pinch Zoom
        * @see https://tailwindcss.com/docs/touch-action
@@ -19136,16 +22951,27 @@ const getDefaultConfig = () => {
        * User Select
        * @see https://tailwindcss.com/docs/user-select
        */
-      select: [{
-        select: ["none", "text", "all", "auto"]
-      }],
+      select: [
+        {
+          select: ["none", "text", "all", "auto"],
+        },
+      ],
       /**
        * Will Change
        * @see https://tailwindcss.com/docs/will-change
        */
-      "will-change": [{
-        "will-change": ["auto", "scroll", "contents", "transform", isArbitraryVariable, isArbitraryValue]
-      }],
+      "will-change": [
+        {
+          "will-change": [
+            "auto",
+            "scroll",
+            "contents",
+            "transform",
+            isArbitraryVariable,
+            isArbitraryValue,
+          ],
+        },
+      ],
       // -----------
       // --- SVG ---
       // -----------
@@ -19153,23 +22979,34 @@ const getDefaultConfig = () => {
        * Fill
        * @see https://tailwindcss.com/docs/fill
        */
-      fill: [{
-        fill: ["none", ...scaleColor()]
-      }],
+      fill: [
+        {
+          fill: ["none", ...scaleColor()],
+        },
+      ],
       /**
        * Stroke Width
        * @see https://tailwindcss.com/docs/stroke-width
        */
-      "stroke-w": [{
-        stroke: [isNumber, isArbitraryVariableLength, isArbitraryLength, isArbitraryNumber]
-      }],
+      "stroke-w": [
+        {
+          stroke: [
+            isNumber,
+            isArbitraryVariableLength,
+            isArbitraryLength,
+            isArbitraryNumber,
+          ],
+        },
+      ],
       /**
        * Stroke
        * @see https://tailwindcss.com/docs/stroke
        */
-      stroke: [{
-        stroke: ["none", ...scaleColor()]
-      }],
+      stroke: [
+        {
+          stroke: ["none", ...scaleColor()],
+        },
+      ],
       // ---------------------
       // --- Accessibility ---
       // ---------------------
@@ -19177,14 +23014,25 @@ const getDefaultConfig = () => {
        * Forced Color Adjust
        * @see https://tailwindcss.com/docs/forced-color-adjust
        */
-      "forced-color-adjust": [{
-        "forced-color-adjust": ["auto", "none"]
-      }]
+      "forced-color-adjust": [
+        {
+          "forced-color-adjust": ["auto", "none"],
+        },
+      ],
     },
     conflictingClassGroups: {
       overflow: ["overflow-x", "overflow-y"],
       overscroll: ["overscroll-x", "overscroll-y"],
-      inset: ["inset-x", "inset-y", "start", "end", "top", "right", "bottom", "left"],
+      inset: [
+        "inset-x",
+        "inset-y",
+        "start",
+        "end",
+        "top",
+        "right",
+        "bottom",
+        "left",
+      ],
       "inset-x": ["right", "left"],
       "inset-y": ["top", "bottom"],
       flex: ["basis", "grow", "shrink"],
@@ -19197,14 +23045,35 @@ const getDefaultConfig = () => {
       my: ["mt", "mb"],
       size: ["w", "h"],
       "font-size": ["leading"],
-      "fvn-normal": ["fvn-ordinal", "fvn-slashed-zero", "fvn-figure", "fvn-spacing", "fvn-fraction"],
+      "fvn-normal": [
+        "fvn-ordinal",
+        "fvn-slashed-zero",
+        "fvn-figure",
+        "fvn-spacing",
+        "fvn-fraction",
+      ],
       "fvn-ordinal": ["fvn-normal"],
       "fvn-slashed-zero": ["fvn-normal"],
       "fvn-figure": ["fvn-normal"],
       "fvn-spacing": ["fvn-normal"],
       "fvn-fraction": ["fvn-normal"],
       "line-clamp": ["display", "overflow"],
-      rounded: ["rounded-s", "rounded-e", "rounded-t", "rounded-r", "rounded-b", "rounded-l", "rounded-ss", "rounded-se", "rounded-ee", "rounded-es", "rounded-tl", "rounded-tr", "rounded-br", "rounded-bl"],
+      rounded: [
+        "rounded-s",
+        "rounded-e",
+        "rounded-t",
+        "rounded-r",
+        "rounded-b",
+        "rounded-l",
+        "rounded-ss",
+        "rounded-se",
+        "rounded-ee",
+        "rounded-es",
+        "rounded-tl",
+        "rounded-tr",
+        "rounded-br",
+        "rounded-bl",
+      ],
       "rounded-s": ["rounded-ss", "rounded-es"],
       "rounded-e": ["rounded-se", "rounded-ee"],
       "rounded-t": ["rounded-tl", "rounded-tr"],
@@ -19212,29 +23081,83 @@ const getDefaultConfig = () => {
       "rounded-b": ["rounded-br", "rounded-bl"],
       "rounded-l": ["rounded-tl", "rounded-bl"],
       "border-spacing": ["border-spacing-x", "border-spacing-y"],
-      "border-w": ["border-w-x", "border-w-y", "border-w-s", "border-w-e", "border-w-t", "border-w-r", "border-w-b", "border-w-l"],
+      "border-w": [
+        "border-w-x",
+        "border-w-y",
+        "border-w-s",
+        "border-w-e",
+        "border-w-t",
+        "border-w-r",
+        "border-w-b",
+        "border-w-l",
+      ],
       "border-w-x": ["border-w-r", "border-w-l"],
       "border-w-y": ["border-w-t", "border-w-b"],
-      "border-color": ["border-color-x", "border-color-y", "border-color-s", "border-color-e", "border-color-t", "border-color-r", "border-color-b", "border-color-l"],
+      "border-color": [
+        "border-color-x",
+        "border-color-y",
+        "border-color-s",
+        "border-color-e",
+        "border-color-t",
+        "border-color-r",
+        "border-color-b",
+        "border-color-l",
+      ],
       "border-color-x": ["border-color-r", "border-color-l"],
       "border-color-y": ["border-color-t", "border-color-b"],
       translate: ["translate-x", "translate-y", "translate-none"],
-      "translate-none": ["translate", "translate-x", "translate-y", "translate-z"],
-      "scroll-m": ["scroll-mx", "scroll-my", "scroll-ms", "scroll-me", "scroll-mt", "scroll-mr", "scroll-mb", "scroll-ml"],
+      "translate-none": [
+        "translate",
+        "translate-x",
+        "translate-y",
+        "translate-z",
+      ],
+      "scroll-m": [
+        "scroll-mx",
+        "scroll-my",
+        "scroll-ms",
+        "scroll-me",
+        "scroll-mt",
+        "scroll-mr",
+        "scroll-mb",
+        "scroll-ml",
+      ],
       "scroll-mx": ["scroll-mr", "scroll-ml"],
       "scroll-my": ["scroll-mt", "scroll-mb"],
-      "scroll-p": ["scroll-px", "scroll-py", "scroll-ps", "scroll-pe", "scroll-pt", "scroll-pr", "scroll-pb", "scroll-pl"],
+      "scroll-p": [
+        "scroll-px",
+        "scroll-py",
+        "scroll-ps",
+        "scroll-pe",
+        "scroll-pt",
+        "scroll-pr",
+        "scroll-pb",
+        "scroll-pl",
+      ],
       "scroll-px": ["scroll-pr", "scroll-pl"],
       "scroll-py": ["scroll-pt", "scroll-pb"],
       touch: ["touch-x", "touch-y", "touch-pz"],
       "touch-x": ["touch"],
       "touch-y": ["touch"],
-      "touch-pz": ["touch"]
+      "touch-pz": ["touch"],
     },
     conflictingClassGroupModifiers: {
-      "font-size": ["leading"]
+      "font-size": ["leading"],
     },
-    orderSensitiveModifiers: ["*", "**", "after", "backdrop", "before", "details-content", "file", "first-letter", "first-line", "marker", "placeholder", "selection"]
+    orderSensitiveModifiers: [
+      "*",
+      "**",
+      "after",
+      "backdrop",
+      "before",
+      "details-content",
+      "file",
+      "first-letter",
+      "first-line",
+      "marker",
+      "placeholder",
+      "selection",
+    ],
   };
 };
 const twMerge = /* @__PURE__ */ createTailwindMerge(getDefaultConfig);
@@ -19244,25 +23167,30 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90 shadow-xs",
-        destructive: "bg-destructive hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60 text-white shadow-xs",
-        outline: "bg-background hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50 border shadow-xs",
-        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80 shadow-xs",
-        ghost: "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
-        link: "text-primary underline-offset-4 hover:underline"
+        default:
+          "bg-primary text-primary-foreground hover:bg-primary/90 shadow-xs",
+        destructive:
+          "bg-destructive hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60 text-white shadow-xs",
+        outline:
+          "bg-background hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50 border shadow-xs",
+        secondary:
+          "bg-secondary text-secondary-foreground hover:bg-secondary/80 shadow-xs",
+        ghost:
+          "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
+        link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",
         sm: "h-8 gap-1.5 rounded-md px-3 has-[>svg]:px-2.5",
         lg: "h-10 rounded-md px-6 has-[>svg]:px-4",
-        icon: "size-9"
-      }
+        icon: "size-9",
+      },
     },
     defaultVariants: {
       variant: "default",
-      size: "default"
-    }
-  }
+      size: "default",
+    },
+  },
 );
 function Button({
   className,
@@ -19272,68 +23200,45 @@ function Button({
   ...props
 }) {
   const Comp = asChild ? Slot$1 : "button";
-  return /* @__PURE__ */ jsx(
-    Comp,
-    {
-      "data-slot": "button",
-      className: cn$1(buttonVariants({ variant, size: size2, className })),
-      ...props
-    }
-  );
+  return /* @__PURE__ */ jsx(Comp, {
+    "data-slot": "button",
+    className: cn$1(buttonVariants({ variant, size: size2, className })),
+    ...props,
+  });
 }
-function DropdownMenu({
-  ...props
-}) {
+function DropdownMenu({ ...props }) {
   return /* @__PURE__ */ jsx(Root2, { "data-slot": "dropdown-menu", ...props });
 }
-function DropdownMenuTrigger({
-  ...props
-}) {
-  return /* @__PURE__ */ jsx(
-    Trigger,
-    {
-      "data-slot": "dropdown-menu-trigger",
-      ...props
-    }
-  );
+function DropdownMenuTrigger({ ...props }) {
+  return /* @__PURE__ */ jsx(Trigger, {
+    "data-slot": "dropdown-menu-trigger",
+    ...props,
+  });
 }
-function DropdownMenuContent({
-  className,
-  sideOffset = 4,
-  ...props
-}) {
-  return /* @__PURE__ */ jsx(Portal2, { children: /* @__PURE__ */ jsx(
-    Content2,
-    {
+function DropdownMenuContent({ className, sideOffset = 4, ...props }) {
+  return /* @__PURE__ */ jsx(Portal2, {
+    children: /* @__PURE__ */ jsx(Content2, {
       "data-slot": "dropdown-menu-content",
       sideOffset,
       className: cn$1(
         "bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 max-h-(--radix-dropdown-menu-content-available-height) min-w-[8rem] origin-(--radix-dropdown-menu-content-transform-origin) overflow-x-hidden overflow-y-auto rounded-md border p-1 shadow-md",
-        className
+        className,
       ),
-      ...props
-    }
-  ) });
+      ...props,
+    }),
+  });
 }
-function DropdownMenuItem({
-  className,
-  inset,
-  variant = "default",
-  ...props
-}) {
-  return /* @__PURE__ */ jsx(
-    Item2,
-    {
-      "data-slot": "dropdown-menu-item",
-      "data-inset": inset,
-      "data-variant": variant,
-      className: cn$1(
-        "focus:bg-accent focus:text-accent-foreground data-[variant=destructive]:text-destructive data-[variant=destructive]:focus:bg-destructive/10 dark:data-[variant=destructive]:focus:bg-destructive/20 data-[variant=destructive]:focus:text-destructive data-[variant=destructive]:*:[svg]:!text-destructive [&_svg:not([class*='text-'])]:text-muted-foreground relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[inset]:pl-8 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
-        className
-      ),
-      ...props
-    }
-  );
+function DropdownMenuItem({ className, inset, variant = "default", ...props }) {
+  return /* @__PURE__ */ jsx(Item2, {
+    "data-slot": "dropdown-menu-item",
+    "data-inset": inset,
+    "data-variant": variant,
+    className: cn$1(
+      "focus:bg-accent focus:text-accent-foreground data-[variant=destructive]:text-destructive data-[variant=destructive]:focus:bg-destructive/10 dark:data-[variant=destructive]:focus:bg-destructive/20 data-[variant=destructive]:focus:text-destructive data-[variant=destructive]:*:[svg]:!text-destructive [&_svg:not([class*='text-'])]:text-muted-foreground relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[inset]:pl-8 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+      className,
+    ),
+    ...props,
+  });
 }
 const ThemeModeSchema = z.enum(["light", "dark", "auto"]);
 const themeKey = "theme-mode";
@@ -19350,12 +23255,13 @@ const setStoredThemeMode = (theme) => {
   try {
     const parsedTheme = ThemeModeSchema.parse(theme);
     localStorage.setItem(themeKey, parsedTheme);
-  } catch {
-  }
+  } catch {}
 };
 const getSystemTheme = () => {
   if (typeof window === "undefined") return "light";
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  return window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
 };
 const updateThemeClass = (themeMode) => {
   const root = document.documentElement;
@@ -19373,10 +23279,13 @@ const setupPreferredListener = () => {
   return () => mediaQuery.removeEventListener("change", handler2);
 };
 const getNextTheme = (current) => {
-  const themes = getSystemTheme() === "dark" ? ["auto", "light", "dark"] : ["auto", "dark", "light"];
+  const themes =
+    getSystemTheme() === "dark"
+      ? ["auto", "light", "dark"]
+      : ["auto", "dark", "light"];
   return themes[(themes.indexOf(current) + 1) % themes.length];
 };
-const themeDetectorScript = (function() {
+const themeDetectorScript = (function () {
   function themeFn() {
     const isValidTheme = (theme) => {
       const validThemes = ["light", "dark", "auto"];
@@ -19385,7 +23294,10 @@ const themeDetectorScript = (function() {
     const storedTheme = localStorage.getItem("theme-mode") ?? "auto";
     const validTheme = isValidTheme(storedTheme) ? storedTheme : "auto";
     if (validTheme === "auto") {
-      const autoTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      const autoTheme = window.matchMedia("(prefers-color-scheme: dark)")
+        .matches
+        ? "dark"
+        : "light";
       document.documentElement.classList.add(autoTheme, "auto");
     } else {
       document.documentElement.classList.add(validTheme);
@@ -19393,9 +23305,7 @@ const themeDetectorScript = (function() {
   }
   return `(${themeFn.toString()})();`;
 })();
-const ThemeContext = React.createContext(
-  void 0
-);
+const ThemeContext = React.createContext(void 0);
 function ThemeProvider({ children }) {
   const [themeMode, setThemeMode] = React.useState(getStoredThemeMode);
   React.useEffect(() => {
@@ -19411,27 +23321,21 @@ function ThemeProvider({ children }) {
   const toggleMode = () => {
     setTheme(getNextTheme(themeMode));
   };
-  return /* @__PURE__ */ jsxs(
-    ThemeContext,
-    {
-      value: {
-        themeMode,
-        resolvedTheme,
-        setTheme,
-        toggleMode
-      },
-      children: [
-        /* @__PURE__ */ jsx(
-          "script",
-          {
-            dangerouslySetInnerHTML: { __html: themeDetectorScript },
-            suppressHydrationWarning: true
-          }
-        ),
-        children
-      ]
-    }
-  );
+  return /* @__PURE__ */ jsxs(ThemeContext, {
+    value: {
+      themeMode,
+      resolvedTheme,
+      setTheme,
+      toggleMode,
+    },
+    children: [
+      /* @__PURE__ */ jsx("script", {
+        dangerouslySetInnerHTML: { __html: themeDetectorScript },
+        suppressHydrationWarning: true,
+      }),
+      children,
+    ],
+  });
 }
 function useTheme() {
   const context = React.use(ThemeContext);
@@ -19442,27 +23346,48 @@ function useTheme() {
 }
 function ThemeToggle() {
   const { setTheme } = useTheme();
-  return /* @__PURE__ */ jsxs(DropdownMenu, { children: [
-    /* @__PURE__ */ jsx(DropdownMenuTrigger, { asChild: true, children: /* @__PURE__ */ jsxs(
-      Button,
-      {
-        variant: "outline",
-        size: "icon",
-        className: "[&>svg]:absolute [&>svg]:size-5 [&>svg]:scale-0",
+  return /* @__PURE__ */ jsxs(DropdownMenu, {
+    children: [
+      /* @__PURE__ */ jsx(DropdownMenuTrigger, {
+        asChild: true,
+        children: /* @__PURE__ */ jsxs(Button, {
+          variant: "outline",
+          size: "icon",
+          className: "[&>svg]:absolute [&>svg]:size-5 [&>svg]:scale-0",
+          children: [
+            /* @__PURE__ */ jsx(SunIcon, {
+              className: "light:scale-100! auto:scale-0!",
+            }),
+            /* @__PURE__ */ jsx(MoonIcon, {
+              className: "auto:scale-0! dark:scale-100!",
+            }),
+            /* @__PURE__ */ jsx(DesktopIcon, { className: "auto:scale-100!" }),
+            /* @__PURE__ */ jsx("span", {
+              className: "sr-only",
+              children: "Toggle theme",
+            }),
+          ],
+        }),
+      }),
+      /* @__PURE__ */ jsxs(DropdownMenuContent, {
+        align: "end",
         children: [
-          /* @__PURE__ */ jsx(SunIcon, { className: "light:scale-100! auto:scale-0!" }),
-          /* @__PURE__ */ jsx(MoonIcon, { className: "auto:scale-0! dark:scale-100!" }),
-          /* @__PURE__ */ jsx(DesktopIcon, { className: "auto:scale-100!" }),
-          /* @__PURE__ */ jsx("span", { className: "sr-only", children: "Toggle theme" })
-        ]
-      }
-    ) }),
-    /* @__PURE__ */ jsxs(DropdownMenuContent, { align: "end", children: [
-      /* @__PURE__ */ jsx(DropdownMenuItem, { onClick: () => setTheme("light"), children: "Light" }),
-      /* @__PURE__ */ jsx(DropdownMenuItem, { onClick: () => setTheme("dark"), children: "Dark" }),
-      /* @__PURE__ */ jsx(DropdownMenuItem, { onClick: () => setTheme("auto"), children: "System" })
-    ] })
-  ] });
+          /* @__PURE__ */ jsx(DropdownMenuItem, {
+            onClick: () => setTheme("light"),
+            children: "Light",
+          }),
+          /* @__PURE__ */ jsx(DropdownMenuItem, {
+            onClick: () => setTheme("dark"),
+            children: "Dark",
+          }),
+          /* @__PURE__ */ jsx(DropdownMenuItem, {
+            onClick: () => setTheme("auto"),
+            children: "System",
+          }),
+        ],
+      }),
+    ],
+  });
 }
 function __insertCSS(code) {
   if (typeof document == "undefined") return;
@@ -19470,7 +23395,9 @@ function __insertCSS(code) {
   let style = document.createElement("style");
   style.type = "text/css";
   head.appendChild(style);
-  style.styleSheet ? style.styleSheet.cssText = code : style.appendChild(document.createTextNode(code));
+  style.styleSheet
+    ? (style.styleSheet.cssText = code)
+    : style.appendChild(document.createTextNode(code));
 }
 const getAsset = (type) => {
   switch (type) {
@@ -19488,86 +23415,118 @@ const getAsset = (type) => {
 };
 const bars = Array(12).fill(0);
 const Loader = ({ visible, className }) => {
-  return /* @__PURE__ */ React__default.createElement("div", {
-    className: [
-      "sonner-loading-wrapper",
-      className
-    ].filter(Boolean).join(" "),
-    "data-visible": visible
-  }, /* @__PURE__ */ React__default.createElement("div", {
-    className: "sonner-spinner"
-  }, bars.map((_, i) => /* @__PURE__ */ React__default.createElement("div", {
-    className: "sonner-loading-bar",
-    key: `spinner-bar-${i}`
-  }))));
+  return /* @__PURE__ */ React__default.createElement(
+    "div",
+    {
+      className: ["sonner-loading-wrapper", className]
+        .filter(Boolean)
+        .join(" "),
+      "data-visible": visible,
+    },
+    /* @__PURE__ */ React__default.createElement(
+      "div",
+      {
+        className: "sonner-spinner",
+      },
+      bars.map((_, i) =>
+        /* @__PURE__ */ React__default.createElement("div", {
+          className: "sonner-loading-bar",
+          key: `spinner-bar-${i}`,
+        }),
+      ),
+    ),
+  );
 };
-const SuccessIcon = /* @__PURE__ */ React__default.createElement("svg", {
-  xmlns: "http://www.w3.org/2000/svg",
-  viewBox: "0 0 20 20",
-  fill: "currentColor",
-  height: "20",
-  width: "20"
-}, /* @__PURE__ */ React__default.createElement("path", {
-  fillRule: "evenodd",
-  d: "M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z",
-  clipRule: "evenodd"
-}));
-const WarningIcon = /* @__PURE__ */ React__default.createElement("svg", {
-  xmlns: "http://www.w3.org/2000/svg",
-  viewBox: "0 0 24 24",
-  fill: "currentColor",
-  height: "20",
-  width: "20"
-}, /* @__PURE__ */ React__default.createElement("path", {
-  fillRule: "evenodd",
-  d: "M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z",
-  clipRule: "evenodd"
-}));
-const InfoIcon = /* @__PURE__ */ React__default.createElement("svg", {
-  xmlns: "http://www.w3.org/2000/svg",
-  viewBox: "0 0 20 20",
-  fill: "currentColor",
-  height: "20",
-  width: "20"
-}, /* @__PURE__ */ React__default.createElement("path", {
-  fillRule: "evenodd",
-  d: "M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z",
-  clipRule: "evenodd"
-}));
-const ErrorIcon = /* @__PURE__ */ React__default.createElement("svg", {
-  xmlns: "http://www.w3.org/2000/svg",
-  viewBox: "0 0 20 20",
-  fill: "currentColor",
-  height: "20",
-  width: "20"
-}, /* @__PURE__ */ React__default.createElement("path", {
-  fillRule: "evenodd",
-  d: "M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z",
-  clipRule: "evenodd"
-}));
-const CloseIcon = /* @__PURE__ */ React__default.createElement("svg", {
-  xmlns: "http://www.w3.org/2000/svg",
-  width: "12",
-  height: "12",
-  viewBox: "0 0 24 24",
-  fill: "none",
-  stroke: "currentColor",
-  strokeWidth: "1.5",
-  strokeLinecap: "round",
-  strokeLinejoin: "round"
-}, /* @__PURE__ */ React__default.createElement("line", {
-  x1: "18",
-  y1: "6",
-  x2: "6",
-  y2: "18"
-}), /* @__PURE__ */ React__default.createElement("line", {
-  x1: "6",
-  y1: "6",
-  x2: "18",
-  y2: "18"
-}));
+const SuccessIcon = /* @__PURE__ */ React__default.createElement(
+  "svg",
+  {
+    xmlns: "http://www.w3.org/2000/svg",
+    viewBox: "0 0 20 20",
+    fill: "currentColor",
+    height: "20",
+    width: "20",
+  },
+  /* @__PURE__ */ React__default.createElement("path", {
+    fillRule: "evenodd",
+    d: "M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z",
+    clipRule: "evenodd",
+  }),
+);
+const WarningIcon = /* @__PURE__ */ React__default.createElement(
+  "svg",
+  {
+    xmlns: "http://www.w3.org/2000/svg",
+    viewBox: "0 0 24 24",
+    fill: "currentColor",
+    height: "20",
+    width: "20",
+  },
+  /* @__PURE__ */ React__default.createElement("path", {
+    fillRule: "evenodd",
+    d: "M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z",
+    clipRule: "evenodd",
+  }),
+);
+const InfoIcon = /* @__PURE__ */ React__default.createElement(
+  "svg",
+  {
+    xmlns: "http://www.w3.org/2000/svg",
+    viewBox: "0 0 20 20",
+    fill: "currentColor",
+    height: "20",
+    width: "20",
+  },
+  /* @__PURE__ */ React__default.createElement("path", {
+    fillRule: "evenodd",
+    d: "M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z",
+    clipRule: "evenodd",
+  }),
+);
+const ErrorIcon = /* @__PURE__ */ React__default.createElement(
+  "svg",
+  {
+    xmlns: "http://www.w3.org/2000/svg",
+    viewBox: "0 0 20 20",
+    fill: "currentColor",
+    height: "20",
+    width: "20",
+  },
+  /* @__PURE__ */ React__default.createElement("path", {
+    fillRule: "evenodd",
+    d: "M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z",
+    clipRule: "evenodd",
+  }),
+);
+const CloseIcon = /* @__PURE__ */ React__default.createElement(
+  "svg",
+  {
+    xmlns: "http://www.w3.org/2000/svg",
+    width: "12",
+    height: "12",
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: "1.5",
+    strokeLinecap: "round",
+    strokeLinejoin: "round",
+  },
+  /* @__PURE__ */ React__default.createElement("line", {
+    x1: "18",
+    y1: "6",
+    x2: "6",
+    y2: "18",
+  }),
+  /* @__PURE__ */ React__default.createElement("line", {
+    x1: "6",
+    y1: "6",
+    x2: "18",
+    y2: "18",
+  }),
+);
 const useIsDocumentHidden = () => {
-  const [isDocumentHidden, setIsDocumentHidden] = React__default.useState(document.hidden);
+  const [isDocumentHidden, setIsDocumentHidden] = React__default.useState(
+    document.hidden,
+  );
   React__default.useEffect(() => {
     const callback = () => {
       setIsDocumentHidden(document.hidden);
@@ -19592,15 +23551,16 @@ class Observer {
     };
     this.addToast = (data) => {
       this.publish(data);
-      this.toasts = [
-        ...this.toasts,
-        data
-      ];
+      this.toasts = [...this.toasts, data];
     };
     this.create = (data) => {
       var _data_id;
       const { message, ...rest } = data;
-      const id = typeof (data == null ? void 0 : data.id) === "number" || ((_data_id = data.id) == null ? void 0 : _data_id.length) > 0 ? data.id : toastsCounter++;
+      const id =
+        typeof (data == null ? void 0 : data.id) === "number" ||
+        ((_data_id = data.id) == null ? void 0 : _data_id.length) > 0
+          ? data.id
+          : toastsCounter++;
       const alreadyExists = this.toasts.find((toast) => {
         return toast.id === id;
       });
@@ -19615,14 +23575,14 @@ class Observer {
               ...toast,
               ...data,
               id,
-              title: message
+              title: message,
             });
             return {
               ...toast,
               ...data,
               id,
               dismissible,
-              title: message
+              title: message,
             };
           }
           return toast;
@@ -19632,7 +23592,7 @@ class Observer {
           title: message,
           ...rest,
           dismissible,
-          id
+          id,
         });
       }
       return id;
@@ -19640,16 +23600,22 @@ class Observer {
     this.dismiss = (id) => {
       if (id) {
         this.dismissedToasts.add(id);
-        requestAnimationFrame(() => this.subscribers.forEach((subscriber) => subscriber({
-          id,
-          dismiss: true
-        })));
+        requestAnimationFrame(() =>
+          this.subscribers.forEach((subscriber) =>
+            subscriber({
+              id,
+              dismiss: true,
+            }),
+          ),
+        );
       } else {
         this.toasts.forEach((toast) => {
-          this.subscribers.forEach((subscriber) => subscriber({
-            id: toast.id,
-            dismiss: true
-          }));
+          this.subscribers.forEach((subscriber) =>
+            subscriber({
+              id: toast.id,
+              dismiss: true,
+            }),
+          );
         });
       }
       return id;
@@ -19657,42 +23623,42 @@ class Observer {
     this.message = (message, data) => {
       return this.create({
         ...data,
-        message
+        message,
       });
     };
     this.error = (message, data) => {
       return this.create({
         ...data,
         message,
-        type: "error"
+        type: "error",
       });
     };
     this.success = (message, data) => {
       return this.create({
         ...data,
         type: "success",
-        message
+        message,
       });
     };
     this.info = (message, data) => {
       return this.create({
         ...data,
         type: "info",
-        message
+        message,
       });
     };
     this.warning = (message, data) => {
       return this.create({
         ...data,
         type: "warning",
-        message
+        message,
       });
     };
     this.loading = (message, data) => {
       return this.create({
         ...data,
         type: "loading",
-        message
+        message,
       });
     };
     this.promise = (promise, data) => {
@@ -19706,103 +23672,153 @@ class Observer {
           promise,
           type: "loading",
           message: data.loading,
-          description: typeof data.description !== "function" ? data.description : void 0
+          description:
+            typeof data.description !== "function" ? data.description : void 0,
         });
       }
-      const p = Promise.resolve(promise instanceof Function ? promise() : promise);
+      const p = Promise.resolve(
+        promise instanceof Function ? promise() : promise,
+      );
       let shouldDismiss = id !== void 0;
       let result;
-      const originalPromise = p.then(async (response) => {
-        result = [
-          "resolve",
-          response
-        ];
-        const isReactElementResponse = React__default.isValidElement(response);
-        if (isReactElementResponse) {
-          shouldDismiss = false;
-          this.create({
-            id,
-            type: "default",
-            message: response
-          });
-        } else if (isHttpResponse(response) && !response.ok) {
-          shouldDismiss = false;
-          const promiseData = typeof data.error === "function" ? await data.error(`HTTP error! status: ${response.status}`) : data.error;
-          const description = typeof data.description === "function" ? await data.description(`HTTP error! status: ${response.status}`) : data.description;
-          const isExtendedResult = typeof promiseData === "object" && !React__default.isValidElement(promiseData);
-          const toastSettings = isExtendedResult ? promiseData : {
-            message: promiseData
-          };
-          this.create({
-            id,
-            type: "error",
-            description,
-            ...toastSettings
-          });
-        } else if (response instanceof Error) {
-          shouldDismiss = false;
-          const promiseData = typeof data.error === "function" ? await data.error(response) : data.error;
-          const description = typeof data.description === "function" ? await data.description(response) : data.description;
-          const isExtendedResult = typeof promiseData === "object" && !React__default.isValidElement(promiseData);
-          const toastSettings = isExtendedResult ? promiseData : {
-            message: promiseData
-          };
-          this.create({
-            id,
-            type: "error",
-            description,
-            ...toastSettings
-          });
-        } else if (data.success !== void 0) {
-          shouldDismiss = false;
-          const promiseData = typeof data.success === "function" ? await data.success(response) : data.success;
-          const description = typeof data.description === "function" ? await data.description(response) : data.description;
-          const isExtendedResult = typeof promiseData === "object" && !React__default.isValidElement(promiseData);
-          const toastSettings = isExtendedResult ? promiseData : {
-            message: promiseData
-          };
-          this.create({
-            id,
-            type: "success",
-            description,
-            ...toastSettings
-          });
-        }
-      }).catch(async (error) => {
-        result = [
-          "reject",
-          error
-        ];
-        if (data.error !== void 0) {
-          shouldDismiss = false;
-          const promiseData = typeof data.error === "function" ? await data.error(error) : data.error;
-          const description = typeof data.description === "function" ? await data.description(error) : data.description;
-          const isExtendedResult = typeof promiseData === "object" && !React__default.isValidElement(promiseData);
-          const toastSettings = isExtendedResult ? promiseData : {
-            message: promiseData
-          };
-          this.create({
-            id,
-            type: "error",
-            description,
-            ...toastSettings
-          });
-        }
-      }).finally(() => {
-        if (shouldDismiss) {
-          this.dismiss(id);
-          id = void 0;
-        }
-        data.finally == null ? void 0 : data.finally.call(data);
-      });
-      const unwrap = () => new Promise((resolve, reject) => originalPromise.then(() => result[0] === "reject" ? reject(result[1]) : resolve(result[1])).catch(reject));
+      const originalPromise = p
+        .then(async (response) => {
+          result = ["resolve", response];
+          const isReactElementResponse =
+            React__default.isValidElement(response);
+          if (isReactElementResponse) {
+            shouldDismiss = false;
+            this.create({
+              id,
+              type: "default",
+              message: response,
+            });
+          } else if (isHttpResponse(response) && !response.ok) {
+            shouldDismiss = false;
+            const promiseData =
+              typeof data.error === "function"
+                ? await data.error(`HTTP error! status: ${response.status}`)
+                : data.error;
+            const description =
+              typeof data.description === "function"
+                ? await data.description(
+                    `HTTP error! status: ${response.status}`,
+                  )
+                : data.description;
+            const isExtendedResult =
+              typeof promiseData === "object" &&
+              !React__default.isValidElement(promiseData);
+            const toastSettings = isExtendedResult
+              ? promiseData
+              : {
+                  message: promiseData,
+                };
+            this.create({
+              id,
+              type: "error",
+              description,
+              ...toastSettings,
+            });
+          } else if (response instanceof Error) {
+            shouldDismiss = false;
+            const promiseData =
+              typeof data.error === "function"
+                ? await data.error(response)
+                : data.error;
+            const description =
+              typeof data.description === "function"
+                ? await data.description(response)
+                : data.description;
+            const isExtendedResult =
+              typeof promiseData === "object" &&
+              !React__default.isValidElement(promiseData);
+            const toastSettings = isExtendedResult
+              ? promiseData
+              : {
+                  message: promiseData,
+                };
+            this.create({
+              id,
+              type: "error",
+              description,
+              ...toastSettings,
+            });
+          } else if (data.success !== void 0) {
+            shouldDismiss = false;
+            const promiseData =
+              typeof data.success === "function"
+                ? await data.success(response)
+                : data.success;
+            const description =
+              typeof data.description === "function"
+                ? await data.description(response)
+                : data.description;
+            const isExtendedResult =
+              typeof promiseData === "object" &&
+              !React__default.isValidElement(promiseData);
+            const toastSettings = isExtendedResult
+              ? promiseData
+              : {
+                  message: promiseData,
+                };
+            this.create({
+              id,
+              type: "success",
+              description,
+              ...toastSettings,
+            });
+          }
+        })
+        .catch(async (error) => {
+          result = ["reject", error];
+          if (data.error !== void 0) {
+            shouldDismiss = false;
+            const promiseData =
+              typeof data.error === "function"
+                ? await data.error(error)
+                : data.error;
+            const description =
+              typeof data.description === "function"
+                ? await data.description(error)
+                : data.description;
+            const isExtendedResult =
+              typeof promiseData === "object" &&
+              !React__default.isValidElement(promiseData);
+            const toastSettings = isExtendedResult
+              ? promiseData
+              : {
+                  message: promiseData,
+                };
+            this.create({
+              id,
+              type: "error",
+              description,
+              ...toastSettings,
+            });
+          }
+        })
+        .finally(() => {
+          if (shouldDismiss) {
+            this.dismiss(id);
+            id = void 0;
+          }
+          data.finally == null ? void 0 : data.finally.call(data);
+        });
+      const unwrap = () =>
+        new Promise((resolve, reject) =>
+          originalPromise
+            .then(() =>
+              result[0] === "reject" ? reject(result[1]) : resolve(result[1]),
+            )
+            .catch(reject),
+        );
       if (typeof id !== "string" && typeof id !== "number") {
         return {
-          unwrap
+          unwrap,
         };
       } else {
         return Object.assign(id, {
-          unwrap
+          unwrap,
         });
       }
     };
@@ -19811,7 +23827,7 @@ class Observer {
       this.create({
         jsx: jsx2(id),
         id,
-        ...data
+        ...data,
       });
       return id;
     };
@@ -19829,31 +23845,44 @@ const toastFunction = (message, data) => {
   ToastState.addToast({
     title: message,
     ...data,
-    id
+    id,
   });
   return id;
 };
 const isHttpResponse = (data) => {
-  return data && typeof data === "object" && "ok" in data && typeof data.ok === "boolean" && "status" in data && typeof data.status === "number";
+  return (
+    data &&
+    typeof data === "object" &&
+    "ok" in data &&
+    typeof data.ok === "boolean" &&
+    "status" in data &&
+    typeof data.status === "number"
+  );
 };
 const basicToast = toastFunction;
 const getHistory = () => ToastState.toasts;
 const getToasts = () => ToastState.getActiveToasts();
-Object.assign(basicToast, {
-  success: ToastState.success,
-  info: ToastState.info,
-  warning: ToastState.warning,
-  error: ToastState.error,
-  custom: ToastState.custom,
-  message: ToastState.message,
-  promise: ToastState.promise,
-  dismiss: ToastState.dismiss,
-  loading: ToastState.loading
-}, {
-  getHistory,
-  getToasts
-});
-__insertCSS("[data-sonner-toaster][dir=ltr],html[dir=ltr]{--toast-icon-margin-start:-3px;--toast-icon-margin-end:4px;--toast-svg-margin-start:-1px;--toast-svg-margin-end:0px;--toast-button-margin-start:auto;--toast-button-margin-end:0;--toast-close-button-start:0;--toast-close-button-end:unset;--toast-close-button-transform:translate(-35%, -35%)}[data-sonner-toaster][dir=rtl],html[dir=rtl]{--toast-icon-margin-start:4px;--toast-icon-margin-end:-3px;--toast-svg-margin-start:0px;--toast-svg-margin-end:-1px;--toast-button-margin-start:0;--toast-button-margin-end:auto;--toast-close-button-start:unset;--toast-close-button-end:0;--toast-close-button-transform:translate(35%, -35%)}[data-sonner-toaster]{position:fixed;width:var(--width);font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,Noto Sans,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol,Noto Color Emoji;--gray1:hsl(0, 0%, 99%);--gray2:hsl(0, 0%, 97.3%);--gray3:hsl(0, 0%, 95.1%);--gray4:hsl(0, 0%, 93%);--gray5:hsl(0, 0%, 90.9%);--gray6:hsl(0, 0%, 88.7%);--gray7:hsl(0, 0%, 85.8%);--gray8:hsl(0, 0%, 78%);--gray9:hsl(0, 0%, 56.1%);--gray10:hsl(0, 0%, 52.3%);--gray11:hsl(0, 0%, 43.5%);--gray12:hsl(0, 0%, 9%);--border-radius:8px;box-sizing:border-box;padding:0;margin:0;list-style:none;outline:0;z-index:999999999;transition:transform .4s ease}@media (hover:none) and (pointer:coarse){[data-sonner-toaster][data-lifted=true]{transform:none}}[data-sonner-toaster][data-x-position=right]{right:var(--offset-right)}[data-sonner-toaster][data-x-position=left]{left:var(--offset-left)}[data-sonner-toaster][data-x-position=center]{left:50%;transform:translateX(-50%)}[data-sonner-toaster][data-y-position=top]{top:var(--offset-top)}[data-sonner-toaster][data-y-position=bottom]{bottom:var(--offset-bottom)}[data-sonner-toast]{--y:translateY(100%);--lift-amount:calc(var(--lift) * var(--gap));z-index:var(--z-index);position:absolute;opacity:0;transform:var(--y);touch-action:none;transition:transform .4s,opacity .4s,height .4s,box-shadow .2s;box-sizing:border-box;outline:0;overflow-wrap:anywhere}[data-sonner-toast][data-styled=true]{padding:16px;background:var(--normal-bg);border:1px solid var(--normal-border);color:var(--normal-text);border-radius:var(--border-radius);box-shadow:0 4px 12px rgba(0,0,0,.1);width:var(--width);font-size:13px;display:flex;align-items:center;gap:6px}[data-sonner-toast]:focus-visible{box-shadow:0 4px 12px rgba(0,0,0,.1),0 0 0 2px rgba(0,0,0,.2)}[data-sonner-toast][data-y-position=top]{top:0;--y:translateY(-100%);--lift:1;--lift-amount:calc(1 * var(--gap))}[data-sonner-toast][data-y-position=bottom]{bottom:0;--y:translateY(100%);--lift:-1;--lift-amount:calc(var(--lift) * var(--gap))}[data-sonner-toast][data-styled=true] [data-description]{font-weight:400;line-height:1.4;color:#3f3f3f}[data-rich-colors=true][data-sonner-toast][data-styled=true] [data-description]{color:inherit}[data-sonner-toaster][data-sonner-theme=dark] [data-description]{color:#e8e8e8}[data-sonner-toast][data-styled=true] [data-title]{font-weight:500;line-height:1.5;color:inherit}[data-sonner-toast][data-styled=true] [data-icon]{display:flex;height:16px;width:16px;position:relative;justify-content:flex-start;align-items:center;flex-shrink:0;margin-left:var(--toast-icon-margin-start);margin-right:var(--toast-icon-margin-end)}[data-sonner-toast][data-promise=true] [data-icon]>svg{opacity:0;transform:scale(.8);transform-origin:center;animation:sonner-fade-in .3s ease forwards}[data-sonner-toast][data-styled=true] [data-icon]>*{flex-shrink:0}[data-sonner-toast][data-styled=true] [data-icon] svg{margin-left:var(--toast-svg-margin-start);margin-right:var(--toast-svg-margin-end)}[data-sonner-toast][data-styled=true] [data-content]{display:flex;flex-direction:column;gap:2px}[data-sonner-toast][data-styled=true] [data-button]{border-radius:4px;padding-left:8px;padding-right:8px;height:24px;font-size:12px;color:var(--normal-bg);background:var(--normal-text);margin-left:var(--toast-button-margin-start);margin-right:var(--toast-button-margin-end);border:none;font-weight:500;cursor:pointer;outline:0;display:flex;align-items:center;flex-shrink:0;transition:opacity .4s,box-shadow .2s}[data-sonner-toast][data-styled=true] [data-button]:focus-visible{box-shadow:0 0 0 2px rgba(0,0,0,.4)}[data-sonner-toast][data-styled=true] [data-button]:first-of-type{margin-left:var(--toast-button-margin-start);margin-right:var(--toast-button-margin-end)}[data-sonner-toast][data-styled=true] [data-cancel]{color:var(--normal-text);background:rgba(0,0,0,.08)}[data-sonner-toaster][data-sonner-theme=dark] [data-sonner-toast][data-styled=true] [data-cancel]{background:rgba(255,255,255,.3)}[data-sonner-toast][data-styled=true] [data-close-button]{position:absolute;left:var(--toast-close-button-start);right:var(--toast-close-button-end);top:0;height:20px;width:20px;display:flex;justify-content:center;align-items:center;padding:0;color:var(--gray12);background:var(--normal-bg);border:1px solid var(--gray4);transform:var(--toast-close-button-transform);border-radius:50%;cursor:pointer;z-index:1;transition:opacity .1s,background .2s,border-color .2s}[data-sonner-toast][data-styled=true] [data-close-button]:focus-visible{box-shadow:0 4px 12px rgba(0,0,0,.1),0 0 0 2px rgba(0,0,0,.2)}[data-sonner-toast][data-styled=true] [data-disabled=true]{cursor:not-allowed}[data-sonner-toast][data-styled=true]:hover [data-close-button]:hover{background:var(--gray2);border-color:var(--gray5)}[data-sonner-toast][data-swiping=true]::before{content:'';position:absolute;left:-100%;right:-100%;height:100%;z-index:-1}[data-sonner-toast][data-y-position=top][data-swiping=true]::before{bottom:50%;transform:scaleY(3) translateY(50%)}[data-sonner-toast][data-y-position=bottom][data-swiping=true]::before{top:50%;transform:scaleY(3) translateY(-50%)}[data-sonner-toast][data-swiping=false][data-removed=true]::before{content:'';position:absolute;inset:0;transform:scaleY(2)}[data-sonner-toast][data-expanded=true]::after{content:'';position:absolute;left:0;height:calc(var(--gap) + 1px);bottom:100%;width:100%}[data-sonner-toast][data-mounted=true]{--y:translateY(0);opacity:1}[data-sonner-toast][data-expanded=false][data-front=false]{--scale:var(--toasts-before) * 0.05 + 1;--y:translateY(calc(var(--lift-amount) * var(--toasts-before))) scale(calc(-1 * var(--scale)));height:var(--front-toast-height)}[data-sonner-toast]>*{transition:opacity .4s}[data-sonner-toast][data-x-position=right]{right:0}[data-sonner-toast][data-x-position=left]{left:0}[data-sonner-toast][data-expanded=false][data-front=false][data-styled=true]>*{opacity:0}[data-sonner-toast][data-visible=false]{opacity:0;pointer-events:none}[data-sonner-toast][data-mounted=true][data-expanded=true]{--y:translateY(calc(var(--lift) * var(--offset)));height:var(--initial-height)}[data-sonner-toast][data-removed=true][data-front=true][data-swipe-out=false]{--y:translateY(calc(var(--lift) * -100%));opacity:0}[data-sonner-toast][data-removed=true][data-front=false][data-swipe-out=false][data-expanded=true]{--y:translateY(calc(var(--lift) * var(--offset) + var(--lift) * -100%));opacity:0}[data-sonner-toast][data-removed=true][data-front=false][data-swipe-out=false][data-expanded=false]{--y:translateY(40%);opacity:0;transition:transform .5s,opacity .2s}[data-sonner-toast][data-removed=true][data-front=false]::before{height:calc(var(--initial-height) + 20%)}[data-sonner-toast][data-swiping=true]{transform:var(--y) translateY(var(--swipe-amount-y,0)) translateX(var(--swipe-amount-x,0));transition:none}[data-sonner-toast][data-swiped=true]{user-select:none}[data-sonner-toast][data-swipe-out=true][data-y-position=bottom],[data-sonner-toast][data-swipe-out=true][data-y-position=top]{animation-duration:.2s;animation-timing-function:ease-out;animation-fill-mode:forwards}[data-sonner-toast][data-swipe-out=true][data-swipe-direction=left]{animation-name:swipe-out-left}[data-sonner-toast][data-swipe-out=true][data-swipe-direction=right]{animation-name:swipe-out-right}[data-sonner-toast][data-swipe-out=true][data-swipe-direction=up]{animation-name:swipe-out-up}[data-sonner-toast][data-swipe-out=true][data-swipe-direction=down]{animation-name:swipe-out-down}@keyframes swipe-out-left{from{transform:var(--y) translateX(var(--swipe-amount-x));opacity:1}to{transform:var(--y) translateX(calc(var(--swipe-amount-x) - 100%));opacity:0}}@keyframes swipe-out-right{from{transform:var(--y) translateX(var(--swipe-amount-x));opacity:1}to{transform:var(--y) translateX(calc(var(--swipe-amount-x) + 100%));opacity:0}}@keyframes swipe-out-up{from{transform:var(--y) translateY(var(--swipe-amount-y));opacity:1}to{transform:var(--y) translateY(calc(var(--swipe-amount-y) - 100%));opacity:0}}@keyframes swipe-out-down{from{transform:var(--y) translateY(var(--swipe-amount-y));opacity:1}to{transform:var(--y) translateY(calc(var(--swipe-amount-y) + 100%));opacity:0}}@media (max-width:600px){[data-sonner-toaster]{position:fixed;right:var(--mobile-offset-right);left:var(--mobile-offset-left);width:100%}[data-sonner-toaster][dir=rtl]{left:calc(var(--mobile-offset-left) * -1)}[data-sonner-toaster] [data-sonner-toast]{left:0;right:0;width:calc(100% - var(--mobile-offset-left) * 2)}[data-sonner-toaster][data-x-position=left]{left:var(--mobile-offset-left)}[data-sonner-toaster][data-y-position=bottom]{bottom:var(--mobile-offset-bottom)}[data-sonner-toaster][data-y-position=top]{top:var(--mobile-offset-top)}[data-sonner-toaster][data-x-position=center]{left:var(--mobile-offset-left);right:var(--mobile-offset-right);transform:none}}[data-sonner-toaster][data-sonner-theme=light]{--normal-bg:#fff;--normal-border:var(--gray4);--normal-text:var(--gray12);--success-bg:hsl(143, 85%, 96%);--success-border:hsl(145, 92%, 87%);--success-text:hsl(140, 100%, 27%);--info-bg:hsl(208, 100%, 97%);--info-border:hsl(221, 91%, 93%);--info-text:hsl(210, 92%, 45%);--warning-bg:hsl(49, 100%, 97%);--warning-border:hsl(49, 91%, 84%);--warning-text:hsl(31, 92%, 45%);--error-bg:hsl(359, 100%, 97%);--error-border:hsl(359, 100%, 94%);--error-text:hsl(360, 100%, 45%)}[data-sonner-toaster][data-sonner-theme=light] [data-sonner-toast][data-invert=true]{--normal-bg:#000;--normal-border:hsl(0, 0%, 20%);--normal-text:var(--gray1)}[data-sonner-toaster][data-sonner-theme=dark] [data-sonner-toast][data-invert=true]{--normal-bg:#fff;--normal-border:var(--gray3);--normal-text:var(--gray12)}[data-sonner-toaster][data-sonner-theme=dark]{--normal-bg:#000;--normal-bg-hover:hsl(0, 0%, 12%);--normal-border:hsl(0, 0%, 20%);--normal-border-hover:hsl(0, 0%, 25%);--normal-text:var(--gray1);--success-bg:hsl(150, 100%, 6%);--success-border:hsl(147, 100%, 12%);--success-text:hsl(150, 86%, 65%);--info-bg:hsl(215, 100%, 6%);--info-border:hsl(223, 43%, 17%);--info-text:hsl(216, 87%, 65%);--warning-bg:hsl(64, 100%, 6%);--warning-border:hsl(60, 100%, 9%);--warning-text:hsl(46, 87%, 65%);--error-bg:hsl(358, 76%, 10%);--error-border:hsl(357, 89%, 16%);--error-text:hsl(358, 100%, 81%)}[data-sonner-toaster][data-sonner-theme=dark] [data-sonner-toast] [data-close-button]{background:var(--normal-bg);border-color:var(--normal-border);color:var(--normal-text)}[data-sonner-toaster][data-sonner-theme=dark] [data-sonner-toast] [data-close-button]:hover{background:var(--normal-bg-hover);border-color:var(--normal-border-hover)}[data-rich-colors=true][data-sonner-toast][data-type=success]{background:var(--success-bg);border-color:var(--success-border);color:var(--success-text)}[data-rich-colors=true][data-sonner-toast][data-type=success] [data-close-button]{background:var(--success-bg);border-color:var(--success-border);color:var(--success-text)}[data-rich-colors=true][data-sonner-toast][data-type=info]{background:var(--info-bg);border-color:var(--info-border);color:var(--info-text)}[data-rich-colors=true][data-sonner-toast][data-type=info] [data-close-button]{background:var(--info-bg);border-color:var(--info-border);color:var(--info-text)}[data-rich-colors=true][data-sonner-toast][data-type=warning]{background:var(--warning-bg);border-color:var(--warning-border);color:var(--warning-text)}[data-rich-colors=true][data-sonner-toast][data-type=warning] [data-close-button]{background:var(--warning-bg);border-color:var(--warning-border);color:var(--warning-text)}[data-rich-colors=true][data-sonner-toast][data-type=error]{background:var(--error-bg);border-color:var(--error-border);color:var(--error-text)}[data-rich-colors=true][data-sonner-toast][data-type=error] [data-close-button]{background:var(--error-bg);border-color:var(--error-border);color:var(--error-text)}.sonner-loading-wrapper{--size:16px;height:var(--size);width:var(--size);position:absolute;inset:0;z-index:10}.sonner-loading-wrapper[data-visible=false]{transform-origin:center;animation:sonner-fade-out .2s ease forwards}.sonner-spinner{position:relative;top:50%;left:50%;height:var(--size);width:var(--size)}.sonner-loading-bar{animation:sonner-spin 1.2s linear infinite;background:var(--gray11);border-radius:6px;height:8%;left:-10%;position:absolute;top:-3.9%;width:24%}.sonner-loading-bar:first-child{animation-delay:-1.2s;transform:rotate(.0001deg) translate(146%)}.sonner-loading-bar:nth-child(2){animation-delay:-1.1s;transform:rotate(30deg) translate(146%)}.sonner-loading-bar:nth-child(3){animation-delay:-1s;transform:rotate(60deg) translate(146%)}.sonner-loading-bar:nth-child(4){animation-delay:-.9s;transform:rotate(90deg) translate(146%)}.sonner-loading-bar:nth-child(5){animation-delay:-.8s;transform:rotate(120deg) translate(146%)}.sonner-loading-bar:nth-child(6){animation-delay:-.7s;transform:rotate(150deg) translate(146%)}.sonner-loading-bar:nth-child(7){animation-delay:-.6s;transform:rotate(180deg) translate(146%)}.sonner-loading-bar:nth-child(8){animation-delay:-.5s;transform:rotate(210deg) translate(146%)}.sonner-loading-bar:nth-child(9){animation-delay:-.4s;transform:rotate(240deg) translate(146%)}.sonner-loading-bar:nth-child(10){animation-delay:-.3s;transform:rotate(270deg) translate(146%)}.sonner-loading-bar:nth-child(11){animation-delay:-.2s;transform:rotate(300deg) translate(146%)}.sonner-loading-bar:nth-child(12){animation-delay:-.1s;transform:rotate(330deg) translate(146%)}@keyframes sonner-fade-in{0%{opacity:0;transform:scale(.8)}100%{opacity:1;transform:scale(1)}}@keyframes sonner-fade-out{0%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(.8)}}@keyframes sonner-spin{0%{opacity:1}100%{opacity:.15}}@media (prefers-reduced-motion){.sonner-loading-bar,[data-sonner-toast],[data-sonner-toast]>*{transition:none!important;animation:none!important}}.sonner-loader{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);transform-origin:center;transition:opacity .2s,transform .2s}.sonner-loader[data-visible=false]{opacity:0;transform:scale(.8) translate(-50%,-50%)}");
+Object.assign(
+  basicToast,
+  {
+    success: ToastState.success,
+    info: ToastState.info,
+    warning: ToastState.warning,
+    error: ToastState.error,
+    custom: ToastState.custom,
+    message: ToastState.message,
+    promise: ToastState.promise,
+    dismiss: ToastState.dismiss,
+    loading: ToastState.loading,
+  },
+  {
+    getHistory,
+    getToasts,
+  },
+);
+__insertCSS(
+  "[data-sonner-toaster][dir=ltr],html[dir=ltr]{--toast-icon-margin-start:-3px;--toast-icon-margin-end:4px;--toast-svg-margin-start:-1px;--toast-svg-margin-end:0px;--toast-button-margin-start:auto;--toast-button-margin-end:0;--toast-close-button-start:0;--toast-close-button-end:unset;--toast-close-button-transform:translate(-35%, -35%)}[data-sonner-toaster][dir=rtl],html[dir=rtl]{--toast-icon-margin-start:4px;--toast-icon-margin-end:-3px;--toast-svg-margin-start:0px;--toast-svg-margin-end:-1px;--toast-button-margin-start:0;--toast-button-margin-end:auto;--toast-close-button-start:unset;--toast-close-button-end:0;--toast-close-button-transform:translate(35%, -35%)}[data-sonner-toaster]{position:fixed;width:var(--width);font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,Noto Sans,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol,Noto Color Emoji;--gray1:hsl(0, 0%, 99%);--gray2:hsl(0, 0%, 97.3%);--gray3:hsl(0, 0%, 95.1%);--gray4:hsl(0, 0%, 93%);--gray5:hsl(0, 0%, 90.9%);--gray6:hsl(0, 0%, 88.7%);--gray7:hsl(0, 0%, 85.8%);--gray8:hsl(0, 0%, 78%);--gray9:hsl(0, 0%, 56.1%);--gray10:hsl(0, 0%, 52.3%);--gray11:hsl(0, 0%, 43.5%);--gray12:hsl(0, 0%, 9%);--border-radius:8px;box-sizing:border-box;padding:0;margin:0;list-style:none;outline:0;z-index:999999999;transition:transform .4s ease}@media (hover:none) and (pointer:coarse){[data-sonner-toaster][data-lifted=true]{transform:none}}[data-sonner-toaster][data-x-position=right]{right:var(--offset-right)}[data-sonner-toaster][data-x-position=left]{left:var(--offset-left)}[data-sonner-toaster][data-x-position=center]{left:50%;transform:translateX(-50%)}[data-sonner-toaster][data-y-position=top]{top:var(--offset-top)}[data-sonner-toaster][data-y-position=bottom]{bottom:var(--offset-bottom)}[data-sonner-toast]{--y:translateY(100%);--lift-amount:calc(var(--lift) * var(--gap));z-index:var(--z-index);position:absolute;opacity:0;transform:var(--y);touch-action:none;transition:transform .4s,opacity .4s,height .4s,box-shadow .2s;box-sizing:border-box;outline:0;overflow-wrap:anywhere}[data-sonner-toast][data-styled=true]{padding:16px;background:var(--normal-bg);border:1px solid var(--normal-border);color:var(--normal-text);border-radius:var(--border-radius);box-shadow:0 4px 12px rgba(0,0,0,.1);width:var(--width);font-size:13px;display:flex;align-items:center;gap:6px}[data-sonner-toast]:focus-visible{box-shadow:0 4px 12px rgba(0,0,0,.1),0 0 0 2px rgba(0,0,0,.2)}[data-sonner-toast][data-y-position=top]{top:0;--y:translateY(-100%);--lift:1;--lift-amount:calc(1 * var(--gap))}[data-sonner-toast][data-y-position=bottom]{bottom:0;--y:translateY(100%);--lift:-1;--lift-amount:calc(var(--lift) * var(--gap))}[data-sonner-toast][data-styled=true] [data-description]{font-weight:400;line-height:1.4;color:#3f3f3f}[data-rich-colors=true][data-sonner-toast][data-styled=true] [data-description]{color:inherit}[data-sonner-toaster][data-sonner-theme=dark] [data-description]{color:#e8e8e8}[data-sonner-toast][data-styled=true] [data-title]{font-weight:500;line-height:1.5;color:inherit}[data-sonner-toast][data-styled=true] [data-icon]{display:flex;height:16px;width:16px;position:relative;justify-content:flex-start;align-items:center;flex-shrink:0;margin-left:var(--toast-icon-margin-start);margin-right:var(--toast-icon-margin-end)}[data-sonner-toast][data-promise=true] [data-icon]>svg{opacity:0;transform:scale(.8);transform-origin:center;animation:sonner-fade-in .3s ease forwards}[data-sonner-toast][data-styled=true] [data-icon]>*{flex-shrink:0}[data-sonner-toast][data-styled=true] [data-icon] svg{margin-left:var(--toast-svg-margin-start);margin-right:var(--toast-svg-margin-end)}[data-sonner-toast][data-styled=true] [data-content]{display:flex;flex-direction:column;gap:2px}[data-sonner-toast][data-styled=true] [data-button]{border-radius:4px;padding-left:8px;padding-right:8px;height:24px;font-size:12px;color:var(--normal-bg);background:var(--normal-text);margin-left:var(--toast-button-margin-start);margin-right:var(--toast-button-margin-end);border:none;font-weight:500;cursor:pointer;outline:0;display:flex;align-items:center;flex-shrink:0;transition:opacity .4s,box-shadow .2s}[data-sonner-toast][data-styled=true] [data-button]:focus-visible{box-shadow:0 0 0 2px rgba(0,0,0,.4)}[data-sonner-toast][data-styled=true] [data-button]:first-of-type{margin-left:var(--toast-button-margin-start);margin-right:var(--toast-button-margin-end)}[data-sonner-toast][data-styled=true] [data-cancel]{color:var(--normal-text);background:rgba(0,0,0,.08)}[data-sonner-toaster][data-sonner-theme=dark] [data-sonner-toast][data-styled=true] [data-cancel]{background:rgba(255,255,255,.3)}[data-sonner-toast][data-styled=true] [data-close-button]{position:absolute;left:var(--toast-close-button-start);right:var(--toast-close-button-end);top:0;height:20px;width:20px;display:flex;justify-content:center;align-items:center;padding:0;color:var(--gray12);background:var(--normal-bg);border:1px solid var(--gray4);transform:var(--toast-close-button-transform);border-radius:50%;cursor:pointer;z-index:1;transition:opacity .1s,background .2s,border-color .2s}[data-sonner-toast][data-styled=true] [data-close-button]:focus-visible{box-shadow:0 4px 12px rgba(0,0,0,.1),0 0 0 2px rgba(0,0,0,.2)}[data-sonner-toast][data-styled=true] [data-disabled=true]{cursor:not-allowed}[data-sonner-toast][data-styled=true]:hover [data-close-button]:hover{background:var(--gray2);border-color:var(--gray5)}[data-sonner-toast][data-swiping=true]::before{content:'';position:absolute;left:-100%;right:-100%;height:100%;z-index:-1}[data-sonner-toast][data-y-position=top][data-swiping=true]::before{bottom:50%;transform:scaleY(3) translateY(50%)}[data-sonner-toast][data-y-position=bottom][data-swiping=true]::before{top:50%;transform:scaleY(3) translateY(-50%)}[data-sonner-toast][data-swiping=false][data-removed=true]::before{content:'';position:absolute;inset:0;transform:scaleY(2)}[data-sonner-toast][data-expanded=true]::after{content:'';position:absolute;left:0;height:calc(var(--gap) + 1px);bottom:100%;width:100%}[data-sonner-toast][data-mounted=true]{--y:translateY(0);opacity:1}[data-sonner-toast][data-expanded=false][data-front=false]{--scale:var(--toasts-before) * 0.05 + 1;--y:translateY(calc(var(--lift-amount) * var(--toasts-before))) scale(calc(-1 * var(--scale)));height:var(--front-toast-height)}[data-sonner-toast]>*{transition:opacity .4s}[data-sonner-toast][data-x-position=right]{right:0}[data-sonner-toast][data-x-position=left]{left:0}[data-sonner-toast][data-expanded=false][data-front=false][data-styled=true]>*{opacity:0}[data-sonner-toast][data-visible=false]{opacity:0;pointer-events:none}[data-sonner-toast][data-mounted=true][data-expanded=true]{--y:translateY(calc(var(--lift) * var(--offset)));height:var(--initial-height)}[data-sonner-toast][data-removed=true][data-front=true][data-swipe-out=false]{--y:translateY(calc(var(--lift) * -100%));opacity:0}[data-sonner-toast][data-removed=true][data-front=false][data-swipe-out=false][data-expanded=true]{--y:translateY(calc(var(--lift) * var(--offset) + var(--lift) * -100%));opacity:0}[data-sonner-toast][data-removed=true][data-front=false][data-swipe-out=false][data-expanded=false]{--y:translateY(40%);opacity:0;transition:transform .5s,opacity .2s}[data-sonner-toast][data-removed=true][data-front=false]::before{height:calc(var(--initial-height) + 20%)}[data-sonner-toast][data-swiping=true]{transform:var(--y) translateY(var(--swipe-amount-y,0)) translateX(var(--swipe-amount-x,0));transition:none}[data-sonner-toast][data-swiped=true]{user-select:none}[data-sonner-toast][data-swipe-out=true][data-y-position=bottom],[data-sonner-toast][data-swipe-out=true][data-y-position=top]{animation-duration:.2s;animation-timing-function:ease-out;animation-fill-mode:forwards}[data-sonner-toast][data-swipe-out=true][data-swipe-direction=left]{animation-name:swipe-out-left}[data-sonner-toast][data-swipe-out=true][data-swipe-direction=right]{animation-name:swipe-out-right}[data-sonner-toast][data-swipe-out=true][data-swipe-direction=up]{animation-name:swipe-out-up}[data-sonner-toast][data-swipe-out=true][data-swipe-direction=down]{animation-name:swipe-out-down}@keyframes swipe-out-left{from{transform:var(--y) translateX(var(--swipe-amount-x));opacity:1}to{transform:var(--y) translateX(calc(var(--swipe-amount-x) - 100%));opacity:0}}@keyframes swipe-out-right{from{transform:var(--y) translateX(var(--swipe-amount-x));opacity:1}to{transform:var(--y) translateX(calc(var(--swipe-amount-x) + 100%));opacity:0}}@keyframes swipe-out-up{from{transform:var(--y) translateY(var(--swipe-amount-y));opacity:1}to{transform:var(--y) translateY(calc(var(--swipe-amount-y) - 100%));opacity:0}}@keyframes swipe-out-down{from{transform:var(--y) translateY(var(--swipe-amount-y));opacity:1}to{transform:var(--y) translateY(calc(var(--swipe-amount-y) + 100%));opacity:0}}@media (max-width:600px){[data-sonner-toaster]{position:fixed;right:var(--mobile-offset-right);left:var(--mobile-offset-left);width:100%}[data-sonner-toaster][dir=rtl]{left:calc(var(--mobile-offset-left) * -1)}[data-sonner-toaster] [data-sonner-toast]{left:0;right:0;width:calc(100% - var(--mobile-offset-left) * 2)}[data-sonner-toaster][data-x-position=left]{left:var(--mobile-offset-left)}[data-sonner-toaster][data-y-position=bottom]{bottom:var(--mobile-offset-bottom)}[data-sonner-toaster][data-y-position=top]{top:var(--mobile-offset-top)}[data-sonner-toaster][data-x-position=center]{left:var(--mobile-offset-left);right:var(--mobile-offset-right);transform:none}}[data-sonner-toaster][data-sonner-theme=light]{--normal-bg:#fff;--normal-border:var(--gray4);--normal-text:var(--gray12);--success-bg:hsl(143, 85%, 96%);--success-border:hsl(145, 92%, 87%);--success-text:hsl(140, 100%, 27%);--info-bg:hsl(208, 100%, 97%);--info-border:hsl(221, 91%, 93%);--info-text:hsl(210, 92%, 45%);--warning-bg:hsl(49, 100%, 97%);--warning-border:hsl(49, 91%, 84%);--warning-text:hsl(31, 92%, 45%);--error-bg:hsl(359, 100%, 97%);--error-border:hsl(359, 100%, 94%);--error-text:hsl(360, 100%, 45%)}[data-sonner-toaster][data-sonner-theme=light] [data-sonner-toast][data-invert=true]{--normal-bg:#000;--normal-border:hsl(0, 0%, 20%);--normal-text:var(--gray1)}[data-sonner-toaster][data-sonner-theme=dark] [data-sonner-toast][data-invert=true]{--normal-bg:#fff;--normal-border:var(--gray3);--normal-text:var(--gray12)}[data-sonner-toaster][data-sonner-theme=dark]{--normal-bg:#000;--normal-bg-hover:hsl(0, 0%, 12%);--normal-border:hsl(0, 0%, 20%);--normal-border-hover:hsl(0, 0%, 25%);--normal-text:var(--gray1);--success-bg:hsl(150, 100%, 6%);--success-border:hsl(147, 100%, 12%);--success-text:hsl(150, 86%, 65%);--info-bg:hsl(215, 100%, 6%);--info-border:hsl(223, 43%, 17%);--info-text:hsl(216, 87%, 65%);--warning-bg:hsl(64, 100%, 6%);--warning-border:hsl(60, 100%, 9%);--warning-text:hsl(46, 87%, 65%);--error-bg:hsl(358, 76%, 10%);--error-border:hsl(357, 89%, 16%);--error-text:hsl(358, 100%, 81%)}[data-sonner-toaster][data-sonner-theme=dark] [data-sonner-toast] [data-close-button]{background:var(--normal-bg);border-color:var(--normal-border);color:var(--normal-text)}[data-sonner-toaster][data-sonner-theme=dark] [data-sonner-toast] [data-close-button]:hover{background:var(--normal-bg-hover);border-color:var(--normal-border-hover)}[data-rich-colors=true][data-sonner-toast][data-type=success]{background:var(--success-bg);border-color:var(--success-border);color:var(--success-text)}[data-rich-colors=true][data-sonner-toast][data-type=success] [data-close-button]{background:var(--success-bg);border-color:var(--success-border);color:var(--success-text)}[data-rich-colors=true][data-sonner-toast][data-type=info]{background:var(--info-bg);border-color:var(--info-border);color:var(--info-text)}[data-rich-colors=true][data-sonner-toast][data-type=info] [data-close-button]{background:var(--info-bg);border-color:var(--info-border);color:var(--info-text)}[data-rich-colors=true][data-sonner-toast][data-type=warning]{background:var(--warning-bg);border-color:var(--warning-border);color:var(--warning-text)}[data-rich-colors=true][data-sonner-toast][data-type=warning] [data-close-button]{background:var(--warning-bg);border-color:var(--warning-border);color:var(--warning-text)}[data-rich-colors=true][data-sonner-toast][data-type=error]{background:var(--error-bg);border-color:var(--error-border);color:var(--error-text)}[data-rich-colors=true][data-sonner-toast][data-type=error] [data-close-button]{background:var(--error-bg);border-color:var(--error-border);color:var(--error-text)}.sonner-loading-wrapper{--size:16px;height:var(--size);width:var(--size);position:absolute;inset:0;z-index:10}.sonner-loading-wrapper[data-visible=false]{transform-origin:center;animation:sonner-fade-out .2s ease forwards}.sonner-spinner{position:relative;top:50%;left:50%;height:var(--size);width:var(--size)}.sonner-loading-bar{animation:sonner-spin 1.2s linear infinite;background:var(--gray11);border-radius:6px;height:8%;left:-10%;position:absolute;top:-3.9%;width:24%}.sonner-loading-bar:first-child{animation-delay:-1.2s;transform:rotate(.0001deg) translate(146%)}.sonner-loading-bar:nth-child(2){animation-delay:-1.1s;transform:rotate(30deg) translate(146%)}.sonner-loading-bar:nth-child(3){animation-delay:-1s;transform:rotate(60deg) translate(146%)}.sonner-loading-bar:nth-child(4){animation-delay:-.9s;transform:rotate(90deg) translate(146%)}.sonner-loading-bar:nth-child(5){animation-delay:-.8s;transform:rotate(120deg) translate(146%)}.sonner-loading-bar:nth-child(6){animation-delay:-.7s;transform:rotate(150deg) translate(146%)}.sonner-loading-bar:nth-child(7){animation-delay:-.6s;transform:rotate(180deg) translate(146%)}.sonner-loading-bar:nth-child(8){animation-delay:-.5s;transform:rotate(210deg) translate(146%)}.sonner-loading-bar:nth-child(9){animation-delay:-.4s;transform:rotate(240deg) translate(146%)}.sonner-loading-bar:nth-child(10){animation-delay:-.3s;transform:rotate(270deg) translate(146%)}.sonner-loading-bar:nth-child(11){animation-delay:-.2s;transform:rotate(300deg) translate(146%)}.sonner-loading-bar:nth-child(12){animation-delay:-.1s;transform:rotate(330deg) translate(146%)}@keyframes sonner-fade-in{0%{opacity:0;transform:scale(.8)}100%{opacity:1;transform:scale(1)}}@keyframes sonner-fade-out{0%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(.8)}}@keyframes sonner-spin{0%{opacity:1}100%{opacity:.15}}@media (prefers-reduced-motion){.sonner-loading-bar,[data-sonner-toast],[data-sonner-toast]>*{transition:none!important;animation:none!important}}.sonner-loader{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);transform-origin:center;transition:opacity .2s,transform .2s}.sonner-loader[data-visible=false]{opacity:0;transform:scale(.8) translate(-50%,-50%)}",
+);
 function isAction(action) {
   return action.label !== void 0;
 }
@@ -19880,18 +23909,56 @@ function getDefaultSwipeDirections(position) {
   return directions;
 }
 const Toast = (props) => {
-  var _toast_classNames, _toast_classNames1, _toast_classNames2, _toast_classNames3, _toast_classNames4, _toast_classNames5, _toast_classNames6, _toast_classNames7, _toast_classNames8;
-  const { invert: ToasterInvert, toast, unstyled, interacting, setHeights, visibleToasts, heights, index: index2, toasts, expanded, removeToast, defaultRichColors, closeButton: closeButtonFromToaster, style, cancelButtonStyle, actionButtonStyle, className = "", descriptionClassName = "", duration: durationFromToaster, position, gap, expandByDefault, classNames, icons, closeButtonAriaLabel = "Close toast" } = props;
+  var _toast_classNames,
+    _toast_classNames1,
+    _toast_classNames2,
+    _toast_classNames3,
+    _toast_classNames4,
+    _toast_classNames5,
+    _toast_classNames6,
+    _toast_classNames7,
+    _toast_classNames8;
+  const {
+    invert: ToasterInvert,
+    toast,
+    unstyled,
+    interacting,
+    setHeights,
+    visibleToasts,
+    heights,
+    index: index2,
+    toasts,
+    expanded,
+    removeToast,
+    defaultRichColors,
+    closeButton: closeButtonFromToaster,
+    style,
+    cancelButtonStyle,
+    actionButtonStyle,
+    className = "",
+    descriptionClassName = "",
+    duration: durationFromToaster,
+    position,
+    gap,
+    expandByDefault,
+    classNames,
+    icons,
+    closeButtonAriaLabel = "Close toast",
+  } = props;
   const [swipeDirection, setSwipeDirection] = React__default.useState(null);
-  const [swipeOutDirection, setSwipeOutDirection] = React__default.useState(null);
+  const [swipeOutDirection, setSwipeOutDirection] =
+    React__default.useState(null);
   const [mounted, setMounted] = React__default.useState(false);
   const [removed, setRemoved] = React__default.useState(false);
   const [swiping, setSwiping] = React__default.useState(false);
   const [swipeOut, setSwipeOut] = React__default.useState(false);
   const [isSwiped, setIsSwiped] = React__default.useState(false);
-  const [offsetBeforeRemove, setOffsetBeforeRemove] = React__default.useState(0);
+  const [offsetBeforeRemove, setOffsetBeforeRemove] =
+    React__default.useState(0);
   const [initialHeight, setInitialHeight] = React__default.useState(0);
-  const remainingTime = React__default.useRef(toast.duration || durationFromToaster || TOAST_LIFETIME);
+  const remainingTime = React__default.useRef(
+    toast.duration || durationFromToaster || TOAST_LIFETIME,
+  );
   const dragStartTime = React__default.useRef(null);
   const toastRef = React__default.useRef(null);
   const isFront = index2 === 0;
@@ -19900,21 +23967,20 @@ const Toast = (props) => {
   const dismissible = toast.dismissible !== false;
   const toastClassname = toast.className || "";
   const toastDescriptionClassname = toast.descriptionClassName || "";
-  const heightIndex = React__default.useMemo(() => heights.findIndex((height) => height.toastId === toast.id) || 0, [
-    heights,
-    toast.id
-  ]);
+  const heightIndex = React__default.useMemo(
+    () => heights.findIndex((height) => height.toastId === toast.id) || 0,
+    [heights, toast.id],
+  );
   const closeButton = React__default.useMemo(() => {
     var _toast_closeButton;
-    return (_toast_closeButton = toast.closeButton) != null ? _toast_closeButton : closeButtonFromToaster;
-  }, [
-    toast.closeButton,
-    closeButtonFromToaster
-  ]);
-  const duration = React__default.useMemo(() => toast.duration || durationFromToaster || TOAST_LIFETIME, [
-    toast.duration,
-    durationFromToaster
-  ]);
+    return (_toast_closeButton = toast.closeButton) != null
+      ? _toast_closeButton
+      : closeButtonFromToaster;
+  }, [toast.closeButton, closeButtonFromToaster]);
+  const duration = React__default.useMemo(
+    () => toast.duration || durationFromToaster || TOAST_LIFETIME,
+    [toast.duration, durationFromToaster],
+  );
   const closeTimerStartTimeRef = React__default.useRef(0);
   const offset2 = React__default.useRef(0);
   const lastCloseTimerStartTimeRef = React__default.useRef(0);
@@ -19927,22 +23993,17 @@ const Toast = (props) => {
       }
       return prev + curr.height;
     }, 0);
-  }, [
-    heights,
-    heightIndex
-  ]);
+  }, [heights, heightIndex]);
   const isDocumentHidden = useIsDocumentHidden();
   const invert = toast.invert || ToasterInvert;
   const disabled = toastType === "loading";
-  offset2.current = React__default.useMemo(() => heightIndex * gap + toastsHeightBefore, [
-    heightIndex,
-    toastsHeightBefore
-  ]);
+  offset2.current = React__default.useMemo(
+    () => heightIndex * gap + toastsHeightBefore,
+    [heightIndex, toastsHeightBefore],
+  );
   React__default.useEffect(() => {
     remainingTime.current = duration;
-  }, [
-    duration
-  ]);
+  }, [duration]);
   React__default.useEffect(() => {
     setMounted(true);
   }, []);
@@ -19955,16 +24016,14 @@ const Toast = (props) => {
         {
           toastId: toast.id,
           height,
-          position: toast.position
+          position: toast.position,
         },
-        ...h
+        ...h,
       ]);
-      return () => setHeights((h) => h.filter((height2) => height2.toastId !== toast.id));
+      return () =>
+        setHeights((h) => h.filter((height2) => height2.toastId !== toast.id));
     }
-  }, [
-    setHeights,
-    toast.id
-  ]);
+  }, [setHeights, toast.id]);
   React__default.useLayoutEffect(() => {
     if (!mounted) return;
     const toastNode = toastRef.current;
@@ -19974,21 +24033,27 @@ const Toast = (props) => {
     toastNode.style.height = originalHeight;
     setInitialHeight(newHeight);
     setHeights((heights2) => {
-      const alreadyExists = heights2.find((height) => height.toastId === toast.id);
+      const alreadyExists = heights2.find(
+        (height) => height.toastId === toast.id,
+      );
       if (!alreadyExists) {
         return [
           {
             toastId: toast.id,
             height: newHeight,
-            position: toast.position
+            position: toast.position,
           },
-          ...heights2
+          ...heights2,
         ];
       } else {
-        return heights2.map((height) => height.toastId === toast.id ? {
-          ...height,
-          height: newHeight
-        } : height);
+        return heights2.map((height) =>
+          height.toastId === toast.id
+            ? {
+                ...height,
+                height: newHeight,
+              }
+            : height,
+        );
       }
     });
   }, [
@@ -19999,7 +24064,7 @@ const Toast = (props) => {
     toast.id,
     toast.jsx,
     toast.action,
-    toast.cancel
+    toast.cancel,
   ]);
   const deleteToast = React__default.useCallback(() => {
     setRemoved(true);
@@ -20008,27 +24073,30 @@ const Toast = (props) => {
     setTimeout(() => {
       removeToast(toast);
     }, TIME_BEFORE_UNMOUNT);
-  }, [
-    toast,
-    removeToast,
-    setHeights,
-    offset2
-  ]);
+  }, [toast, removeToast, setHeights, offset2]);
   React__default.useEffect(() => {
-    if (toast.promise && toastType === "loading" || toast.duration === Infinity || toast.type === "loading") return;
+    if (
+      (toast.promise && toastType === "loading") ||
+      toast.duration === Infinity ||
+      toast.type === "loading"
+    )
+      return;
     let timeoutId;
     const pauseTimer = () => {
       if (lastCloseTimerStartTimeRef.current < closeTimerStartTimeRef.current) {
-        const elapsedTime = (/* @__PURE__ */ new Date()).getTime() - closeTimerStartTimeRef.current;
+        const elapsedTime =
+          /* @__PURE__ */ new Date().getTime() - closeTimerStartTimeRef.current;
         remainingTime.current = remainingTime.current - elapsedTime;
       }
-      lastCloseTimerStartTimeRef.current = (/* @__PURE__ */ new Date()).getTime();
+      lastCloseTimerStartTimeRef.current = /* @__PURE__ */ new Date().getTime();
     };
     const startTimer = () => {
       if (remainingTime.current === Infinity) return;
-      closeTimerStartTimeRef.current = (/* @__PURE__ */ new Date()).getTime();
+      closeTimerStartTimeRef.current = /* @__PURE__ */ new Date().getTime();
       timeoutId = setTimeout(() => {
-        toast.onAutoClose == null ? void 0 : toast.onAutoClose.call(toast, toast);
+        toast.onAutoClose == null
+          ? void 0
+          : toast.onAutoClose.call(toast, toast);
         deleteToast();
       }, remainingTime.current);
     };
@@ -20038,209 +24106,418 @@ const Toast = (props) => {
       startTimer();
     }
     return () => clearTimeout(timeoutId);
-  }, [
-    expanded,
-    interacting,
-    toast,
-    toastType,
-    isDocumentHidden,
-    deleteToast
-  ]);
+  }, [expanded, interacting, toast, toastType, isDocumentHidden, deleteToast]);
   React__default.useEffect(() => {
     if (toast.delete) {
       deleteToast();
       toast.onDismiss == null ? void 0 : toast.onDismiss.call(toast, toast);
     }
-  }, [
-    deleteToast,
-    toast.delete
-  ]);
+  }, [deleteToast, toast.delete]);
   function getLoadingIcon() {
     var _toast_classNames9;
     if (icons == null ? void 0 : icons.loading) {
       var _toast_classNames12;
-      return /* @__PURE__ */ React__default.createElement("div", {
-        className: cn(classNames == null ? void 0 : classNames.loader, toast == null ? void 0 : (_toast_classNames12 = toast.classNames) == null ? void 0 : _toast_classNames12.loader, "sonner-loader"),
-        "data-visible": toastType === "loading"
-      }, icons.loading);
+      return /* @__PURE__ */ React__default.createElement(
+        "div",
+        {
+          className: cn(
+            classNames == null ? void 0 : classNames.loader,
+            toast == null
+              ? void 0
+              : (_toast_classNames12 = toast.classNames) == null
+                ? void 0
+                : _toast_classNames12.loader,
+            "sonner-loader",
+          ),
+          "data-visible": toastType === "loading",
+        },
+        icons.loading,
+      );
     }
     return /* @__PURE__ */ React__default.createElement(Loader, {
-      className: cn(classNames == null ? void 0 : classNames.loader, toast == null ? void 0 : (_toast_classNames9 = toast.classNames) == null ? void 0 : _toast_classNames9.loader),
-      visible: toastType === "loading"
+      className: cn(
+        classNames == null ? void 0 : classNames.loader,
+        toast == null
+          ? void 0
+          : (_toast_classNames9 = toast.classNames) == null
+            ? void 0
+            : _toast_classNames9.loader,
+      ),
+      visible: toastType === "loading",
     });
   }
-  const icon = toast.icon || (icons == null ? void 0 : icons[toastType]) || getAsset(toastType);
+  const icon =
+    toast.icon ||
+    (icons == null ? void 0 : icons[toastType]) ||
+    getAsset(toastType);
   var _toast_richColors, _icons_close;
-  return /* @__PURE__ */ React__default.createElement("li", {
-    tabIndex: 0,
-    ref: toastRef,
-    className: cn(className, toastClassname, classNames == null ? void 0 : classNames.toast, toast == null ? void 0 : (_toast_classNames = toast.classNames) == null ? void 0 : _toast_classNames.toast, classNames == null ? void 0 : classNames.default, classNames == null ? void 0 : classNames[toastType], toast == null ? void 0 : (_toast_classNames1 = toast.classNames) == null ? void 0 : _toast_classNames1[toastType]),
-    "data-sonner-toast": "",
-    "data-rich-colors": (_toast_richColors = toast.richColors) != null ? _toast_richColors : defaultRichColors,
-    "data-styled": !Boolean(toast.jsx || toast.unstyled || unstyled),
-    "data-mounted": mounted,
-    "data-promise": Boolean(toast.promise),
-    "data-swiped": isSwiped,
-    "data-removed": removed,
-    "data-visible": isVisible,
-    "data-y-position": y,
-    "data-x-position": x,
-    "data-index": index2,
-    "data-front": isFront,
-    "data-swiping": swiping,
-    "data-dismissible": dismissible,
-    "data-type": toastType,
-    "data-invert": invert,
-    "data-swipe-out": swipeOut,
-    "data-swipe-direction": swipeOutDirection,
-    "data-expanded": Boolean(expanded || expandByDefault && mounted),
-    "data-testid": toast.testId,
-    style: {
-      "--index": index2,
-      "--toasts-before": index2,
-      "--z-index": toasts.length - index2,
-      "--offset": `${removed ? offsetBeforeRemove : offset2.current}px`,
-      "--initial-height": expandByDefault ? "auto" : `${initialHeight}px`,
-      ...style,
-      ...toast.style
-    },
-    onDragEnd: () => {
-      setSwiping(false);
-      setSwipeDirection(null);
-      pointerStartRef.current = null;
-    },
-    onPointerDown: (event) => {
-      if (event.button === 2) return;
-      if (disabled || !dismissible) return;
-      dragStartTime.current = /* @__PURE__ */ new Date();
-      setOffsetBeforeRemove(offset2.current);
-      event.target.setPointerCapture(event.pointerId);
-      if (event.target.tagName === "BUTTON") return;
-      setSwiping(true);
-      pointerStartRef.current = {
-        x: event.clientX,
-        y: event.clientY
-      };
-    },
-    onPointerUp: () => {
-      var _toastRef_current, _toastRef_current1, _dragStartTime_current;
-      if (swipeOut || !dismissible) return;
-      pointerStartRef.current = null;
-      const swipeAmountX = Number(((_toastRef_current = toastRef.current) == null ? void 0 : _toastRef_current.style.getPropertyValue("--swipe-amount-x").replace("px", "")) || 0);
-      const swipeAmountY = Number(((_toastRef_current1 = toastRef.current) == null ? void 0 : _toastRef_current1.style.getPropertyValue("--swipe-amount-y").replace("px", "")) || 0);
-      const timeTaken = (/* @__PURE__ */ new Date()).getTime() - ((_dragStartTime_current = dragStartTime.current) == null ? void 0 : _dragStartTime_current.getTime());
-      const swipeAmount = swipeDirection === "x" ? swipeAmountX : swipeAmountY;
-      const velocity = Math.abs(swipeAmount) / timeTaken;
-      if (Math.abs(swipeAmount) >= SWIPE_THRESHOLD || velocity > 0.11) {
+  return /* @__PURE__ */ React__default.createElement(
+    "li",
+    {
+      tabIndex: 0,
+      ref: toastRef,
+      className: cn(
+        className,
+        toastClassname,
+        classNames == null ? void 0 : classNames.toast,
+        toast == null
+          ? void 0
+          : (_toast_classNames = toast.classNames) == null
+            ? void 0
+            : _toast_classNames.toast,
+        classNames == null ? void 0 : classNames.default,
+        classNames == null ? void 0 : classNames[toastType],
+        toast == null
+          ? void 0
+          : (_toast_classNames1 = toast.classNames) == null
+            ? void 0
+            : _toast_classNames1[toastType],
+      ),
+      "data-sonner-toast": "",
+      "data-rich-colors":
+        (_toast_richColors = toast.richColors) != null
+          ? _toast_richColors
+          : defaultRichColors,
+      "data-styled": !Boolean(toast.jsx || toast.unstyled || unstyled),
+      "data-mounted": mounted,
+      "data-promise": Boolean(toast.promise),
+      "data-swiped": isSwiped,
+      "data-removed": removed,
+      "data-visible": isVisible,
+      "data-y-position": y,
+      "data-x-position": x,
+      "data-index": index2,
+      "data-front": isFront,
+      "data-swiping": swiping,
+      "data-dismissible": dismissible,
+      "data-type": toastType,
+      "data-invert": invert,
+      "data-swipe-out": swipeOut,
+      "data-swipe-direction": swipeOutDirection,
+      "data-expanded": Boolean(expanded || (expandByDefault && mounted)),
+      "data-testid": toast.testId,
+      style: {
+        "--index": index2,
+        "--toasts-before": index2,
+        "--z-index": toasts.length - index2,
+        "--offset": `${removed ? offsetBeforeRemove : offset2.current}px`,
+        "--initial-height": expandByDefault ? "auto" : `${initialHeight}px`,
+        ...style,
+        ...toast.style,
+      },
+      onDragEnd: () => {
+        setSwiping(false);
+        setSwipeDirection(null);
+        pointerStartRef.current = null;
+      },
+      onPointerDown: (event) => {
+        if (event.button === 2) return;
+        if (disabled || !dismissible) return;
+        dragStartTime.current = /* @__PURE__ */ new Date();
         setOffsetBeforeRemove(offset2.current);
-        toast.onDismiss == null ? void 0 : toast.onDismiss.call(toast, toast);
-        if (swipeDirection === "x") {
-          setSwipeOutDirection(swipeAmountX > 0 ? "right" : "left");
+        event.target.setPointerCapture(event.pointerId);
+        if (event.target.tagName === "BUTTON") return;
+        setSwiping(true);
+        pointerStartRef.current = {
+          x: event.clientX,
+          y: event.clientY,
+        };
+      },
+      onPointerUp: () => {
+        var _toastRef_current, _toastRef_current1, _dragStartTime_current;
+        if (swipeOut || !dismissible) return;
+        pointerStartRef.current = null;
+        const swipeAmountX = Number(
+          ((_toastRef_current = toastRef.current) == null
+            ? void 0
+            : _toastRef_current.style
+                .getPropertyValue("--swipe-amount-x")
+                .replace("px", "")) || 0,
+        );
+        const swipeAmountY = Number(
+          ((_toastRef_current1 = toastRef.current) == null
+            ? void 0
+            : _toastRef_current1.style
+                .getPropertyValue("--swipe-amount-y")
+                .replace("px", "")) || 0,
+        );
+        const timeTaken =
+          /* @__PURE__ */ new Date().getTime() -
+          ((_dragStartTime_current = dragStartTime.current) == null
+            ? void 0
+            : _dragStartTime_current.getTime());
+        const swipeAmount =
+          swipeDirection === "x" ? swipeAmountX : swipeAmountY;
+        const velocity = Math.abs(swipeAmount) / timeTaken;
+        if (Math.abs(swipeAmount) >= SWIPE_THRESHOLD || velocity > 0.11) {
+          setOffsetBeforeRemove(offset2.current);
+          toast.onDismiss == null ? void 0 : toast.onDismiss.call(toast, toast);
+          if (swipeDirection === "x") {
+            setSwipeOutDirection(swipeAmountX > 0 ? "right" : "left");
+          } else {
+            setSwipeOutDirection(swipeAmountY > 0 ? "down" : "up");
+          }
+          deleteToast();
+          setSwipeOut(true);
+          return;
         } else {
-          setSwipeOutDirection(swipeAmountY > 0 ? "down" : "up");
+          var _toastRef_current2, _toastRef_current3;
+          (_toastRef_current2 = toastRef.current) == null
+            ? void 0
+            : _toastRef_current2.style.setProperty("--swipe-amount-x", `0px`);
+          (_toastRef_current3 = toastRef.current) == null
+            ? void 0
+            : _toastRef_current3.style.setProperty("--swipe-amount-y", `0px`);
         }
-        deleteToast();
-        setSwipeOut(true);
-        return;
-      } else {
-        var _toastRef_current2, _toastRef_current3;
-        (_toastRef_current2 = toastRef.current) == null ? void 0 : _toastRef_current2.style.setProperty("--swipe-amount-x", `0px`);
-        (_toastRef_current3 = toastRef.current) == null ? void 0 : _toastRef_current3.style.setProperty("--swipe-amount-y", `0px`);
-      }
-      setIsSwiped(false);
-      setSwiping(false);
-      setSwipeDirection(null);
-    },
-    onPointerMove: (event) => {
-      var _window_getSelection, _toastRef_current, _toastRef_current1;
-      if (!pointerStartRef.current || !dismissible) return;
-      const isHighlighted = ((_window_getSelection = window.getSelection()) == null ? void 0 : _window_getSelection.toString().length) > 0;
-      if (isHighlighted) return;
-      const yDelta = event.clientY - pointerStartRef.current.y;
-      const xDelta = event.clientX - pointerStartRef.current.x;
-      var _props_swipeDirections;
-      const swipeDirections = (_props_swipeDirections = props.swipeDirections) != null ? _props_swipeDirections : getDefaultSwipeDirections(position);
-      if (!swipeDirection && (Math.abs(xDelta) > 1 || Math.abs(yDelta) > 1)) {
-        setSwipeDirection(Math.abs(xDelta) > Math.abs(yDelta) ? "x" : "y");
-      }
-      let swipeAmount = {
-        x: 0,
-        y: 0
-      };
-      const getDampening = (delta) => {
-        const factor = Math.abs(delta) / 20;
-        return 1 / (1.5 + factor);
-      };
-      if (swipeDirection === "y") {
-        if (swipeDirections.includes("top") || swipeDirections.includes("bottom")) {
-          if (swipeDirections.includes("top") && yDelta < 0 || swipeDirections.includes("bottom") && yDelta > 0) {
-            swipeAmount.y = yDelta;
-          } else {
-            const dampenedDelta = yDelta * getDampening(yDelta);
-            swipeAmount.y = Math.abs(dampenedDelta) < Math.abs(yDelta) ? dampenedDelta : yDelta;
+        setIsSwiped(false);
+        setSwiping(false);
+        setSwipeDirection(null);
+      },
+      onPointerMove: (event) => {
+        var _window_getSelection, _toastRef_current, _toastRef_current1;
+        if (!pointerStartRef.current || !dismissible) return;
+        const isHighlighted =
+          ((_window_getSelection = window.getSelection()) == null
+            ? void 0
+            : _window_getSelection.toString().length) > 0;
+        if (isHighlighted) return;
+        const yDelta = event.clientY - pointerStartRef.current.y;
+        const xDelta = event.clientX - pointerStartRef.current.x;
+        var _props_swipeDirections;
+        const swipeDirections =
+          (_props_swipeDirections = props.swipeDirections) != null
+            ? _props_swipeDirections
+            : getDefaultSwipeDirections(position);
+        if (!swipeDirection && (Math.abs(xDelta) > 1 || Math.abs(yDelta) > 1)) {
+          setSwipeDirection(Math.abs(xDelta) > Math.abs(yDelta) ? "x" : "y");
+        }
+        let swipeAmount = {
+          x: 0,
+          y: 0,
+        };
+        const getDampening = (delta) => {
+          const factor = Math.abs(delta) / 20;
+          return 1 / (1.5 + factor);
+        };
+        if (swipeDirection === "y") {
+          if (
+            swipeDirections.includes("top") ||
+            swipeDirections.includes("bottom")
+          ) {
+            if (
+              (swipeDirections.includes("top") && yDelta < 0) ||
+              (swipeDirections.includes("bottom") && yDelta > 0)
+            ) {
+              swipeAmount.y = yDelta;
+            } else {
+              const dampenedDelta = yDelta * getDampening(yDelta);
+              swipeAmount.y =
+                Math.abs(dampenedDelta) < Math.abs(yDelta)
+                  ? dampenedDelta
+                  : yDelta;
+            }
+          }
+        } else if (swipeDirection === "x") {
+          if (
+            swipeDirections.includes("left") ||
+            swipeDirections.includes("right")
+          ) {
+            if (
+              (swipeDirections.includes("left") && xDelta < 0) ||
+              (swipeDirections.includes("right") && xDelta > 0)
+            ) {
+              swipeAmount.x = xDelta;
+            } else {
+              const dampenedDelta = xDelta * getDampening(xDelta);
+              swipeAmount.x =
+                Math.abs(dampenedDelta) < Math.abs(xDelta)
+                  ? dampenedDelta
+                  : xDelta;
+            }
           }
         }
-      } else if (swipeDirection === "x") {
-        if (swipeDirections.includes("left") || swipeDirections.includes("right")) {
-          if (swipeDirections.includes("left") && xDelta < 0 || swipeDirections.includes("right") && xDelta > 0) {
-            swipeAmount.x = xDelta;
-          } else {
-            const dampenedDelta = xDelta * getDampening(xDelta);
-            swipeAmount.x = Math.abs(dampenedDelta) < Math.abs(xDelta) ? dampenedDelta : xDelta;
-          }
+        if (Math.abs(swipeAmount.x) > 0 || Math.abs(swipeAmount.y) > 0) {
+          setIsSwiped(true);
         }
-      }
-      if (Math.abs(swipeAmount.x) > 0 || Math.abs(swipeAmount.y) > 0) {
-        setIsSwiped(true);
-      }
-      (_toastRef_current = toastRef.current) == null ? void 0 : _toastRef_current.style.setProperty("--swipe-amount-x", `${swipeAmount.x}px`);
-      (_toastRef_current1 = toastRef.current) == null ? void 0 : _toastRef_current1.style.setProperty("--swipe-amount-y", `${swipeAmount.y}px`);
-    }
-  }, closeButton && !toast.jsx && toastType !== "loading" ? /* @__PURE__ */ React__default.createElement("button", {
-    "aria-label": closeButtonAriaLabel,
-    "data-disabled": disabled,
-    "data-close-button": true,
-    onClick: disabled || !dismissible ? () => {
-    } : () => {
-      deleteToast();
-      toast.onDismiss == null ? void 0 : toast.onDismiss.call(toast, toast);
+        (_toastRef_current = toastRef.current) == null
+          ? void 0
+          : _toastRef_current.style.setProperty(
+              "--swipe-amount-x",
+              `${swipeAmount.x}px`,
+            );
+        (_toastRef_current1 = toastRef.current) == null
+          ? void 0
+          : _toastRef_current1.style.setProperty(
+              "--swipe-amount-y",
+              `${swipeAmount.y}px`,
+            );
+      },
     },
-    className: cn(classNames == null ? void 0 : classNames.closeButton, toast == null ? void 0 : (_toast_classNames2 = toast.classNames) == null ? void 0 : _toast_classNames2.closeButton)
-  }, (_icons_close = icons == null ? void 0 : icons.close) != null ? _icons_close : CloseIcon) : null, (toastType || toast.icon || toast.promise) && toast.icon !== null && ((icons == null ? void 0 : icons[toastType]) !== null || toast.icon) ? /* @__PURE__ */ React__default.createElement("div", {
-    "data-icon": "",
-    className: cn(classNames == null ? void 0 : classNames.icon, toast == null ? void 0 : (_toast_classNames3 = toast.classNames) == null ? void 0 : _toast_classNames3.icon)
-  }, toast.promise || toast.type === "loading" && !toast.icon ? toast.icon || getLoadingIcon() : null, toast.type !== "loading" ? icon : null) : null, /* @__PURE__ */ React__default.createElement("div", {
-    "data-content": "",
-    className: cn(classNames == null ? void 0 : classNames.content, toast == null ? void 0 : (_toast_classNames4 = toast.classNames) == null ? void 0 : _toast_classNames4.content)
-  }, /* @__PURE__ */ React__default.createElement("div", {
-    "data-title": "",
-    className: cn(classNames == null ? void 0 : classNames.title, toast == null ? void 0 : (_toast_classNames5 = toast.classNames) == null ? void 0 : _toast_classNames5.title)
-  }, toast.jsx ? toast.jsx : typeof toast.title === "function" ? toast.title() : toast.title), toast.description ? /* @__PURE__ */ React__default.createElement("div", {
-    "data-description": "",
-    className: cn(descriptionClassName, toastDescriptionClassname, classNames == null ? void 0 : classNames.description, toast == null ? void 0 : (_toast_classNames6 = toast.classNames) == null ? void 0 : _toast_classNames6.description)
-  }, typeof toast.description === "function" ? toast.description() : toast.description) : null), /* @__PURE__ */ React__default.isValidElement(toast.cancel) ? toast.cancel : toast.cancel && isAction(toast.cancel) ? /* @__PURE__ */ React__default.createElement("button", {
-    "data-button": true,
-    "data-cancel": true,
-    style: toast.cancelButtonStyle || cancelButtonStyle,
-    onClick: (event) => {
-      if (!isAction(toast.cancel)) return;
-      if (!dismissible) return;
-      toast.cancel.onClick == null ? void 0 : toast.cancel.onClick.call(toast.cancel, event);
-      deleteToast();
-    },
-    className: cn(classNames == null ? void 0 : classNames.cancelButton, toast == null ? void 0 : (_toast_classNames7 = toast.classNames) == null ? void 0 : _toast_classNames7.cancelButton)
-  }, toast.cancel.label) : null, /* @__PURE__ */ React__default.isValidElement(toast.action) ? toast.action : toast.action && isAction(toast.action) ? /* @__PURE__ */ React__default.createElement("button", {
-    "data-button": true,
-    "data-action": true,
-    style: toast.actionButtonStyle || actionButtonStyle,
-    onClick: (event) => {
-      if (!isAction(toast.action)) return;
-      toast.action.onClick == null ? void 0 : toast.action.onClick.call(toast.action, event);
-      if (event.defaultPrevented) return;
-      deleteToast();
-    },
-    className: cn(classNames == null ? void 0 : classNames.actionButton, toast == null ? void 0 : (_toast_classNames8 = toast.classNames) == null ? void 0 : _toast_classNames8.actionButton)
-  }, toast.action.label) : null);
+    closeButton && !toast.jsx && toastType !== "loading"
+      ? /* @__PURE__ */ React__default.createElement(
+          "button",
+          {
+            "aria-label": closeButtonAriaLabel,
+            "data-disabled": disabled,
+            "data-close-button": true,
+            onClick:
+              disabled || !dismissible
+                ? () => {}
+                : () => {
+                    deleteToast();
+                    toast.onDismiss == null
+                      ? void 0
+                      : toast.onDismiss.call(toast, toast);
+                  },
+            className: cn(
+              classNames == null ? void 0 : classNames.closeButton,
+              toast == null
+                ? void 0
+                : (_toast_classNames2 = toast.classNames) == null
+                  ? void 0
+                  : _toast_classNames2.closeButton,
+            ),
+          },
+          (_icons_close = icons == null ? void 0 : icons.close) != null
+            ? _icons_close
+            : CloseIcon,
+        )
+      : null,
+    (toastType || toast.icon || toast.promise) &&
+      toast.icon !== null &&
+      ((icons == null ? void 0 : icons[toastType]) !== null || toast.icon)
+      ? /* @__PURE__ */ React__default.createElement(
+          "div",
+          {
+            "data-icon": "",
+            className: cn(
+              classNames == null ? void 0 : classNames.icon,
+              toast == null
+                ? void 0
+                : (_toast_classNames3 = toast.classNames) == null
+                  ? void 0
+                  : _toast_classNames3.icon,
+            ),
+          },
+          toast.promise || (toast.type === "loading" && !toast.icon)
+            ? toast.icon || getLoadingIcon()
+            : null,
+          toast.type !== "loading" ? icon : null,
+        )
+      : null,
+    /* @__PURE__ */ React__default.createElement(
+      "div",
+      {
+        "data-content": "",
+        className: cn(
+          classNames == null ? void 0 : classNames.content,
+          toast == null
+            ? void 0
+            : (_toast_classNames4 = toast.classNames) == null
+              ? void 0
+              : _toast_classNames4.content,
+        ),
+      },
+      /* @__PURE__ */ React__default.createElement(
+        "div",
+        {
+          "data-title": "",
+          className: cn(
+            classNames == null ? void 0 : classNames.title,
+            toast == null
+              ? void 0
+              : (_toast_classNames5 = toast.classNames) == null
+                ? void 0
+                : _toast_classNames5.title,
+          ),
+        },
+        toast.jsx
+          ? toast.jsx
+          : typeof toast.title === "function"
+            ? toast.title()
+            : toast.title,
+      ),
+      toast.description
+        ? /* @__PURE__ */ React__default.createElement(
+            "div",
+            {
+              "data-description": "",
+              className: cn(
+                descriptionClassName,
+                toastDescriptionClassname,
+                classNames == null ? void 0 : classNames.description,
+                toast == null
+                  ? void 0
+                  : (_toast_classNames6 = toast.classNames) == null
+                    ? void 0
+                    : _toast_classNames6.description,
+              ),
+            },
+            typeof toast.description === "function"
+              ? toast.description()
+              : toast.description,
+          )
+        : null,
+    ),
+    /* @__PURE__ */ React__default.isValidElement(toast.cancel)
+      ? toast.cancel
+      : toast.cancel && isAction(toast.cancel)
+        ? /* @__PURE__ */ React__default.createElement(
+            "button",
+            {
+              "data-button": true,
+              "data-cancel": true,
+              style: toast.cancelButtonStyle || cancelButtonStyle,
+              onClick: (event) => {
+                if (!isAction(toast.cancel)) return;
+                if (!dismissible) return;
+                toast.cancel.onClick == null
+                  ? void 0
+                  : toast.cancel.onClick.call(toast.cancel, event);
+                deleteToast();
+              },
+              className: cn(
+                classNames == null ? void 0 : classNames.cancelButton,
+                toast == null
+                  ? void 0
+                  : (_toast_classNames7 = toast.classNames) == null
+                    ? void 0
+                    : _toast_classNames7.cancelButton,
+              ),
+            },
+            toast.cancel.label,
+          )
+        : null,
+    /* @__PURE__ */ React__default.isValidElement(toast.action)
+      ? toast.action
+      : toast.action && isAction(toast.action)
+        ? /* @__PURE__ */ React__default.createElement(
+            "button",
+            {
+              "data-button": true,
+              "data-action": true,
+              style: toast.actionButtonStyle || actionButtonStyle,
+              onClick: (event) => {
+                if (!isAction(toast.action)) return;
+                toast.action.onClick == null
+                  ? void 0
+                  : toast.action.onClick.call(toast.action, event);
+                if (event.defaultPrevented) return;
+                deleteToast();
+              },
+              className: cn(
+                classNames == null ? void 0 : classNames.actionButton,
+                toast == null
+                  ? void 0
+                  : (_toast_classNames8 = toast.classNames) == null
+                    ? void 0
+                    : _toast_classNames8.actionButton,
+              ),
+            },
+            toast.action.label,
+          )
+        : null,
+  );
 };
 function getDocumentDirection() {
   if (typeof window === "undefined") return "ltr";
@@ -20253,36 +24530,27 @@ function getDocumentDirection() {
 }
 function assignOffset(defaultOffset, mobileOffset) {
   const styles = {};
-  [
-    defaultOffset,
-    mobileOffset
-  ].forEach((offset2, index2) => {
+  [defaultOffset, mobileOffset].forEach((offset2, index2) => {
     const isMobile = index2 === 1;
     const prefix = isMobile ? "--mobile-offset" : "--offset";
     const defaultValue = isMobile ? MOBILE_VIEWPORT_OFFSET : VIEWPORT_OFFSET;
     function assignAll(offset3) {
-      [
-        "top",
-        "right",
-        "bottom",
-        "left"
-      ].forEach((key) => {
-        styles[`${prefix}-${key}`] = typeof offset3 === "number" ? `${offset3}px` : offset3;
+      ["top", "right", "bottom", "left"].forEach((key) => {
+        styles[`${prefix}-${key}`] =
+          typeof offset3 === "number" ? `${offset3}px` : offset3;
       });
     }
     if (typeof offset2 === "number" || typeof offset2 === "string") {
       assignAll(offset2);
     } else if (typeof offset2 === "object") {
-      [
-        "top",
-        "right",
-        "bottom",
-        "left"
-      ].forEach((key) => {
+      ["top", "right", "bottom", "left"].forEach((key) => {
         if (offset2[key] === void 0) {
           styles[`${prefix}-${key}`] = defaultValue;
         } else {
-          styles[`${prefix}-${key}`] = typeof offset2[key] === "number" ? `${offset2[key]}px` : offset2[key];
+          styles[`${prefix}-${key}`] =
+            typeof offset2[key] === "number"
+              ? `${offset2[key]}px`
+              : offset2[key];
         }
       });
     } else {
@@ -20291,398 +24559,507 @@ function assignOffset(defaultOffset, mobileOffset) {
   });
   return styles;
 }
-const Toaster$1 = /* @__PURE__ */ React__default.forwardRef(function Toaster(props, ref) {
-  const { id, invert, position = "bottom-right", hotkey = [
-    "altKey",
-    "KeyT"
-  ], expand, closeButton, className, offset: offset2, mobileOffset, theme = "light", richColors, duration, style, visibleToasts = VISIBLE_TOASTS_AMOUNT, toastOptions, dir = getDocumentDirection(), gap = GAP, icons, containerAriaLabel = "Notifications" } = props;
-  const [toasts, setToasts] = React__default.useState([]);
-  const filteredToasts = React__default.useMemo(() => {
-    if (id) {
-      return toasts.filter((toast) => toast.toasterId === id);
-    }
-    return toasts.filter((toast) => !toast.toasterId);
-  }, [
-    toasts,
-    id
-  ]);
-  const possiblePositions = React__default.useMemo(() => {
-    return Array.from(new Set([
-      position
-    ].concat(filteredToasts.filter((toast) => toast.position).map((toast) => toast.position))));
-  }, [
-    filteredToasts,
-    position
-  ]);
-  const [heights, setHeights] = React__default.useState([]);
-  const [expanded, setExpanded] = React__default.useState(false);
-  const [interacting, setInteracting] = React__default.useState(false);
-  const [actualTheme, setActualTheme] = React__default.useState(theme !== "system" ? theme : typeof window !== "undefined" ? window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light" : "light");
-  const listRef = React__default.useRef(null);
-  const hotkeyLabel = hotkey.join("+").replace(/Key/g, "").replace(/Digit/g, "");
-  const lastFocusedElementRef = React__default.useRef(null);
-  const isFocusWithinRef = React__default.useRef(false);
-  const removeToast = React__default.useCallback((toastToRemove) => {
-    setToasts((toasts2) => {
-      var _toasts_find;
-      if (!((_toasts_find = toasts2.find((toast) => toast.id === toastToRemove.id)) == null ? void 0 : _toasts_find.delete)) {
-        ToastState.dismiss(toastToRemove.id);
+const Toaster$1 = /* @__PURE__ */ React__default.forwardRef(
+  function Toaster(props, ref) {
+    const {
+      id,
+      invert,
+      position = "bottom-right",
+      hotkey = ["altKey", "KeyT"],
+      expand,
+      closeButton,
+      className,
+      offset: offset2,
+      mobileOffset,
+      theme = "light",
+      richColors,
+      duration,
+      style,
+      visibleToasts = VISIBLE_TOASTS_AMOUNT,
+      toastOptions,
+      dir = getDocumentDirection(),
+      gap = GAP,
+      icons,
+      containerAriaLabel = "Notifications",
+    } = props;
+    const [toasts, setToasts] = React__default.useState([]);
+    const filteredToasts = React__default.useMemo(() => {
+      if (id) {
+        return toasts.filter((toast) => toast.toasterId === id);
       }
-      return toasts2.filter(({ id: id2 }) => id2 !== toastToRemove.id);
-    });
-  }, []);
-  React__default.useEffect(() => {
-    return ToastState.subscribe((toast) => {
-      if (toast.dismiss) {
-        requestAnimationFrame(() => {
-          setToasts((toasts2) => toasts2.map((t2) => t2.id === toast.id ? {
-            ...t2,
-            delete: true
-          } : t2));
-        });
-        return;
-      }
-      setTimeout(() => {
-        ReactDOM__default.flushSync(() => {
-          setToasts((toasts2) => {
-            const indexOfExistingToast = toasts2.findIndex((t2) => t2.id === toast.id);
-            if (indexOfExistingToast !== -1) {
-              return [
-                ...toasts2.slice(0, indexOfExistingToast),
-                {
-                  ...toasts2[indexOfExistingToast],
-                  ...toast
-                },
-                ...toasts2.slice(indexOfExistingToast + 1)
-              ];
-            }
-            return [
-              toast,
-              ...toasts2
-            ];
+      return toasts.filter((toast) => !toast.toasterId);
+    }, [toasts, id]);
+    const possiblePositions = React__default.useMemo(() => {
+      return Array.from(
+        new Set(
+          [position].concat(
+            filteredToasts
+              .filter((toast) => toast.position)
+              .map((toast) => toast.position),
+          ),
+        ),
+      );
+    }, [filteredToasts, position]);
+    const [heights, setHeights] = React__default.useState([]);
+    const [expanded, setExpanded] = React__default.useState(false);
+    const [interacting, setInteracting] = React__default.useState(false);
+    const [actualTheme, setActualTheme] = React__default.useState(
+      theme !== "system"
+        ? theme
+        : typeof window !== "undefined"
+          ? window.matchMedia &&
+            window.matchMedia("(prefers-color-scheme: dark)").matches
+            ? "dark"
+            : "light"
+          : "light",
+    );
+    const listRef = React__default.useRef(null);
+    const hotkeyLabel = hotkey
+      .join("+")
+      .replace(/Key/g, "")
+      .replace(/Digit/g, "");
+    const lastFocusedElementRef = React__default.useRef(null);
+    const isFocusWithinRef = React__default.useRef(false);
+    const removeToast = React__default.useCallback((toastToRemove) => {
+      setToasts((toasts2) => {
+        var _toasts_find;
+        if (
+          !((_toasts_find = toasts2.find(
+            (toast) => toast.id === toastToRemove.id,
+          )) == null
+            ? void 0
+            : _toasts_find.delete)
+        ) {
+          ToastState.dismiss(toastToRemove.id);
+        }
+        return toasts2.filter(({ id: id2 }) => id2 !== toastToRemove.id);
+      });
+    }, []);
+    React__default.useEffect(() => {
+      return ToastState.subscribe((toast) => {
+        if (toast.dismiss) {
+          requestAnimationFrame(() => {
+            setToasts((toasts2) =>
+              toasts2.map((t2) =>
+                t2.id === toast.id
+                  ? {
+                      ...t2,
+                      delete: true,
+                    }
+                  : t2,
+              ),
+            );
+          });
+          return;
+        }
+        setTimeout(() => {
+          ReactDOM__default.flushSync(() => {
+            setToasts((toasts2) => {
+              const indexOfExistingToast = toasts2.findIndex(
+                (t2) => t2.id === toast.id,
+              );
+              if (indexOfExistingToast !== -1) {
+                return [
+                  ...toasts2.slice(0, indexOfExistingToast),
+                  {
+                    ...toasts2[indexOfExistingToast],
+                    ...toast,
+                  },
+                  ...toasts2.slice(indexOfExistingToast + 1),
+                ];
+              }
+              return [toast, ...toasts2];
+            });
           });
         });
       });
-    });
-  }, [
-    toasts
-  ]);
-  React__default.useEffect(() => {
-    if (theme !== "system") {
-      setActualTheme(theme);
-      return;
-    }
-    if (theme === "system") {
-      if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
-        setActualTheme("dark");
-      } else {
-        setActualTheme("light");
+    }, [toasts]);
+    React__default.useEffect(() => {
+      if (theme !== "system") {
+        setActualTheme(theme);
+        return;
       }
-    }
-    if (typeof window === "undefined") return;
-    const darkMediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    try {
-      darkMediaQuery.addEventListener("change", ({ matches }) => {
-        if (matches) {
+      if (theme === "system") {
+        if (
+          window.matchMedia &&
+          window.matchMedia("(prefers-color-scheme: dark)").matches
+        ) {
           setActualTheme("dark");
         } else {
           setActualTheme("light");
         }
-      });
-    } catch (error) {
-      darkMediaQuery.addListener(({ matches }) => {
-        try {
+      }
+      if (typeof window === "undefined") return;
+      const darkMediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+      try {
+        darkMediaQuery.addEventListener("change", ({ matches }) => {
           if (matches) {
             setActualTheme("dark");
           } else {
             setActualTheme("light");
           }
-        } catch (e) {
-          console.error(e);
-        }
-      });
-    }
-  }, [
-    theme
-  ]);
-  React__default.useEffect(() => {
-    if (toasts.length <= 1) {
-      setExpanded(false);
-    }
-  }, [
-    toasts
-  ]);
-  React__default.useEffect(() => {
-    const handleKeyDown = (event) => {
-      var _listRef_current;
-      const isHotkeyPressed = hotkey.every((key) => event[key] || event.code === key);
-      if (isHotkeyPressed) {
-        var _listRef_current1;
-        setExpanded(true);
-        (_listRef_current1 = listRef.current) == null ? void 0 : _listRef_current1.focus();
+        });
+      } catch (error) {
+        darkMediaQuery.addListener(({ matches }) => {
+          try {
+            if (matches) {
+              setActualTheme("dark");
+            } else {
+              setActualTheme("light");
+            }
+          } catch (e) {
+            console.error(e);
+          }
+        });
       }
-      if (event.code === "Escape" && (document.activeElement === listRef.current || ((_listRef_current = listRef.current) == null ? void 0 : _listRef_current.contains(document.activeElement)))) {
+    }, [theme]);
+    React__default.useEffect(() => {
+      if (toasts.length <= 1) {
         setExpanded(false);
       }
-    };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [
-    hotkey
-  ]);
-  React__default.useEffect(() => {
-    if (listRef.current) {
-      return () => {
-        if (lastFocusedElementRef.current) {
-          lastFocusedElementRef.current.focus({
-            preventScroll: true
-          });
-          lastFocusedElementRef.current = null;
-          isFocusWithinRef.current = false;
+    }, [toasts]);
+    React__default.useEffect(() => {
+      const handleKeyDown = (event) => {
+        var _listRef_current;
+        const isHotkeyPressed = hotkey.every(
+          (key) => event[key] || event.code === key,
+        );
+        if (isHotkeyPressed) {
+          var _listRef_current1;
+          setExpanded(true);
+          (_listRef_current1 = listRef.current) == null
+            ? void 0
+            : _listRef_current1.focus();
+        }
+        if (
+          event.code === "Escape" &&
+          (document.activeElement === listRef.current ||
+            ((_listRef_current = listRef.current) == null
+              ? void 0
+              : _listRef_current.contains(document.activeElement)))
+        ) {
+          setExpanded(false);
         }
       };
-    }
-  }, [
-    listRef.current
-  ]);
-  return (
-    // Remove item from normal navigation flow, only available via hotkey
-    /* @__PURE__ */ React__default.createElement("section", {
-      ref,
-      "aria-label": `${containerAriaLabel} ${hotkeyLabel}`,
-      tabIndex: -1,
-      "aria-live": "polite",
-      "aria-relevant": "additions text",
-      "aria-atomic": "false",
-      suppressHydrationWarning: true
-    }, possiblePositions.map((position2, index2) => {
-      var _heights_;
-      const [y, x] = position2.split("-");
-      if (!filteredToasts.length) return null;
-      return /* @__PURE__ */ React__default.createElement("ol", {
-        key: position2,
-        dir: dir === "auto" ? getDocumentDirection() : dir,
-        tabIndex: -1,
-        ref: listRef,
-        className,
-        "data-sonner-toaster": true,
-        "data-sonner-theme": actualTheme,
-        "data-y-position": y,
-        "data-x-position": x,
-        style: {
-          "--front-toast-height": `${((_heights_ = heights[0]) == null ? void 0 : _heights_.height) || 0}px`,
-          "--width": `${TOAST_WIDTH}px`,
-          "--gap": `${gap}px`,
-          ...style,
-          ...assignOffset(offset2, mobileOffset)
-        },
-        onBlur: (event) => {
-          if (isFocusWithinRef.current && !event.currentTarget.contains(event.relatedTarget)) {
+      document.addEventListener("keydown", handleKeyDown);
+      return () => document.removeEventListener("keydown", handleKeyDown);
+    }, [hotkey]);
+    React__default.useEffect(() => {
+      if (listRef.current) {
+        return () => {
+          if (lastFocusedElementRef.current) {
+            lastFocusedElementRef.current.focus({
+              preventScroll: true,
+            });
+            lastFocusedElementRef.current = null;
             isFocusWithinRef.current = false;
-            if (lastFocusedElementRef.current) {
-              lastFocusedElementRef.current.focus({
-                preventScroll: true
-              });
-              lastFocusedElementRef.current = null;
-            }
           }
+        };
+      }
+    }, [listRef.current]);
+    return (
+      // Remove item from normal navigation flow, only available via hotkey
+      /* @__PURE__ */ React__default.createElement(
+        "section",
+        {
+          ref,
+          "aria-label": `${containerAriaLabel} ${hotkeyLabel}`,
+          tabIndex: -1,
+          "aria-live": "polite",
+          "aria-relevant": "additions text",
+          "aria-atomic": "false",
+          suppressHydrationWarning: true,
         },
-        onFocus: (event) => {
-          const isNotDismissible = event.target instanceof HTMLElement && event.target.dataset.dismissible === "false";
-          if (isNotDismissible) return;
-          if (!isFocusWithinRef.current) {
-            isFocusWithinRef.current = true;
-            lastFocusedElementRef.current = event.relatedTarget;
-          }
-        },
-        onMouseEnter: () => setExpanded(true),
-        onMouseMove: () => setExpanded(true),
-        onMouseLeave: () => {
-          if (!interacting) {
-            setExpanded(false);
-          }
-        },
-        onDragEnd: () => setExpanded(false),
-        onPointerDown: (event) => {
-          const isNotDismissible = event.target instanceof HTMLElement && event.target.dataset.dismissible === "false";
-          if (isNotDismissible) return;
-          setInteracting(true);
-        },
-        onPointerUp: () => setInteracting(false)
-      }, filteredToasts.filter((toast) => !toast.position && index2 === 0 || toast.position === position2).map((toast, index3) => {
-        var _toastOptions_duration, _toastOptions_closeButton;
-        return /* @__PURE__ */ React__default.createElement(Toast, {
-          key: toast.id,
-          icons,
-          index: index3,
-          toast,
-          defaultRichColors: richColors,
-          duration: (_toastOptions_duration = toastOptions == null ? void 0 : toastOptions.duration) != null ? _toastOptions_duration : duration,
-          className: toastOptions == null ? void 0 : toastOptions.className,
-          descriptionClassName: toastOptions == null ? void 0 : toastOptions.descriptionClassName,
-          invert,
-          visibleToasts,
-          closeButton: (_toastOptions_closeButton = toastOptions == null ? void 0 : toastOptions.closeButton) != null ? _toastOptions_closeButton : closeButton,
-          interacting,
-          position: position2,
-          style: toastOptions == null ? void 0 : toastOptions.style,
-          unstyled: toastOptions == null ? void 0 : toastOptions.unstyled,
-          classNames: toastOptions == null ? void 0 : toastOptions.classNames,
-          cancelButtonStyle: toastOptions == null ? void 0 : toastOptions.cancelButtonStyle,
-          actionButtonStyle: toastOptions == null ? void 0 : toastOptions.actionButtonStyle,
-          closeButtonAriaLabel: toastOptions == null ? void 0 : toastOptions.closeButtonAriaLabel,
-          removeToast,
-          toasts: filteredToasts.filter((t2) => t2.position == toast.position),
-          heights: heights.filter((h) => h.position == toast.position),
-          setHeights,
-          expandByDefault: expand,
-          gap,
-          expanded,
-          swipeDirections: props.swipeDirections
-        });
-      }));
-    }))
-  );
-});
+        possiblePositions.map((position2, index2) => {
+          var _heights_;
+          const [y, x] = position2.split("-");
+          if (!filteredToasts.length) return null;
+          return /* @__PURE__ */ React__default.createElement(
+            "ol",
+            {
+              key: position2,
+              dir: dir === "auto" ? getDocumentDirection() : dir,
+              tabIndex: -1,
+              ref: listRef,
+              className,
+              "data-sonner-toaster": true,
+              "data-sonner-theme": actualTheme,
+              "data-y-position": y,
+              "data-x-position": x,
+              style: {
+                "--front-toast-height": `${((_heights_ = heights[0]) == null ? void 0 : _heights_.height) || 0}px`,
+                "--width": `${TOAST_WIDTH}px`,
+                "--gap": `${gap}px`,
+                ...style,
+                ...assignOffset(offset2, mobileOffset),
+              },
+              onBlur: (event) => {
+                if (
+                  isFocusWithinRef.current &&
+                  !event.currentTarget.contains(event.relatedTarget)
+                ) {
+                  isFocusWithinRef.current = false;
+                  if (lastFocusedElementRef.current) {
+                    lastFocusedElementRef.current.focus({
+                      preventScroll: true,
+                    });
+                    lastFocusedElementRef.current = null;
+                  }
+                }
+              },
+              onFocus: (event) => {
+                const isNotDismissible =
+                  event.target instanceof HTMLElement &&
+                  event.target.dataset.dismissible === "false";
+                if (isNotDismissible) return;
+                if (!isFocusWithinRef.current) {
+                  isFocusWithinRef.current = true;
+                  lastFocusedElementRef.current = event.relatedTarget;
+                }
+              },
+              onMouseEnter: () => setExpanded(true),
+              onMouseMove: () => setExpanded(true),
+              onMouseLeave: () => {
+                if (!interacting) {
+                  setExpanded(false);
+                }
+              },
+              onDragEnd: () => setExpanded(false),
+              onPointerDown: (event) => {
+                const isNotDismissible =
+                  event.target instanceof HTMLElement &&
+                  event.target.dataset.dismissible === "false";
+                if (isNotDismissible) return;
+                setInteracting(true);
+              },
+              onPointerUp: () => setInteracting(false),
+            },
+            filteredToasts
+              .filter(
+                (toast) =>
+                  (!toast.position && index2 === 0) ||
+                  toast.position === position2,
+              )
+              .map((toast, index3) => {
+                var _toastOptions_duration, _toastOptions_closeButton;
+                return /* @__PURE__ */ React__default.createElement(Toast, {
+                  key: toast.id,
+                  icons,
+                  index: index3,
+                  toast,
+                  defaultRichColors: richColors,
+                  duration:
+                    (_toastOptions_duration =
+                      toastOptions == null ? void 0 : toastOptions.duration) !=
+                    null
+                      ? _toastOptions_duration
+                      : duration,
+                  className:
+                    toastOptions == null ? void 0 : toastOptions.className,
+                  descriptionClassName:
+                    toastOptions == null
+                      ? void 0
+                      : toastOptions.descriptionClassName,
+                  invert,
+                  visibleToasts,
+                  closeButton:
+                    (_toastOptions_closeButton =
+                      toastOptions == null
+                        ? void 0
+                        : toastOptions.closeButton) != null
+                      ? _toastOptions_closeButton
+                      : closeButton,
+                  interacting,
+                  position: position2,
+                  style: toastOptions == null ? void 0 : toastOptions.style,
+                  unstyled:
+                    toastOptions == null ? void 0 : toastOptions.unstyled,
+                  classNames:
+                    toastOptions == null ? void 0 : toastOptions.classNames,
+                  cancelButtonStyle:
+                    toastOptions == null
+                      ? void 0
+                      : toastOptions.cancelButtonStyle,
+                  actionButtonStyle:
+                    toastOptions == null
+                      ? void 0
+                      : toastOptions.actionButtonStyle,
+                  closeButtonAriaLabel:
+                    toastOptions == null
+                      ? void 0
+                      : toastOptions.closeButtonAriaLabel,
+                  removeToast,
+                  toasts: filteredToasts.filter(
+                    (t2) => t2.position == toast.position,
+                  ),
+                  heights: heights.filter((h) => h.position == toast.position),
+                  setHeights,
+                  expandByDefault: expand,
+                  gap,
+                  expanded,
+                  swipeDirections: props.swipeDirections,
+                });
+              }),
+          );
+        }),
+      )
+    );
+  },
+);
 const Toaster2 = ({ ...props }) => {
   const { themeMode } = useTheme();
-  return /* @__PURE__ */ jsx(
-    Toaster$1,
-    {
-      theme: themeMode === "auto" ? "system" : themeMode,
-      className: "toaster group",
-      style: {
-        "--normal-bg": "var(--popover)",
-        "--normal-text": "var(--popover-foreground)",
-        "--normal-border": "var(--border)"
-      },
-      ...props
-    }
-  );
+  return /* @__PURE__ */ jsx(Toaster$1, {
+    theme: themeMode === "auto" ? "system" : themeMode,
+    className: "toaster group",
+    style: {
+      "--normal-bg": "var(--popover)",
+      "--normal-text": "var(--popover-foreground)",
+      "--normal-border": "var(--border)",
+    },
+    ...props,
+  });
 };
 const appCss = "/assets/styles-RJEoQMaO.css";
 const Route$3 = createRootRouteWithContext()({
   head: () => ({
-    links: [{ rel: "stylesheet", href: appCss }]
+    links: [{ rel: "stylesheet", href: appCss }],
   }),
-  component: RootComponent
+  component: RootComponent,
 });
 function RootComponent() {
-  return /* @__PURE__ */ jsx(RootDocument, { children: /* @__PURE__ */ jsx(Outlet, {}) });
+  return /* @__PURE__ */ jsx(RootDocument, {
+    children: /* @__PURE__ */ jsx(Outlet, {}),
+  });
 }
 function RootDocument({ children }) {
-  return /* @__PURE__ */ jsx(ThemeProvider, { children: /* @__PURE__ */ jsxs("html", { lang: "en", suppressHydrationWarning: true, children: [
-    /* @__PURE__ */ jsx("head", { children: /* @__PURE__ */ jsx(HeadContent, {}) }),
-    /* @__PURE__ */ jsxs("body", { className: "bg-background text-foreground min-h-screen font-sans antialiased", children: [
-      children,
-      /* @__PURE__ */ jsx("div", { className: "absolute right-4 bottom-12", children: /* @__PURE__ */ jsx(ThemeToggle, {}) }),
-      /* @__PURE__ */ jsx(Toaster2, {}),
-      /* @__PURE__ */ jsx(TanStackRouterDevtools, { position: "bottom-right" }),
-      /* @__PURE__ */ jsx(Scripts, {})
-    ] })
-  ] }) });
+  return /* @__PURE__ */ jsx(ThemeProvider, {
+    children: /* @__PURE__ */ jsxs("html", {
+      lang: "en",
+      suppressHydrationWarning: true,
+      children: [
+        /* @__PURE__ */ jsx("head", {
+          children: /* @__PURE__ */ jsx(HeadContent, {}),
+        }),
+        /* @__PURE__ */ jsxs("body", {
+          className:
+            "bg-background text-foreground min-h-screen font-sans antialiased",
+          children: [
+            children,
+            /* @__PURE__ */ jsx("div", {
+              className: "absolute right-4 bottom-12",
+              children: /* @__PURE__ */ jsx(ThemeToggle, {}),
+            }),
+            /* @__PURE__ */ jsx(Toaster2, {}),
+            /* @__PURE__ */ jsx(TanStackRouterDevtools, {
+              position: "bottom-right",
+            }),
+            /* @__PURE__ */ jsx(Scripts, {}),
+          ],
+        }),
+      ],
+    }),
+  });
 }
 const $$splitComponentImporter = () => import("./index-BMY2lUJV.mjs");
 const Route$2 = createFileRoute("/")({
-  loader: ({
-    context
-  }) => {
-    const {
-      trpc,
-      queryClient
-    } = context;
-    void queryClient.prefetchQuery(trpc.listing.list.queryOptions({
-      limit: 12
-    }));
+  loader: ({ context }) => {
+    const { trpc, queryClient } = context;
+    void queryClient.prefetchQuery(
+      trpc.listing.list.queryOptions({
+        limit: 12,
+      }),
+    );
   },
-  component: lazyRouteComponent($$splitComponentImporter, "component")
+  component: lazyRouteComponent($$splitComponentImporter, "component"),
 });
-const handler = (req) => fetchRequestHandler({
-  endpoint: "/api/trpc",
-  router: appRouter,
-  req,
-  createContext: () => createTRPCContext({
-    auth,
-    headers: req.headers
-  }),
-  onError({ error, path }) {
-    console.error(`>>> tRPC Error on '${path}'`, error);
-  }
-});
+const handler = (req) =>
+  fetchRequestHandler({
+    endpoint: "/api/trpc",
+    router: appRouter,
+    req,
+    createContext: () =>
+      createTRPCContext({
+        auth,
+        headers: req.headers,
+      }),
+    onError({ error, path }) {
+      console.error(`>>> tRPC Error on '${path}'`, error);
+    },
+  });
 const Route$1 = createFileRoute("/api/trpc/$")({
   server: {
     handlers: {
       GET: ({ request }) => handler(request),
-      POST: ({ request }) => handler(request)
-    }
-  }
+      POST: ({ request }) => handler(request),
+    },
+  },
 });
 const Route = createFileRoute("/api/auth/$")({
   server: {
     handlers: {
       GET: ({ request }) => auth.handler(request),
-      POST: ({ request }) => auth.handler(request)
-    }
-  }
+      POST: ({ request }) => auth.handler(request),
+    },
+  },
 });
 const IndexRoute = Route$2.update({
   id: "/",
   path: "/",
-  getParentRoute: () => Route$3
+  getParentRoute: () => Route$3,
 });
 const ApiTrpcSplatRoute = Route$1.update({
   id: "/api/trpc/$",
   path: "/api/trpc/$",
-  getParentRoute: () => Route$3
+  getParentRoute: () => Route$3,
 });
 const ApiAuthSplatRoute = Route.update({
   id: "/api/auth/$",
   path: "/api/auth/$",
-  getParentRoute: () => Route$3
+  getParentRoute: () => Route$3,
 });
 const rootRouteChildren = {
   IndexRoute,
   ApiAuthSplatRoute,
-  ApiTrpcSplatRoute
+  ApiTrpcSplatRoute,
 };
 const routeTree = Route$3._addFileChildren(rootRouteChildren)._addFileTypes();
 function getRouter() {
   const queryClient = new QueryClient({
     defaultOptions: {
       dehydrate: { serializeData: SuperJSON.serialize },
-      hydrate: { deserializeData: SuperJSON.deserialize }
-    }
+      hydrate: { deserializeData: SuperJSON.deserialize },
+    },
   });
   const trpcClient = makeTRPCClient();
   const trpc = createTRPCOptionsProxy({
     client: trpcClient,
-    queryClient
+    queryClient,
   });
   const router2 = createRouter({
     routeTree,
     context: { queryClient, trpc },
     defaultPreload: "intent",
-    Wrap: (props) => /* @__PURE__ */ jsx(
-      TRPCProvider,
-      {
+    Wrap: (props) =>
+      /* @__PURE__ */ jsx(TRPCProvider, {
         trpcClient,
         queryClient,
-        ...props
-      }
-    )
+        ...props,
+      }),
   });
   setupRouterSsrQueryIntegration({
     router: router2,
-    queryClient
+    queryClient,
   });
   return router2;
 }
-const router = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
-  __proto__: null,
-  getRouter
-}, Symbol.toStringTag, { value: "Module" }));
-export {
-  Button as B,
-  router as r,
-  useTRPC as u
-};
+const router = /* @__PURE__ */ Object.freeze(
+  /* @__PURE__ */ Object.defineProperty(
+    {
+      __proto__: null,
+      getRouter,
+    },
+    Symbol.toStringTag,
+    { value: "Module" },
+  ),
+);
+export { Button as B, router as r, useTRPC as u };

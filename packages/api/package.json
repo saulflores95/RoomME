@@ -6,6 +6,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./src/index.ts"
+    },
+    "./blob": {
+      "types": "./dist/blob.d.ts",
+      "default": "./src/blob.ts"
     }
   },
   "license": "MIT",
@@ -22,6 +26,7 @@
     "@acme/db": "workspace:*",
     "@acme/validators": "workspace:*",
     "@trpc/server": "catalog:",
+    "@vercel/blob": "^2.8.0",
     "superjson": "2.2.3",
     "zod": "catalog:"
   },

@@ -35,7 +35,7 @@ export default async function CdmxRoomsPage({
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("meta");
-  prefetch(trpc.listing.list.queryOptions({ city: "cdmx", limit: 24 }));
+  prefetch(trpc.listing.list.queryOptions({ city: "cdmx", limit: 48 }));
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -50,8 +50,10 @@ export default async function CdmxRoomsPage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <main className="mx-auto max-w-6xl px-4 py-12">
-        <h1 className="mb-8 text-4xl font-bold">{t("cdmxTitle")}</h1>
+      <main className="mx-auto w-full max-w-[1400px] px-4 py-6 sm:py-8">
+        <h1 className="mb-4 text-3xl font-bold sm:mb-6 sm:text-4xl">
+          {t("cdmxTitle")}
+        </h1>
         <Suspense>
           <RoomsBrowser city="cdmx" />
         </Suspense>

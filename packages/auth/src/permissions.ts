@@ -15,7 +15,7 @@ export const roomie = ac.newRole({
 });
 
 export const host = ac.newRole({
-  complex: ["create", "update", "delete", "list"],
+  complex: ["list"],
   room: ["create", "update", "delete", "list"],
   rating: ["create", "list"],
 });

@@ -1,12 +1,9 @@
 import type { MetadataRoute } from "next";
 
-import { env } from "~/env";
+import { getSiteUrl } from "~/lib/site-url";
 
 export default function robots(): MetadataRoute.Robots {
-  const base =
-    env.VERCEL_PROJECT_PRODUCTION_URL != null
-      ? `https://${env.VERCEL_PROJECT_PRODUCTION_URL}`
-      : "http://localhost:3000";
+  const base = getSiteUrl();
 
   return {
     rules: {

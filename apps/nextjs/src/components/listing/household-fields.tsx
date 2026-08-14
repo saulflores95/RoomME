@@ -12,57 +12,63 @@ import {
   FormNumberField,
   FormSelectField,
 } from "./form-controls";
+import { ListingSectionCard } from "./section-card";
 
 export function HouseholdFields(): JSX.Element {
   const t = useTranslations("list");
   const { control } = useFormContext<ListingFormValues>();
 
   return (
-    <FieldGroup>
-      <h2 className="text-xl font-semibold">{t("household")}</h2>
-      <FormNumberField
-        control={control}
-        name="capacity"
-        label={t("capacity")}
-        min={1}
-        max={12}
-      />
-      <FormSelectField
-        control={control}
-        name="householdGender"
-        label={t("householdGender")}
-        options={[
-          { value: "male", label: t("genderMale") },
-          { value: "female", label: t("genderFemale") },
-          { value: "mixed", label: t("genderMixed") },
-        ]}
-      />
-      <div className="grid gap-4 sm:grid-cols-2">
+    <ListingSectionCard
+      step={3}
+      title={t("household")}
+      description={t("householdHint")}
+    >
+      <FieldGroup>
         <FormNumberField
           control={control}
-          name="preferredAgeMin"
-          label={t("ageMin")}
-          min={18}
-          max={99}
+          name="capacity"
+          label={t("capacity")}
+          min={1}
+          max={12}
         />
-        <FormNumberField
+        <FormSelectField
           control={control}
-          name="preferredAgeMax"
-          label={t("ageMax")}
-          min={18}
-          max={99}
+          name="householdGender"
+          label={t("householdGender")}
+          options={[
+            { value: "male", label: t("genderMale") },
+            { value: "female", label: t("genderFemale") },
+            { value: "mixed", label: t("genderMixed") },
+          ]}
         />
-      </div>
-      <FormCheckboxField
-        control={control}
-        name="hasPets"
-        label={t("hasPets")}
-      />
-      <FormCheckboxField
-        control={control}
-        name="acceptsPets"
-        label={t("acceptsPets")}
-      />
-    </FieldGroup>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <FormNumberField
+            control={control}
+            name="preferredAgeMin"
+            label={t("ageMin")}
+            min={18}
+            max={99}
+          />
+          <FormNumberField
+            control={control}
+            name="preferredAgeMax"
+            label={t("ageMax")}
+            min={18}
+            max={99}
+          />
+        </div>
+        <FormCheckboxField
+          control={control}
+          name="hasPets"
+          label={t("hasPets")}
+        />
+        <FormCheckboxField
+          control={control}
+          name="acceptsPets"
+          label={t("acceptsPets")}
+        />
+      </FieldGroup>
+    </ListingSectionCard>
   );
 }

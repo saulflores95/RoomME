@@ -1,83 +1,121 @@
 "use client";
 
+import type { JSX } from "react";
 import { useTranslations } from "next-intl";
 
 import type { RouterOutputs } from "@acme/api";
+import { cn } from "@acme/ui";
 
 import { Link } from "~/i18n/navigation";
+import { formatMxn } from "~/lib/money";
+
+export { formatMxn };
 
 type Listing = RouterOutputs["listing"]["list"][number];
 
-export function formatMxn(cents: number): string {
-  return new Intl.NumberFormat("es-MX", {
-    style: "currency",
-    currency: "MXN",
-    maximumFractionDigits: 0,
-  }).format(cents / 100);
-}
+const formatAvailable = (
+  value: Date | string | null,
+  immediately: string,
+): string => {
+  if (!value) {
+    return immediately;
+  }
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return immediately;
+  }
+  return new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(date);
+};
 
-export function RoomCard({ listing }: { listing: Listing }) {
+export function RoomCard({
+  listing,
+  pinNumber = null,
+  active = false,
+  onHover,
+}: {
+  listing: Listing;
+  pinNumber?: number | null;
+  active?: boolean;
+  onHover?: (listingId: string | null) => void;
+}): JSX.Element {
   const t = useTranslations("rooms");
-  const chips = [
-    t(
-      listing.householdGender === "male"
-        ? "genderMale"
-        : listing.householdGender === "female"
-          ? "genderFemale"
-          : "genderMixed",
-    ),
-    listing.bathroomType === "private"
-      ? t("bathroomPrivate")
-      : t("bathroomShared"),
-    listing.hasPets ? t("hasPets") : null,
-    listing.acceptsPets ? t("acceptsPets") : null,
-  ].filter((chip): chip is string => chip !== null);
+  const address =
+    listing.addressLine1 && listing.addressLine1.length > 0
+      ? `${listing.addressLine1}, ${listing.complex.neighborhood}`
+      : listing.complex.neighborhood;
+  const description =
+    listing.description.length > 110
+      ? `${listing.description.slice(0, 110).trimEnd()}…`
+      : listing.description;
 
   return (
-    <article className="border-border bg-card overflow-hidden rounded-2xl border shadow-sm">
-      <div className="bg-muted aspect-4/3 overflow-hidden">
-        {listing.coverUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={listing.coverUrl}
-            alt={listing.title}
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          <div className="h-full w-full" />
-        )}
-      </div>
-      <div className="space-y-2 p-4">
-        <p className="text-muted-foreground text-sm">
-          {listing.complex.neighborhood}
-        </p>
-        <h3 className="text-lg font-semibold">{listing.title}</h3>
-        <p className="text-foreground text-base font-medium">
-          {formatMxn(listing.rentPriceCents)}
-          {t("perMonth")}
-        </p>
-        <p className="text-muted-foreground text-sm">
-          {t("roomies", { count: listing.capacity })}
-        </p>
-        <div className="flex flex-wrap gap-1">
-          {chips.map((chip) => (
-            <span
-              key={chip}
-              className="border-border text-muted-foreground rounded-full border px-2 py-0.5 text-xs"
-            >
-              {chip}
+    <Link
+      href={`/rooms/${listing.id}`}
+      className={cn(
+        "border-border bg-card block overflow-hidden rounded-2xl border shadow-sm transition-shadow hover:shadow-md",
+        active && "ring-primary ring-2",
+      )}
+      onMouseEnter={() => {
+        onHover?.(listing.id);
+      }}
+      onMouseLeave={() => {
+        onHover?.(null);
+      }}
+    >
+      <article>
+        <div className="bg-muted relative aspect-4/3 overflow-hidden">
+          {listing.coverUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={listing.coverUrl}
+              alt={listing.title}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <div className="h-full w-full" />
+          )}
+          {pinNumber !== null ? (
+            <span className="absolute top-2 left-2 flex size-7 items-center justify-center rounded-full bg-emerald-700 text-xs font-bold text-white shadow">
+              {pinNumber}
             </span>
-          ))}
+          ) : null}
+          {listing.host?.image ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={listing.host.image}
+              alt={listing.host.name}
+              className="border-background absolute right-2 bottom-2 size-9 rounded-full border-2 object-cover"
+            />
+          ) : null}
         </div>
-      </div>
-    </article>
-  );
-}
-
-export function RoomCardLink({ listing }: { listing: Listing }) {
-  return (
-    <Link href={`/rooms`}>
-      <RoomCard listing={listing} />
+        <div className="space-y-2 p-4">
+          {listing.host ? (
+            <p className="text-muted-foreground text-sm">{listing.host.name}</p>
+          ) : null}
+          <h3 className="line-clamp-2 text-base font-semibold">
+            {listing.title}
+          </h3>
+          <p className="text-muted-foreground truncate text-sm">{address}</p>
+          <p className="text-muted-foreground line-clamp-2 text-sm">
+            {description}
+          </p>
+          <p className="text-muted-foreground text-xs">
+            {t("availableDate", {
+              date: formatAvailable(listing.availableFrom, t("availableNow")),
+            })}
+          </p>
+          <p className="text-brand text-lg font-bold tabular-nums">
+            {formatMxn(listing.rentPriceCents)}
+            <span className="text-muted-foreground text-sm font-medium">
+              {t("perMonth")}
+            </span>
+          </p>
+        </div>
+      </article>
     </Link>
   );
 }

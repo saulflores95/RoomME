@@ -1,27 +1,45 @@
 "use client";
 
+import type { JSX } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 
 import type {
-  BathroomType,
-  Cleanliness,
-  Furnished,
   HouseholdGender,
   ListingInclude,
   ListListingsInput,
-  OvernightGuests,
-  SmokingPolicy,
 } from "@acme/validators";
+import { Button } from "@acme/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@acme/ui/dialog";
+import { Input } from "@acme/ui/input";
+import { Slider } from "@acme/ui/slider";
 import { LISTING_INCLUDES } from "@acme/validators";
 
 import {
-  FilterField,
-  OptionalBooleanSelect,
-  OptionalEnumSelect,
-  parseOptionalNumber,
+  AGE_MAX,
+  AGE_MIN,
+  countActiveFilters,
+  FilterDivider,
+  FilterPill,
+  FilterPillGrid,
+  FilterRadioGrid,
+  FilterSection,
+  RENT_MAX,
+  RENT_MIN,
+  RENT_STEP,
 } from "~/components/rooms-filter-controls";
 
 const emptyFilters: ListListingsInput = {};
+
+const clamp = (value: number, min: number, max: number): number =>
+  Math.min(max, Math.max(min, value));
 
 export function RoomsFilters({
   value,
@@ -29,272 +47,420 @@ export function RoomsFilters({
 }: {
   value: ListListingsInput;
   onChange: (next: ListListingsInput) => void;
-}) {
+}): JSX.Element {
   const t = useTranslations("rooms");
+  const [open, setOpen] = useState(false);
+  const [draft, setDraft] = useState<ListListingsInput>(value);
+
+  useEffect(() => {
+    if (open) {
+      setDraft(value);
+    }
+  }, [open, value]);
 
   const setField = <K extends keyof ListListingsInput>(
     key: K,
     nextValue: ListListingsInput[K] | undefined,
   ): void => {
-    onChange({
-      ...value,
-      [key]: nextValue,
+    setDraft((current) => {
+      const next = { ...current };
+      if (nextValue === undefined) {
+        delete next[key];
+      } else {
+        next[key] = nextValue;
+      }
+      return next;
     });
   };
 
-  const selectedIncludes = value.includes ?? [];
-  const inputClassName =
-    "border-input h-9 w-full rounded-md border bg-transparent px-3 text-sm";
+  const rentMin = draft.minRentMxn ?? RENT_MIN;
+  const rentMax = draft.maxRentMxn ?? RENT_MAX;
+  const ageValue = draft.seekerAge ?? AGE_MIN;
+  const selectedIncludes = draft.includes ?? [];
+  const activeCount = useMemo(() => countActiveFilters(value), [value]);
+
+  const toggleInclude = (item: ListingInclude): void => {
+    const selected = selectedIncludes.includes(item);
+    const nextIncludes = selected
+      ? selectedIncludes.filter((include) => include !== item)
+      : [...selectedIncludes, item];
+    setField("includes", nextIncludes.length > 0 ? nextIncludes : undefined);
+  };
+
+  const toggleExact = <K extends keyof ListListingsInput>(
+    key: K,
+    nextValue: NonNullable<ListListingsInput[K]>,
+  ): void => {
+    setField(key, draft[key] === nextValue ? undefined : nextValue);
+  };
 
   return (
-    <section className="border-border space-y-4 rounded-2xl border p-4">
-      <div className="flex items-center justify-between gap-4">
-        <h2 className="text-sm font-semibold">{t("filters")}</h2>
-        <button
-          type="button"
-          className="text-muted-foreground text-sm underline"
-          onClick={() => {
-            onChange(emptyFilters);
-          }}
-        >
-          {t("clear")}
-        </button>
-      </div>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button type="button" variant="outline" className="gap-2">
+          {t("filters")}
+          {activeCount > 0 ? (
+            <span className="bg-primary text-primary-foreground inline-flex size-5 items-center justify-center rounded-full text-xs font-semibold">
+              {activeCount}
+            </span>
+          ) : null}
+        </Button>
+      </DialogTrigger>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <FilterField label={t("gender")}>
-          <OptionalEnumSelect<HouseholdGender>
-            value={value.householdGender}
-            onChange={(next) => {
-              setField("householdGender", next);
-            }}
-            anyLabel={t("any")}
-            options={[
-              { value: "male", label: t("genderMale") },
-              { value: "female", label: t("genderFemale") },
-              { value: "mixed", label: t("genderMixed") },
-            ]}
-          />
-        </FilterField>
+      <DialogContent
+        showCloseButton
+        className="flex max-h-[min(90vh,720px)] flex-col gap-0 p-0 sm:max-w-md"
+      >
+        <DialogHeader>
+          <DialogTitle>{t("filters")}</DialogTitle>
+        </DialogHeader>
 
-        <FilterField label={t("age")}>
-          <input
-            type="number"
-            min={18}
-            max={99}
-            className={inputClassName}
-            value={value.seekerAge ?? ""}
-            onChange={(event) => {
-              setField("seekerAge", parseOptionalNumber(event.target.value));
-            }}
-          />
-        </FilterField>
-
-        <FilterField label={t("hasPets")}>
-          <OptionalBooleanSelect
-            value={value.hasPets}
-            onChange={(next) => {
-              setField("hasPets", next);
-            }}
-            anyLabel={t("any")}
-            yesLabel={t("yes")}
-            noLabel={t("no")}
-          />
-        </FilterField>
-
-        <FilterField label={t("acceptsPets")}>
-          <OptionalBooleanSelect
-            value={value.acceptsPets}
-            onChange={(next) => {
-              setField("acceptsPets", next);
-            }}
-            anyLabel={t("any")}
-            yesLabel={t("yes")}
-            noLabel={t("no")}
-          />
-        </FilterField>
-
-        <FilterField label={t("bathroom")}>
-          <OptionalEnumSelect<BathroomType>
-            value={value.bathroomType}
-            onChange={(next) => {
-              setField("bathroomType", next);
-            }}
-            anyLabel={t("any")}
-            options={[
-              { value: "private", label: t("bathroomPrivate") },
-              { value: "shared", label: t("bathroomShared") },
-            ]}
-          />
-        </FilterField>
-
-        <FilterField label={t("furnished")}>
-          <OptionalEnumSelect<Furnished>
-            value={value.furnished}
-            onChange={(next) => {
-              setField("furnished", next);
-            }}
-            anyLabel={t("any")}
-            options={[
-              { value: "furnished", label: t("furnishedYes") },
-              { value: "semi", label: t("furnishedSemi") },
-              { value: "unfurnished", label: t("furnishedNo") },
-            ]}
-          />
-        </FilterField>
-
-        <FilterField label={t("availableBy")}>
-          <input
-            type="date"
-            className={inputClassName}
-            value={
-              value.availableBy
-                ? value.availableBy.toISOString().slice(0, 10)
-                : ""
+        <div className="overflow-y-auto px-5">
+          <FilterSection
+            title={t("rent")}
+            trailing={
+              <span className="text-muted-foreground text-sm tabular-nums">
+                {t("rentRange", {
+                  min: rentMin.toLocaleString(),
+                  max: rentMax.toLocaleString(),
+                })}
+              </span>
             }
-            onChange={(event) => {
-              setField(
-                "availableBy",
-                event.target.value.length > 0
-                  ? new Date(event.target.value)
-                  : undefined,
-              );
-            }}
-          />
-        </FilterField>
+          >
+            <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+              <Input
+                type="number"
+                min={RENT_MIN}
+                max={RENT_MAX}
+                step={RENT_STEP}
+                value={rentMin}
+                onChange={(event) => {
+                  const next = clamp(
+                    Number(event.target.value),
+                    RENT_MIN,
+                    rentMax,
+                  );
+                  setField("minRentMxn", next === RENT_MIN ? undefined : next);
+                }}
+              />
+              <span className="text-muted-foreground">–</span>
+              <Input
+                type="number"
+                min={RENT_MIN}
+                max={RENT_MAX}
+                step={RENT_STEP}
+                value={rentMax}
+                onChange={(event) => {
+                  const next = clamp(
+                    Number(event.target.value),
+                    rentMin,
+                    RENT_MAX,
+                  );
+                  setField("maxRentMxn", next === RENT_MAX ? undefined : next);
+                }}
+              />
+            </div>
+            <Slider
+              min={RENT_MIN}
+              max={RENT_MAX}
+              step={RENT_STEP}
+              value={[rentMin, rentMax]}
+              onValueChange={(next) => {
+                const [min = RENT_MIN, max = RENT_MAX] = next;
+                setDraft((current) => ({
+                  ...current,
+                  minRentMxn: min === RENT_MIN ? undefined : min,
+                  maxRentMxn: max === RENT_MAX ? undefined : max,
+                }));
+              }}
+            />
+          </FilterSection>
 
-        <FilterField label={t("couples")}>
-          <OptionalBooleanSelect
-            value={value.couplesAllowed}
-            onChange={(next) => {
-              setField("couplesAllowed", next);
-            }}
-            anyLabel={t("any")}
-            yesLabel={t("yes")}
-            noLabel={t("no")}
-          />
-        </FilterField>
+          <FilterDivider />
 
-        <FilterField label={t("smoking")}>
-          <OptionalEnumSelect<SmokingPolicy>
-            value={value.smokingPolicy}
-            onChange={(next) => {
-              setField("smokingPolicy", next);
-            }}
-            anyLabel={t("any")}
-            options={[
-              { value: "no", label: t("smokingNo") },
-              { value: "outdoor", label: t("smokingOutdoor") },
-              { value: "yes", label: t("smokingYes") },
-            ]}
-          />
-        </FilterField>
+          <FilterSection title={t("age")}>
+            <div className="flex items-center justify-between gap-3">
+              <Input
+                type="number"
+                min={AGE_MIN}
+                max={AGE_MAX}
+                className="max-w-24"
+                value={draft.seekerAge ?? ""}
+                placeholder={String(AGE_MIN)}
+                onChange={(event) => {
+                  const raw = event.target.value;
+                  if (raw.length === 0) {
+                    setField("seekerAge", undefined);
+                    return;
+                  }
+                  setField("seekerAge", clamp(Number(raw), AGE_MIN, AGE_MAX));
+                }}
+              />
+              <span className="text-muted-foreground text-sm">
+                {draft.seekerAge !== undefined
+                  ? t("ageValue", { age: draft.seekerAge })
+                  : t("any")}
+              </span>
+            </div>
+            <Slider
+              min={AGE_MIN}
+              max={AGE_MAX}
+              step={1}
+              value={[ageValue]}
+              onValueChange={(next) => {
+                const [age = AGE_MIN] = next;
+                setField("seekerAge", age);
+              }}
+            />
+          </FilterSection>
 
-        <FilterField label={t("guests")}>
-          <OptionalEnumSelect<OvernightGuests>
-            value={value.overnightGuests}
-            onChange={(next) => {
-              setField("overnightGuests", next);
-            }}
-            anyLabel={t("any")}
-            options={[
-              { value: "no", label: t("guestsNo") },
-              { value: "ask", label: t("guestsAsk") },
-              { value: "yes", label: t("guestsYes") },
-            ]}
-          />
-        </FilterField>
+          <FilterDivider />
 
-        <FilterField label={t("wfh")}>
-          <OptionalBooleanSelect
-            value={value.wfhFriendly}
-            onChange={(next) => {
-              setField("wfhFriendly", next);
-            }}
-            anyLabel={t("any")}
-            yesLabel={t("yes")}
-            noLabel={t("no")}
-          />
-        </FilterField>
+          <FilterSection title={t("gender")}>
+            <FilterRadioGrid
+              value={draft.householdGender ?? "any"}
+              onChange={(next) => {
+                setField(
+                  "householdGender",
+                  next === "any" ? undefined : (next as HouseholdGender),
+                );
+              }}
+              options={[
+                { value: "any", label: t("genderEveryone") },
+                { value: "female", label: t("genderFemale") },
+                { value: "male", label: t("genderMale") },
+                { value: "mixed", label: t("genderMixed") },
+              ]}
+            />
+          </FilterSection>
 
-        <FilterField label={t("quiet")}>
-          <OptionalBooleanSelect
-            value={value.quietHome}
-            onChange={(next) => {
-              setField("quietHome", next);
-            }}
-            anyLabel={t("any")}
-            yesLabel={t("yes")}
-            noLabel={t("no")}
-          />
-        </FilterField>
+          <FilterDivider />
 
-        <FilterField label={t("cleanliness")}>
-          <OptionalEnumSelect<Cleanliness>
-            value={value.cleanliness}
-            onChange={(next) => {
-              setField("cleanliness", next);
-            }}
-            anyLabel={t("any")}
-            options={[
-              { value: "relaxed", label: t("cleanlinessRelaxed") },
-              { value: "average", label: t("cleanlinessAverage") },
-              { value: "tidy", label: t("cleanlinessTidy") },
-            ]}
-          />
-        </FilterField>
-
-        <FilterField label={t("rentMin")}>
-          <input
-            type="number"
-            min={0}
-            className={inputClassName}
-            value={value.minRentMxn ?? ""}
-            onChange={(event) => {
-              setField("minRentMxn", parseOptionalNumber(event.target.value));
-            }}
-          />
-        </FilterField>
-
-        <FilterField label={t("rentMax")}>
-          <input
-            type="number"
-            min={1}
-            className={inputClassName}
-            value={value.maxRentMxn ?? ""}
-            onChange={(event) => {
-              setField("maxRentMxn", parseOptionalNumber(event.target.value));
-            }}
-          />
-        </FilterField>
-      </div>
-
-      <fieldset className="space-y-2">
-        <legend className="text-sm font-medium">{t("includes")}</legend>
-        <div className="flex flex-wrap gap-3">
-          {LISTING_INCLUDES.map((item) => {
-            const checked = selectedIncludes.includes(item);
-            return (
-              <label key={item} className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={checked}
-                  onChange={(event) => {
-                    const nextIncludes: ListingInclude[] = event.target.checked
-                      ? [...selectedIncludes, item]
-                      : selectedIncludes.filter((include) => include !== item);
-                    setField(
-                      "includes",
-                      nextIncludes.length > 0 ? nextIncludes : undefined,
-                    );
+          <FilterSection title={t("bathroom")}>
+            <FilterPillGrid>
+              {(
+                [
+                  ["private", t("bathroomPrivate")],
+                  ["shared", t("bathroomShared")],
+                ] as const
+              ).map(([item, label]) => (
+                <FilterPill
+                  key={item}
+                  selected={draft.bathroomType === item}
+                  onClick={() => {
+                    toggleExact("bathroomType", item);
                   }}
-                />
-                {t(`include.${item}`)}
-              </label>
-            );
-          })}
+                >
+                  {label}
+                </FilterPill>
+              ))}
+            </FilterPillGrid>
+          </FilterSection>
+
+          <FilterDivider />
+
+          <FilterSection title={t("furnished")}>
+            <FilterPillGrid>
+              {(
+                [
+                  ["furnished", t("furnishedYes")],
+                  ["semi", t("furnishedSemi")],
+                  ["unfurnished", t("furnishedNo")],
+                ] as const
+              ).map(([item, label]) => (
+                <FilterPill
+                  key={item}
+                  selected={draft.furnished === item}
+                  onClick={() => {
+                    toggleExact("furnished", item);
+                  }}
+                >
+                  {label}
+                </FilterPill>
+              ))}
+            </FilterPillGrid>
+          </FilterSection>
+
+          <FilterDivider />
+
+          <FilterSection title={t("filterLifestyle")}>
+            <FilterPillGrid>
+              <FilterPill
+                selected={draft.hasPets === true}
+                onClick={() => {
+                  toggleExact("hasPets", true);
+                }}
+              >
+                {t("hasPets")}
+              </FilterPill>
+              <FilterPill
+                selected={draft.acceptsPets === true}
+                onClick={() => {
+                  toggleExact("acceptsPets", true);
+                }}
+              >
+                {t("acceptsPets")}
+              </FilterPill>
+              <FilterPill
+                selected={draft.couplesAllowed === true}
+                onClick={() => {
+                  toggleExact("couplesAllowed", true);
+                }}
+              >
+                {t("couples")}
+              </FilterPill>
+              <FilterPill
+                selected={draft.wfhFriendly === true}
+                onClick={() => {
+                  toggleExact("wfhFriendly", true);
+                }}
+              >
+                {t("wfh")}
+              </FilterPill>
+              <FilterPill
+                selected={draft.quietHome === true}
+                onClick={() => {
+                  toggleExact("quietHome", true);
+                }}
+              >
+                {t("quiet")}
+              </FilterPill>
+            </FilterPillGrid>
+          </FilterSection>
+
+          <FilterDivider />
+
+          <FilterSection title={t("smoking")}>
+            <FilterPillGrid>
+              {(
+                [
+                  ["no", t("smokingNo")],
+                  ["outdoor", t("smokingOutdoor")],
+                  ["yes", t("smokingYes")],
+                ] as const
+              ).map(([item, label]) => (
+                <FilterPill
+                  key={item}
+                  selected={draft.smokingPolicy === item}
+                  onClick={() => {
+                    toggleExact("smokingPolicy", item);
+                  }}
+                >
+                  {label}
+                </FilterPill>
+              ))}
+            </FilterPillGrid>
+          </FilterSection>
+
+          <FilterDivider />
+
+          <FilterSection title={t("guests")}>
+            <FilterPillGrid>
+              {(
+                [
+                  ["no", t("guestsNo")],
+                  ["ask", t("guestsAsk")],
+                  ["yes", t("guestsYes")],
+                ] as const
+              ).map(([item, label]) => (
+                <FilterPill
+                  key={item}
+                  selected={draft.overnightGuests === item}
+                  onClick={() => {
+                    toggleExact("overnightGuests", item);
+                  }}
+                >
+                  {label}
+                </FilterPill>
+              ))}
+            </FilterPillGrid>
+          </FilterSection>
+
+          <FilterDivider />
+
+          <FilterSection title={t("cleanliness")}>
+            <FilterPillGrid>
+              {(
+                [
+                  ["relaxed", t("cleanlinessRelaxed")],
+                  ["average", t("cleanlinessAverage")],
+                  ["tidy", t("cleanlinessTidy")],
+                ] as const
+              ).map(([item, label]) => (
+                <FilterPill
+                  key={item}
+                  selected={draft.cleanliness === item}
+                  onClick={() => {
+                    toggleExact("cleanliness", item);
+                  }}
+                >
+                  {label}
+                </FilterPill>
+              ))}
+            </FilterPillGrid>
+          </FilterSection>
+
+          <FilterDivider />
+
+          <FilterSection title={t("includes")}>
+            <FilterPillGrid>
+              {LISTING_INCLUDES.map((item) => (
+                <FilterPill
+                  key={item}
+                  selected={selectedIncludes.includes(item)}
+                  onClick={() => {
+                    toggleInclude(item);
+                  }}
+                >
+                  {t(`include.${item}`)}
+                </FilterPill>
+              ))}
+            </FilterPillGrid>
+          </FilterSection>
+
+          <FilterDivider />
+
+          <FilterSection title={t("availableBy")}>
+            <Input
+              type="date"
+              value={
+                draft.availableBy
+                  ? draft.availableBy.toISOString().slice(0, 10)
+                  : ""
+              }
+              onChange={(event) => {
+                setField(
+                  "availableBy",
+                  event.target.value.length > 0
+                    ? new Date(event.target.value)
+                    : undefined,
+                );
+              }}
+            />
+          </FilterSection>
         </div>
-      </fieldset>
-    </section>
+
+        <DialogFooter>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => {
+              setDraft(emptyFilters);
+            }}
+          >
+            {t("clear")}
+          </Button>
+          <Button
+            type="button"
+            onClick={() => {
+              onChange(draft);
+              setOpen(false);
+            }}
+          >
+            {t("showResults")}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

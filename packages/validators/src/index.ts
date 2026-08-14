@@ -47,9 +47,23 @@ export const COMPLEX_AMENITIES = [
   "gym",
   "garden",
   "furnished",
+  "padel",
+  "tennis",
 ] as const;
-export const ComplexAmenitySchema = z.enum(COMPLEX_AMENITIES);
+export type PresetAmenity = (typeof COMPLEX_AMENITIES)[number];
+
+export const MAX_AMENITY_LENGTH = 48;
+export const MAX_AMENITIES = 24;
+
+export const ComplexAmenitySchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(MAX_AMENITY_LENGTH);
 export type ComplexAmenity = z.infer<typeof ComplexAmenitySchema>;
+
+export const isPresetAmenity = (value: string): value is PresetAmenity =>
+  COMPLEX_AMENITIES.some((item) => item === value);
 
 export const LEASE_MONTHS = [1, 3, 6, 12] as const;
 export const LeaseMonthsSchema = z.coerce
@@ -66,10 +80,15 @@ export const NONE_COMPLEX_ID = "none";
 
 const AgeSchema = z.number().int().min(18).max(99);
 
-const OptionalUrlSchema = z.union([
-  z.literal(""),
-  z.url({ message: "Enter a valid URL" }),
-]);
+export const MAX_LISTING_IMAGES = 12;
+
+export const ListingImageUrlSchema = z.url({
+  message: "Enter a valid image URL",
+});
+
+export const ListingImagesSchema = z
+  .array(ListingImageUrlSchema)
+  .max(MAX_LISTING_IMAGES);
 
 const requireMapPin = (
   data: { latitude?: number; longitude?: number },
@@ -114,7 +133,7 @@ export const CreateListingSchema = z
     wfhFriendly: z.boolean().default(false),
     quietHome: z.boolean().default(false),
     cleanliness: CleanlinessSchema.default("average"),
-    roomImageUrl: z.string().optional(),
+    images: ListingImagesSchema.default([]),
   })
   .refine((value) => value.preferredAgeMin <= value.preferredAgeMax, {
     message: "Minimum age must be less than or equal to maximum age",
@@ -174,7 +193,7 @@ export const ListingFormSchema = z
     wfhFriendly: z.boolean(),
     quietHome: z.boolean(),
     cleanliness: CleanlinessSchema,
-    roomImageUrl: OptionalUrlSchema,
+    images: ListingImagesSchema,
   })
   .refine((value) => value.preferredAgeMin <= value.preferredAgeMax, {
     message: "Minimum age must be less than or equal to maximum age",
@@ -221,8 +240,8 @@ export const ComplexFormSchema = z
     latitude: z.number().min(-90).max(90).optional(),
     longitude: z.number().min(-180).max(180).optional(),
     petFriendly: z.boolean(),
-    amenities: z.array(ComplexAmenitySchema),
-    imageUrl: OptionalUrlSchema,
+    amenities: z.array(ComplexAmenitySchema).max(MAX_AMENITIES),
+    images: ListingImagesSchema,
   })
   .superRefine((data, ctx) => {
     requireMapPin(data, ctx);

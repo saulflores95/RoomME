@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { JSX, ReactNode } from "react";
 
 export function ListingSectionCard({
   step,
@@ -10,7 +10,7 @@ export function ListingSectionCard({
   title: string;
   description: string;
   children: ReactNode;
-}) {
+}): JSX.Element {
   return (
     <section className="border-border bg-card overflow-hidden rounded-2xl border shadow-sm">
       <header className="border-border flex items-start gap-3 border-b px-5 py-4">

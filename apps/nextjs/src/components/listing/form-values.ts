@@ -74,7 +74,7 @@ export const listingFormDefaults = (): ListingFormValues => ({
   wfhFriendly: false,
   quietHome: false,
   cleanliness: "average",
-  roomImageUrl: "",
+  images: [],
 });
 
 export const complexFormDefaults = (): ComplexFormValues => ({
@@ -87,7 +87,7 @@ export const complexFormDefaults = (): ComplexFormValues => ({
   longitude: undefined,
   petFriendly: false,
   amenities: [],
-  imageUrl: "",
+  images: [],
 });
 
 export const roomToListingFormValues = (
@@ -121,7 +121,7 @@ export const roomToListingFormValues = (
   wfhFriendly: room.wfhFriendly,
   quietHome: room.quietHome,
   cleanliness: room.cleanliness,
-  roomImageUrl: room.roomImageUrl ?? "",
+  images: room.images,
 });
 
 export const complexToFormValues = (
@@ -136,7 +136,7 @@ export const complexToFormValues = (
   longitude: complex.longitude ?? undefined,
   petFriendly: complex.petFriendly,
   amenities: complex.amenities,
-  imageUrl: complex.imageUrl ?? "",
+  images: complex.images,
 });
 
 export const toCreateListingInput = (
@@ -176,7 +176,6 @@ export const toCreateListingInput = (
     wfhFriendly: values.wfhFriendly,
     quietHome: values.quietHome,
     cleanliness: values.cleanliness,
-    roomImageUrl:
-      values.roomImageUrl.length > 0 ? values.roomImageUrl : undefined,
+    images: values.images,
   };
 };
