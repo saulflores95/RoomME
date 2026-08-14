@@ -11,7 +11,11 @@ import {
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 
 import type { AppRouter } from "@acme/api";
-import { ThemeProvider, ThemeToggle } from "@acme/ui/theme";
+import {
+  themeDetectorScript,
+  ThemeProvider,
+  ThemeToggle,
+} from "@acme/ui/theme";
 import { Toaster } from "@acme/ui/toast";
 
 import appCss from "~/styles.css?url";
@@ -22,6 +26,7 @@ export const Route = createRootRouteWithContext<{
 }>()({
   head: () => ({
     links: [{ rel: "stylesheet", href: appCss }],
+    scripts: [{ children: themeDetectorScript }],
   }),
   component: RootComponent,
 });
@@ -37,7 +42,7 @@ function RootComponent() {
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider>
-      <html lang="en" suppressHydrationWarning>
+      <html lang="en" className="light" suppressHydrationWarning>
         <head>
           <HeadContent />
         </head>

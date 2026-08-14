@@ -19,13 +19,15 @@ const themeKey = "theme-mode";
 export type ThemeMode = z.output<typeof ThemeModeSchema>;
 export type ResolvedTheme = Exclude<ThemeMode, "auto">;
 
+const DEFAULT_THEME_MODE: ThemeMode = "light";
+
 const getStoredThemeMode = (): ThemeMode => {
-  if (typeof window === "undefined") return "auto";
+  if (typeof window === "undefined") return DEFAULT_THEME_MODE;
   try {
     const storedTheme = localStorage.getItem(themeKey);
     return ThemeModeSchema.parse(storedTheme);
   } catch {
-    return "auto";
+    return DEFAULT_THEME_MODE;
   }
 };
 
@@ -79,8 +81,8 @@ export const themeDetectorScript = (function () {
       return validThemes.includes(theme as ThemeMode);
     };
 
-    const storedTheme = localStorage.getItem("theme-mode") ?? "auto";
-    const validTheme = isValidTheme(storedTheme) ? storedTheme : "auto";
+    const storedTheme = localStorage.getItem("theme-mode") ?? "light";
+    const validTheme = isValidTheme(storedTheme) ? storedTheme : "light";
 
     if (validTheme === "auto") {
       const autoTheme = window.matchMedia("(prefers-color-scheme: dark)")
@@ -109,6 +111,7 @@ export function ThemeProvider({ children }: React.PropsWithChildren) {
   const [themeMode, setThemeMode] = React.useState(getStoredThemeMode);
 
   React.useEffect(() => {
+    updateThemeClass(themeMode);
     if (themeMode !== "auto") return;
     return setupPreferredListener();
   }, [themeMode]);
@@ -134,10 +137,6 @@ export function ThemeProvider({ children }: React.PropsWithChildren) {
         toggleMode,
       }}
     >
-      <script
-        dangerouslySetInnerHTML={{ __html: themeDetectorScript }}
-        suppressHydrationWarning
-      />
       {children}
     </ThemeContext>
   );

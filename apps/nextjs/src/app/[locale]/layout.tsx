@@ -9,7 +9,7 @@ import {
 } from "next-intl/server";
 
 import { cn } from "@acme/ui";
-import { ThemeProvider } from "@acme/ui/theme";
+import { themeDetectorScript, ThemeProvider } from "@acme/ui/theme";
 import { Toaster } from "@acme/ui/toast";
 
 import { SiteHeader } from "~/components/site-header";
@@ -83,7 +83,13 @@ export default async function LocaleLayout({
   const messages = await getMessages();
 
   return (
-    <html lang={locale} suppressHydrationWarning>
+    <html lang={locale} className="light" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{ __html: themeDetectorScript }}
+          suppressHydrationWarning
+        />
+      </head>
       <body
         className={cn(
           "bg-background text-foreground min-h-screen font-sans antialiased",
