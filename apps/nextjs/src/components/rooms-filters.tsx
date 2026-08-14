@@ -1,7 +1,7 @@
 "use client";
 
 import type { JSX } from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 
 import type {
@@ -52,11 +52,12 @@ export function RoomsFilters({
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<ListListingsInput>(value);
 
-  useEffect(() => {
-    if (open) {
+  const handleOpenChange = (nextOpen: boolean): void => {
+    if (nextOpen) {
       setDraft(value);
     }
-  }, [open, value]);
+    setOpen(nextOpen);
+  };
 
   const setField = <K extends keyof ListListingsInput>(
     key: K,
@@ -95,7 +96,7 @@ export function RoomsFilters({
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button type="button" variant="outline" className="gap-2">
           {t("filters")}

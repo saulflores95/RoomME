@@ -107,19 +107,24 @@ export function LocationFields({
             />
             {complexes.length === 0 ? (
               <p className="text-muted-foreground text-sm">
-                {t("noComplexes")}{" "}
-                <Link href="/list-a-complex" className="underline">
-                  {t("createComplexLink")}
-                </Link>
+                {t("noComplexes")}
+                {canCreateComplex ? (
+                  <>
+                    {" "}
+                    <Link href="/list-a-complex" className="underline">
+                      {t("createComplexLink")}
+                    </Link>
+                  </>
+                ) : null}
               </p>
-            ) : (
+            ) : canCreateComplex ? (
               <p className="text-muted-foreground text-sm">
                 {t("addComplexHint")}{" "}
                 <Link href="/list-a-complex" className="underline">
                   {t("createComplexLink")}
                 </Link>
               </p>
-            )}
+            ) : null}
           </>
         ) : null}
         {selectedComplex ? null : (

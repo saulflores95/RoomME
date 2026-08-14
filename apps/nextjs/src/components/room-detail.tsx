@@ -209,10 +209,7 @@ export function RoomDetail({ id }: { id: string }): JSX.Element {
       : null;
 
   const complexMapPin =
-    complex &&
-    (complex.city === "cdmx" || complex.city === "queretaro") &&
-    complex.latitude !== null &&
-    complex.longitude !== null
+    complex?.latitude != null && complex.longitude != null
       ? {
           city: complex.city,
           latitude: complex.latitude,
@@ -525,7 +522,7 @@ export function RoomDetail({ id }: { id: string }): JSX.Element {
             </div>
           ) : null}
 
-          {showComplexMap && complexMapPin ? (
+          {showComplexMap ? (
             <div className="space-y-3">
               <h3 className="text-lg font-semibold">{t("complexLocation")}</h3>
               <div className="border-border h-64 overflow-hidden rounded-2xl border sm:h-80">
