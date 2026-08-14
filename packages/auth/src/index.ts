@@ -14,6 +14,7 @@ export function initAuth<
   baseUrl: string;
   productionUrl: string;
   secret: string | undefined;
+  trustedOrigins?: string[];
   extraPlugins?: TExtraPlugins;
 }) {
   const config = {
@@ -36,6 +37,18 @@ export function initAuth<
         return Promise.resolve();
       },
     },
+    user: {
+      additionalFields: {
+        bio: {
+          type: "string",
+          required: false,
+        },
+        birthDate: {
+          type: "date",
+          required: false,
+        },
+      },
+    },
     plugins: [
       expo(),
       admin({
@@ -46,7 +59,16 @@ export function initAuth<
       }),
       ...(options.extraPlugins ?? []),
     ],
-    trustedOrigins: [options.productionUrl, "expo://", "exp://"],
+    trustedOrigins: [
+      ...new Set([
+        options.baseUrl,
+        options.productionUrl,
+        "https://roomemx.vercel.app",
+        ...(options.trustedOrigins ?? []),
+        "expo://",
+        "exp://",
+      ]),
+    ],
     onAPIError: {
       onError(error, ctx) {
         console.error("BETTER AUTH API ERROR", error, ctx);

@@ -22,6 +22,12 @@ export const roomImageKindEnum = pgEnum("room_image_kind", [
   "apartment",
 ]);
 export const stayStatusEnum = pgEnum("stay_status", ["current", "past"]);
+export const applicationStatusEnum = pgEnum("application_status", [
+  "pending",
+  "accepted",
+  "declined",
+  "withdrawn",
+]);
 export const householdGenderEnum = pgEnum("household_gender", [
   "male",
   "female",
@@ -183,6 +189,31 @@ export const RoommeRating = pgTable(
   ],
 );
 
+export const Application = pgTable(
+  "application",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    roomId: t
+      .uuid()
+      .notNull()
+      .references(() => Room.id, { onDelete: "cascade" }),
+    applicantId: t
+      .text()
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    message: t.text(),
+    status: applicationStatusEnum().notNull().default("pending"),
+    createdAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .$onUpdateFn(() => sql`now()`),
+  }),
+  (t) => [unique("application_room_applicant").on(t.roomId, t.applicantId)],
+);
+
 export const complexRelations = relations(Complex, ({ many }) => ({
   images: many(ComplexImage),
   rooms: many(Room),
@@ -207,6 +238,7 @@ export const roomRelations = relations(Room, ({ one, many }) => ({
   }),
   images: many(RoomImage),
   stays: many(Stay),
+  applications: many(Application),
 }));
 
 export const roomImageRelations = relations(RoomImage, ({ one }) => ({
@@ -233,6 +265,18 @@ export const userRelations = relations(user, ({ many }) => ({
   stays: many(Stay),
   ratingsGiven: many(RoommeRating, { relationName: "ratingRater" }),
   ratingsReceived: many(RoommeRating, { relationName: "ratingRatee" }),
+  applications: many(Application),
+}));
+
+export const applicationRelations = relations(Application, ({ one }) => ({
+  room: one(Room, {
+    fields: [Application.roomId],
+    references: [Room.id],
+  }),
+  applicant: one(user, {
+    fields: [Application.applicantId],
+    references: [user.id],
+  }),
 }));
 
 export const roommeRatingRelations = relations(RoommeRating, ({ one }) => ({

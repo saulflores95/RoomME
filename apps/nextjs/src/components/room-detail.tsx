@@ -4,12 +4,19 @@ import type { JSX } from "react";
 import { useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { notFound } from "next/navigation";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 
 import { cn } from "@acme/ui";
 import { Button } from "@acme/ui/button";
 
+import { authClient } from "~/auth/client";
+import { ApplicantCard } from "~/components/applicant-card";
 import { formatMxn } from "~/components/room-card";
 import { RoomShareButton } from "~/components/room-share-button";
 import { Link } from "~/i18n/navigation";
@@ -76,11 +83,48 @@ const Pill = ({ children }: { children: string }): JSX.Element => (
 
 export function RoomDetail({ id }: { id: string }): JSX.Element {
   const t = useTranslations("rooms");
+  const tProfile = useTranslations("profile");
   const trpc = useTRPC();
+  const queryClient = useQueryClient();
+  const { data: session } = authClient.useSession();
   const { data: listing } = useSuspenseQuery(
     trpc.listing.byId.queryOptions({ id }),
   );
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [applyError, setApplyError] = useState<string | null>(null);
+
+  const isHost =
+    session?.user.id != null && listing?.host?.id === session.user.id;
+  const isSignedIn = session?.user != null;
+
+  const myApplicationQuery = useQuery({
+    ...trpc.application.mineForRoom.queryOptions({ roomId: id }),
+    enabled: isSignedIn && !isHost,
+  });
+
+  const applicantsQuery = useQuery({
+    ...trpc.application.listForRoom.queryOptions({ roomId: id }),
+    enabled: isHost,
+  });
+
+  const applyMutation = useMutation(
+    trpc.application.apply.mutationOptions({
+      onSuccess: async () => {
+        setApplyError(null);
+        await queryClient.invalidateQueries(
+          trpc.application.mineForRoom.queryFilter({ roomId: id }),
+        );
+        if (isHost) {
+          await queryClient.invalidateQueries(
+            trpc.application.listForRoom.queryFilter({ roomId: id }),
+          );
+        }
+      },
+      onError: () => {
+        setApplyError(t("applyFailed"));
+      },
+    }),
+  );
 
   const galleryImages = useMemo((): GalleryImage[] => {
     if (!listing) {
@@ -238,13 +282,34 @@ export function RoomDetail({ id }: { id: string }): JSX.Element {
             title={listing.title}
             description={listing.description}
           />
-          {listing.host ? (
-            <Button asChild>
-              <Link href="/sign-in">{t("contactHost")}</Link>
-            </Button>
+          {listing.host && !isHost ? (
+            isSignedIn ? (
+              myApplicationQuery.data &&
+              myApplicationQuery.data.status !== "withdrawn" ? (
+                <Button variant="outline" disabled>
+                  {t("applied")}
+                </Button>
+              ) : (
+                <Button
+                  disabled={applyMutation.isPending}
+                  onClick={() => {
+                    applyMutation.mutate({ roomId: listing.id });
+                  }}
+                >
+                  {applyMutation.isPending ? t("applying") : t("apply")}
+                </Button>
+              )
+            ) : (
+              <Button asChild>
+                <Link href="/sign-in">{t("apply")}</Link>
+              </Button>
+            )
           ) : null}
         </div>
       </div>
+      {applyError ? (
+        <p className="text-destructive text-sm">{applyError}</p>
+      ) : null}
 
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
         <div className="space-y-3">
@@ -335,7 +400,10 @@ export function RoomDetail({ id }: { id: string }): JSX.Element {
           </div>
 
           {listing.host ? (
-            <div className="border-border flex items-center gap-3 rounded-2xl border p-3">
+            <Link
+              href={`/profiles/${listing.host.id}`}
+              className="border-border hover:bg-muted/40 flex items-center gap-3 rounded-2xl border p-3 transition-colors"
+            >
               {listing.host.image ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -348,13 +416,16 @@ export function RoomDetail({ id }: { id: string }): JSX.Element {
                   {listing.host.name.slice(0, 1).toUpperCase()}
                 </span>
               )}
-              <div>
+              <div className="min-w-0 flex-1">
                 <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
                   {t("host")}
                 </p>
                 <p className="font-semibold">{listing.host.name}</p>
+                <p className="text-muted-foreground text-xs">
+                  {tProfile("viewProfile")}
+                </p>
               </div>
-            </div>
+            </Link>
           ) : null}
 
           <dl className="grid grid-cols-2 gap-2 sm:grid-cols-3">
@@ -413,6 +484,30 @@ export function RoomDetail({ id }: { id: string }): JSX.Element {
           {listing.description}
         </p>
       </section>
+
+      {isHost ? (
+        <section className="space-y-4">
+          <div>
+            <h2 className="text-xl font-semibold">{t("applicants")}</h2>
+            <p className="text-muted-foreground text-sm">
+              {t("applicantsHint")}
+            </p>
+          </div>
+          {applicantsQuery.isPending ? (
+            <p className="text-muted-foreground text-sm">
+              {t("loadingApplicants")}
+            </p>
+          ) : (applicantsQuery.data?.length ?? 0) === 0 ? (
+            <p className="text-muted-foreground text-sm">{t("noApplicants")}</p>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2">
+              {applicantsQuery.data?.map((application) => (
+                <ApplicantCard key={application.id} application={application} />
+              ))}
+            </div>
+          )}
+        </section>
+      ) : null}
 
       {listing.includes.length > 0 ? (
         <section className="space-y-3">

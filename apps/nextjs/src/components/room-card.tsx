@@ -1,12 +1,12 @@
 "use client";
 
-import type { JSX } from "react";
+import type { JSX, KeyboardEvent, MouseEvent } from "react";
 import { useTranslations } from "next-intl";
 
 import type { RouterOutputs } from "@acme/api";
 import { cn } from "@acme/ui";
 
-import { Link } from "~/i18n/navigation";
+import { Link, useRouter } from "~/i18n/navigation";
 import { formatMxn } from "~/lib/money";
 
 export { formatMxn };
@@ -43,6 +43,7 @@ export function RoomCard({
   onHover?: (listingId: string | null) => void;
 }): JSX.Element {
   const t = useTranslations("rooms");
+  const router = useRouter();
   const address =
     listing.addressLine1 && listing.addressLine1.length > 0
       ? `${listing.addressLine1}, ${listing.complex.neighborhood}`
@@ -51,6 +52,15 @@ export function RoomCard({
     listing.description.length > 110
       ? `${listing.description.slice(0, 110).trimEnd()}…`
       : listing.description;
+
+  const openHostProfile = (event: MouseEvent | KeyboardEvent): void => {
+    if (!listing.host) {
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    router.push(`/profiles/${listing.host.id}`);
+  };
 
   return (
     <Link
@@ -89,12 +99,27 @@ export function RoomCard({
               src={listing.host.image}
               alt={listing.host.name}
               className="border-background absolute right-2 bottom-2 size-9 rounded-full border-2 object-cover"
+              onClick={openHostProfile}
             />
           ) : null}
         </div>
         <div className="space-y-2 p-4">
           {listing.host ? (
-            <p className="text-muted-foreground text-sm">{listing.host.name}</p>
+            <p className="text-muted-foreground text-sm">
+              <span
+                role="link"
+                tabIndex={0}
+                className="hover:text-foreground underline-offset-4 hover:underline"
+                onClick={openHostProfile}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    openHostProfile(event);
+                  }
+                }}
+              >
+                {listing.host.name}
+              </span>
+            </p>
           ) : null}
           <h3 className="line-clamp-2 text-base font-semibold">
             {listing.title}

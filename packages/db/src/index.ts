@@ -11,4 +11,6 @@ export {
   isNull,
   inArray,
   arrayContains,
+  avg,
+  count,
 } from "drizzle-orm";

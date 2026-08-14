@@ -7,7 +7,8 @@ import { getBaseUrl } from "~/lib/url";
 
 export const auth = initAuth({
   baseUrl: getBaseUrl(),
-  productionUrl: `https://${env.VERCEL_PROJECT_PRODUCTION_URL ?? "roomme.app"}`,
+  productionUrl: `https://${env.VERCEL_PROJECT_PRODUCTION_URL ?? "roomemx.vercel.app"}`,
   secret: env.AUTH_SECRET,
+  trustedOrigins: ["https://roomemx.vercel.app"],
   extraPlugins: [reactStartCookies()],
 });

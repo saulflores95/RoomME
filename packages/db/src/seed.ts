@@ -1,7 +1,16 @@
 import { eq } from "drizzle-orm";
 
 import { db } from "./client";
-import { Complex, ComplexImage, Room, RoomImage, user } from "./schema";
+import {
+  Application,
+  Complex,
+  ComplexImage,
+  Room,
+  RoomImage,
+  RoommeRating,
+  Stay,
+  user,
+} from "./schema";
 
 const now = new Date();
 
@@ -12,6 +21,8 @@ const hosts = [
     email: "maria.host@roomme.local",
     image:
       "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80",
+    bio: "Diseñadora en Roma Norte. Me encanta cocinar los domingos y mantener la casa limpia pero relajada. Busco roomies responsables y con buena vibra.",
+    birthDate: new Date("1996-04-12"),
     role: "roomie,host",
   },
   {
@@ -20,9 +31,81 @@ const hosts = [
     email: "diego.host@roomme.local",
     image:
       "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80",
+    bio: "Ingeniero en Querétaro. Trabajo híbrido, me gusta el gym y las tardes tranquilas. La casa es pet-friendly y WFH friendly.",
+    birthDate: new Date("1993-09-03"),
     role: "roomie,host",
   },
 ] as const;
+
+const roomies = [
+  {
+    id: "seed-roomie-ana",
+    name: "Ana Torres",
+    email: "ana.roomie@roomme.local",
+    image:
+      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=80",
+    bio: "Product designer de 28 años. Busco un espacio luminoso cerca de cafés. Soy ordenada, no fumo y trabajo desde casa 3 días a la semana.",
+    birthDate: new Date("1998-02-18"),
+    role: "roomie",
+  },
+  {
+    id: "seed-roomie-luis",
+    name: "Luis Mendoza",
+    email: "luis.roomie@roomme.local",
+    image:
+      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80",
+    bio: "Desarrollador full-stack. Me gusta cocinar, ver series y salir a correr. Busco roomies respetuosos del silencio en la noche.",
+    birthDate: new Date("1995-11-07"),
+    role: "roomie",
+  },
+  {
+    id: "seed-roomie-sofia",
+    name: "Sofía Chen",
+    email: "sofia.roomie@roomme.local",
+    image:
+      "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=200&q=80",
+    bio: "Estudiante de maestría y freelance de marketing. Soy sociable, limpia y tengo un gato (sí, soy package deal).",
+    birthDate: new Date("1999-06-22"),
+    role: "roomie",
+  },
+] as const;
+
+async function upsertUsers(): Promise<void> {
+  for (const person of [...hosts, ...roomies]) {
+    const existing = await db.query.user.findFirst({
+      where: eq(user.id, person.id),
+    });
+
+    if (existing) {
+      await db
+        .update(user)
+        .set({
+          name: person.name,
+          image: person.image,
+          bio: person.bio,
+          birthDate: person.birthDate,
+          role: person.role,
+          updatedAt: now,
+        })
+        .where(eq(user.id, person.id));
+      continue;
+    }
+
+    await db.insert(user).values({
+      id: person.id,
+      name: person.name,
+      email: person.email,
+      emailVerified: true,
+      image: person.image,
+      bio: person.bio,
+      birthDate: person.birthDate,
+      createdAt: now,
+      updatedAt: now,
+      role: person.role,
+      banned: false,
+    });
+  }
+}
 
 async function backfillRoomFilters(): Promise<void> {
   const updates = [
@@ -112,33 +195,138 @@ async function backfillRoomFilters(): Promise<void> {
   }
 }
 
-async function seed(): Promise<void> {
-  for (const host of hosts) {
-    const existing = await db.query.user.findFirst({
-      where: eq(user.id, host.id),
-    });
+async function seedApplicationsAndRatings(): Promise<void> {
+  const rooms = await db.query.Room.findMany({
+    columns: { id: true, title: true, hostId: true },
+  });
 
-    if (existing) {
-      continue;
-    }
+  const romaRoom = rooms.find(
+    (room) => room.title === "Habitación con luz natural",
+  );
+  const loftRoom = rooms.find(
+    (room) => room.title === "Cuarto privado en loft",
+  );
+  const qroRoom = rooms.find(
+    (room) => room.title === "Habitación en planta baja",
+  );
 
-    await db.insert(user).values({
-      id: host.id,
-      name: host.name,
-      email: host.email,
-      emailVerified: true,
-      image: host.image,
-      createdAt: now,
-      updatedAt: now,
-      role: host.role,
-      banned: false,
-    });
+  if (!romaRoom || !loftRoom || !qroRoom) {
+    return;
   }
+
+  const existingApplications = await db.query.Application.findMany({
+    limit: 1,
+  });
+  if (existingApplications.length === 0) {
+    await db.insert(Application).values([
+      {
+        roomId: romaRoom.id,
+        applicantId: "seed-roomie-ana",
+        message:
+          "¡Hola María! Me encanta Roma Norte y busco un espacio limpio para trabajar desde casa.",
+        status: "pending",
+      },
+      {
+        roomId: romaRoom.id,
+        applicantId: "seed-roomie-sofia",
+        message:
+          "Soy tranquila, limpia y tengo un gatito. ¿Aceptan mascotas pequeñas?",
+        status: "pending",
+      },
+      {
+        roomId: loftRoom.id,
+        applicantId: "seed-roomie-luis",
+        message:
+          "Me gusta Condesa y el loft se ve genial. Puedo mudarme este mes.",
+        status: "pending",
+      },
+      {
+        roomId: qroRoom.id,
+        applicantId: "seed-roomie-luis",
+        message:
+          "Busco algo en Centro Sur cerca del trabajo. Soy ordenado y sin drama.",
+        status: "pending",
+      },
+    ]);
+  }
+
+  const existingStays = await db.query.Stay.findMany({ limit: 1 });
+  if (existingStays.length > 0) {
+    return;
+  }
+
+  const pastStart = new Date("2024-01-15");
+  const pastEnd = new Date("2025-06-01");
+
+  const [anaStay] = await db
+    .insert(Stay)
+    .values({
+      roomId: romaRoom.id,
+      userId: "seed-roomie-ana",
+      startedAt: pastStart,
+      endedAt: pastEnd,
+      status: "past",
+    })
+    .returning();
+
+  const [luisStay] = await db
+    .insert(Stay)
+    .values({
+      roomId: qroRoom.id,
+      userId: "seed-roomie-luis",
+      startedAt: pastStart,
+      endedAt: pastEnd,
+      status: "past",
+    })
+    .returning();
+
+  if (!anaStay || !luisStay) {
+    return;
+  }
+
+  await db.insert(RoommeRating).values([
+    {
+      raterId: "seed-roomie-ana",
+      rateeId: "seed-host-cdmx",
+      stayId: anaStay.id,
+      score: 5,
+      comment:
+        "María es una anfitriona excelente: clara, limpia y súper amable.",
+    },
+    {
+      raterId: "seed-host-cdmx",
+      rateeId: "seed-roomie-ana",
+      stayId: anaStay.id,
+      score: 5,
+      comment:
+        "Ana fue una roomie ideal. Respetuosa y siempre dejaba todo ordenado.",
+    },
+    {
+      raterId: "seed-roomie-luis",
+      rateeId: "seed-host-qro",
+      stayId: luisStay.id,
+      score: 4,
+      comment:
+        "Diego es puntual con las cuentas y el ambiente de la casa es tranquilo.",
+    },
+    {
+      raterId: "seed-host-qro",
+      rateeId: "seed-roomie-luis",
+      stayId: luisStay.id,
+      score: 5,
+      comment: "Luis es responsable y fácil de vivir. Lo recomiendo mucho.",
+    },
+  ]);
+}
+
+async function seed(): Promise<void> {
+  await upsertUsers();
 
   const existingComplexes = await db.query.Complex.findMany({ limit: 1 });
   if (existingComplexes.length > 0) {
     await backfillRoomFilters();
-    console.log("Seed listings already exist, updated room filter fields.");
+    await seedApplicationsAndRatings();
+    console.log("Seed listings already exist, updated profiles/applications.");
     return;
   }
 
@@ -411,6 +599,7 @@ async function seed(): Promise<void> {
     }),
   );
 
+  await seedApplicationsAndRatings();
   console.log(`Seeded ${rooms.length} rooms in CDMX and Querétaro.`);
 }
 

@@ -6,6 +6,8 @@ export const user = pgTable("user", (t) => ({
   email: t.text().notNull().unique(),
   emailVerified: t.boolean().default(false).notNull(),
   image: t.text(),
+  bio: t.text(),
+  birthDate: t.timestamp({ mode: "date" }),
   createdAt: t.timestamp().defaultNow().notNull(),
   updatedAt: t.timestamp().defaultNow().notNull(),
   role: t.text().default("roomie"),

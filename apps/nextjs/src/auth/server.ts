@@ -15,10 +15,16 @@ const baseUrl =
       ? `https://${env.VERCEL_URL}`
       : "http://localhost:3000";
 
+const productionUrl = `https://${env.VERCEL_PROJECT_PRODUCTION_URL ?? "roomemx.vercel.app"}`;
+
 export const auth = initAuth({
   baseUrl,
-  productionUrl: `https://${env.VERCEL_PROJECT_PRODUCTION_URL ?? "roomme.app"}`,
+  productionUrl,
   secret: env.AUTH_SECRET,
+  trustedOrigins: [
+    "https://roomemx.vercel.app",
+    ...(env.VERCEL_URL != null ? [`https://${env.VERCEL_URL}`] : []),
+  ],
   extraPlugins: [nextCookies()],
 });
 
