@@ -25,13 +25,15 @@ export function initAuth<
     secret: options.secret,
     emailAndPassword: {
       enabled: true,
-      sendResetPassword: async ({ user, url }) => {
+      sendResetPassword: ({ user, url }): Promise<void> => {
         console.log("[auth] password reset", user.email, url);
+        return Promise.resolve();
       },
     },
     emailVerification: {
-      sendVerificationEmail: async ({ user, url }) => {
+      sendVerificationEmail: ({ user, url }): Promise<void> => {
         console.log("[auth] verify email", user.email, url);
+        return Promise.resolve();
       },
     },
     plugins: [

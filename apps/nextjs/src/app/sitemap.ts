@@ -1,9 +1,12 @@
+import type { MetadataRoute } from "next";
+
+import { env } from "~/env";
 import { routing } from "~/i18n/routing";
 
-export default function sitemap() {
+export default function sitemap(): MetadataRoute.Sitemap {
   const base =
-    process.env.VERCEL_PROJECT_PRODUCTION_URL != null
-      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    env.VERCEL_PROJECT_PRODUCTION_URL != null
+      ? `https://${env.VERCEL_PROJECT_PRODUCTION_URL}`
       : "http://localhost:3000";
 
   const paths = [

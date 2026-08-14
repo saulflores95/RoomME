@@ -19,6 +19,10 @@ import { RoomMeLogo } from "./logo";
 
 const CURRENCY_COOKIE = "roomme-currency";
 
+const setCurrencyCookie = (currency: Currency): void => {
+  document.cookie = `${CURRENCY_COOKIE}=${currency}; path=/; max-age=31536000`;
+};
+
 export function SiteHeader() {
   const t = useTranslations("header");
   const pathname = usePathname();
@@ -30,7 +34,7 @@ export function SiteHeader() {
   };
 
   const switchCurrency = (currency: Currency) => {
-    document.cookie = `${CURRENCY_COOKIE}=${currency}; path=/; max-age=31536000`;
+    setCurrencyCookie(currency);
     router.refresh();
   };
 

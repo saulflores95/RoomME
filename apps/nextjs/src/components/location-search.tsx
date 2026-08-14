@@ -3,6 +3,7 @@
 import type { FormEvent } from "react";
 
 import { useRouter } from "~/i18n/navigation";
+import { getFormString } from "~/utils/form-data";
 
 const SUGGESTIONS = [
   {
@@ -21,9 +22,7 @@ export function LocationSearch({ placeholder }: { placeholder: string }) {
   const onSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
-    const query = String(data.get("q") ?? "")
-      .trim()
-      .toLowerCase();
+    const query = getFormString(data, "q").trim().toLowerCase();
     const match = SUGGESTIONS.find((item) =>
       item.labels.some(
         (label) => query.includes(label) || label.includes(query),

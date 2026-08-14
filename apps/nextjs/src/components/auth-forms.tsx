@@ -9,6 +9,7 @@ import { Input } from "@acme/ui/input";
 
 import { authClient } from "~/auth/client";
 import { Link, useRouter } from "~/i18n/navigation";
+import { getFormString } from "~/utils/form-data";
 
 function PasswordField({
   id,
@@ -78,8 +79,8 @@ export function SignInForm() {
         event.preventDefault();
         const data = new FormData(event.currentTarget);
         const result = await authClient.signIn.email({
-          email: String(data.get("email") ?? ""),
-          password: String(data.get("password") ?? ""),
+          email: getFormString(data, "email"),
+          password: getFormString(data, "password"),
         });
         if (result.error) {
           setError(result.error.message ?? "Error");
@@ -136,15 +137,15 @@ export function SignUpForm() {
       onSubmit={async (event) => {
         event.preventDefault();
         const data = new FormData(event.currentTarget);
-        const password = String(data.get("password") ?? "");
-        const confirmPassword = String(data.get("confirmPassword") ?? "");
+        const password = getFormString(data, "password");
+        const confirmPassword = getFormString(data, "confirmPassword");
         if (password !== confirmPassword) {
           setError(t("passwordMismatch"));
           return;
         }
         const result = await authClient.signUp.email({
-          name: String(data.get("name") ?? ""),
-          email: String(data.get("email") ?? ""),
+          name: getFormString(data, "name"),
+          email: getFormString(data, "email"),
           password,
         });
         if (result.error) {
@@ -215,7 +216,7 @@ export function ForgotPasswordForm() {
         event.preventDefault();
         const data = new FormData(event.currentTarget);
         await authClient.requestPasswordReset({
-          email: String(data.get("email") ?? ""),
+          email: getFormString(data, "email"),
           redirectTo: "/reset-password",
         });
         setSent(true);
@@ -250,8 +251,8 @@ export function ResetPasswordForm() {
       onSubmit={async (event) => {
         event.preventDefault();
         const data = new FormData(event.currentTarget);
-        const password = String(data.get("password") ?? "");
-        const confirmPassword = String(data.get("confirmPassword") ?? "");
+        const password = getFormString(data, "password");
+        const confirmPassword = getFormString(data, "confirmPassword");
         if (password !== confirmPassword) {
           setError(t("passwordMismatch"));
           return;

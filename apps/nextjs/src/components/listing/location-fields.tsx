@@ -132,9 +132,8 @@ export function LocationFields({
       <AddressPicker
         city={selectedComplex?.city ?? city}
         pin={
-          selectedComplex &&
-          selectedComplex.latitude !== null &&
-          selectedComplex.longitude !== null
+          selectedComplex?.latitude != null &&
+          selectedComplex.longitude != null
             ? {
                 latitude: selectedComplex.latitude,
                 longitude: selectedComplex.longitude,

@@ -114,7 +114,7 @@ export function AddressPicker({
             placeholder={searchPlaceholder}
             autoComplete="off"
           />
-          {!locked && debounced.length >= 2 && results.length > 0 ? (
+          {debounced.length >= 2 && results.length > 0 ? (
             <ul className="border-border bg-background absolute z-20 mt-1 max-h-48 w-full overflow-auto rounded-md border text-sm shadow-md">
               {results.map((hit) => (
                 <li key={`${hit.latitude}:${hit.longitude}:${hit.label}`}>
@@ -132,8 +132,7 @@ export function AddressPicker({
               ))}
             </ul>
           ) : null}
-          {!locked &&
-          debounced.length >= 2 &&
+          {debounced.length >= 2 &&
           !resultsQuery.isFetching &&
           results.length === 0 ? (
             <p className="text-muted-foreground pt-1 text-sm">{noResults}</p>

@@ -391,19 +391,28 @@ async function seed(): Promise<void> {
     ])
     .returning();
 
+  const roomImageUrls = [
+    "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1616594039964-ae9021a400a0?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1554995207-c18c203602cb?auto=format&fit=crop&w=1200&q=80",
+  ] as const;
+
   await db.insert(RoomImage).values(
-    rooms.map((room, index) => ({
-      roomId: room.id,
-      url: [
-        "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=1200&q=80",
-        "https://images.unsplash.com/photo-1616594039964-ae9021a400a0?auto=format&fit=crop&w=1200&q=80",
-        "https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?auto=format&fit=crop&w=1200&q=80",
-        "https://images.unsplash.com/photo-1554995207-c18c203602cb?auto=format&fit=crop&w=1200&q=80",
-      ][index]!,
-      alt: room.title,
-      kind: "room" as const,
-      sortOrder: 0,
-    })),
+    rooms.map((room, index) => {
+      const url = roomImageUrls[index];
+      if (url === undefined) {
+        throw new Error(`Missing seed image URL at index ${index}`);
+      }
+
+      return {
+        roomId: room.id,
+        url,
+        alt: room.title,
+        kind: "room" as const,
+        sortOrder: 0,
+      };
+    }),
   );
 
   console.log(`Seeded ${rooms.length} rooms in CDMX and Querétaro.`);
