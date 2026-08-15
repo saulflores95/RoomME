@@ -20,6 +20,12 @@ import { agentProcedure, protectedProcedure, publicProcedure } from "../trpc";
 
 const SLOT_MINUTES = 60;
 
+const DEFAULT_ADMIN_HOURS = [1, 2, 3, 4, 5].map((dayOfWeek) => ({
+  dayOfWeek,
+  startMinute: 10 * 60,
+  endMinute: 18 * 60,
+}));
+
 export interface TourAgentSummary {
   id: string;
   name: string;
@@ -46,18 +52,48 @@ export interface TourBookingItem {
   status: "scheduled" | "cancelled" | "completed";
 }
 
+const isAdmin = (role: string | null | undefined): boolean =>
+  hasRole(role, "admin");
+
 const isAgentBookable = (row: {
   role: string | null;
   documentUrl: string | null;
-  operatingCities: string[];
 }): boolean => {
-  if (!hasRole(row.role, "agent") && !hasRole(row.role, "admin")) {
+  if (isAdmin(row.role)) {
+    return true;
+  }
+  if (!hasRole(row.role, "agent")) {
     return false;
   }
-  if (!row.documentUrl) {
-    return false;
+  return Boolean(row.documentUrl);
+};
+
+const operatesInCity = (
+  row: {
+    role: string | null;
+    operatingCities: string[];
+  },
+  city: string,
+): boolean => {
+  if (isAdmin(row.role)) {
+    return true;
   }
-  return true;
+  return row.operatingCities.includes(city);
+};
+
+const resolveWeeklyHours = <
+  T extends { dayOfWeek: number; startMinute: number; endMinute: number },
+>(
+  role: string | null | undefined,
+  hours: T[],
+): T[] | typeof DEFAULT_ADMIN_HOURS => {
+  if (hours.length > 0) {
+    return hours;
+  }
+  if (isAdmin(role)) {
+    return DEFAULT_ADMIN_HOURS;
+  }
+  return hours;
 };
 
 export const tourRouter = {
@@ -87,12 +123,15 @@ export const tourRouter = {
       const hourSet = new Set(withHours.map((row) => row.agentId));
 
       return agents
-        .filter(
-          (agent) =>
-            isAgentBookable(agent) &&
-            agent.operatingCities.includes(input.city) &&
-            hourSet.has(agent.id),
-        )
+        .filter((agent) => {
+          if (!isAgentBookable(agent)) {
+            return false;
+          }
+          if (isAdmin(agent.role)) {
+            return true;
+          }
+          return operatesInCity(agent, input.city) && hourSet.has(agent.id);
+        })
         .map((agent) => ({
           id: agent.id,
           name: agent.name,
@@ -222,6 +261,14 @@ export const tourRouter = {
       }),
     )
     .query(async ({ ctx, input }): Promise<{ startsAt: Date }[]> => {
+      const agentRow = await ctx.db.query.user.findFirst({
+        where: eq(user.id, input.agentId),
+        columns: { role: true, documentUrl: true },
+      });
+      if (!agentRow || !isAgentBookable(agentRow)) {
+        return [];
+      }
+
       const hours = await ctx.db.query.AgentWeeklyHours.findMany({
         where: eq(AgentWeeklyHours.agentId, input.agentId),
       });
@@ -240,7 +287,7 @@ export const tourRouter = {
       return computeAvailableSlots({
         from: input.from,
         to: input.to,
-        weeklyHours: hours,
+        weeklyHours: resolveWeeklyHours(agentRow.role, hours),
         blockedDates: blocked.map((row) => row.date),
         existingStarts: bookings.map((row) => row.startsAt),
         slotMinutes: SLOT_MINUTES,
@@ -281,7 +328,7 @@ export const tourRouter = {
           message: "Agent not available",
         });
       }
-      if (!agent.operatingCities.includes(city)) {
+      if (!operatesInCity(agent, city)) {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "Agent does not operate in this city",
@@ -311,7 +358,7 @@ export const tourRouter = {
       const available = computeAvailableSlots({
         from: dayStart,
         to: dayEnd,
-        weeklyHours: slots,
+        weeklyHours: resolveWeeklyHours(agent.role, slots),
         blockedDates: blocked.map((row) => row.date),
         existingStarts: existing.map((row) => row.startsAt),
         slotMinutes: SLOT_MINUTES,
