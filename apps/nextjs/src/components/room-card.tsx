@@ -132,6 +132,8 @@ export function RoomCard({
             {t("availableDate", {
               date: formatAvailable(listing.availableFrom, t("availableNow")),
             })}
+            {" · "}
+            {t("tourCount", { count: listing.tourBookingCount })}
           </p>
           <p className="text-brand text-lg font-bold tabular-nums">
             {formatMxn(listing.rentPriceCents)}

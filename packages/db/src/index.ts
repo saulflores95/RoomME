@@ -8,6 +8,7 @@ export {
   asc,
   gte,
   lte,
+  ne,
   isNull,
   inArray,
   arrayContains,

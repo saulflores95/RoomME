@@ -15,7 +15,7 @@ import {
 import { authClient } from "~/auth/client";
 import { Link, usePathname, useRouter } from "~/i18n/navigation";
 import { routing } from "~/i18n/routing";
-import { RoomMeLogo } from "./logo";
+import { RooMeLogo } from "./logo";
 
 const CURRENCY_COOKIE = "roomme-currency";
 
@@ -45,8 +45,8 @@ export function SiteHeader() {
           href="/"
           className="text-brand flex items-center gap-2 font-semibold"
         >
-          <RoomMeLogo className="size-8" />
-          <span className="text-foreground text-lg tracking-tight">RoomMe</span>
+          <RooMeLogo className="size-8" />
+          <span className="text-foreground text-lg tracking-tight">RooMe</span>
         </Link>
 
         <div className="flex items-center gap-2 sm:gap-3">
@@ -89,7 +89,13 @@ export function SiteHeader() {
           {session?.user ? (
             <div className="flex items-center gap-2">
               <Button variant="ghost" size="sm" asChild>
+                <Link href="/settings">{t("settings")}</Link>
+              </Button>
+              <Button variant="ghost" size="sm" asChild>
                 <Link href="/host">{t("listings")}</Link>
+              </Button>
+              <Button variant="ghost" size="sm" asChild>
+                <Link href="/agent/calendar">{t("calendar")}</Link>
               </Button>
               <span className="text-muted-foreground hidden max-w-32 truncate text-sm sm:inline">
                 {session.user.name}

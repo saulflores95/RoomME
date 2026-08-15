@@ -2,11 +2,13 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod/v4";
 
+import { hasRole } from "@acme/auth/roles";
 import { avg, count, desc, eq } from "@acme/db";
 import { RoommeRating, user } from "@acme/db/schema";
+import { CitySchema } from "@acme/validators";
 
 import { ageFromBirthDate, roundRatingAverage } from "../lib/profile";
-import { publicProcedure } from "../trpc";
+import { protectedProcedure, publicProcedure } from "../trpc";
 
 export interface PublicProfile {
   id: string;
@@ -14,8 +16,13 @@ export interface PublicProfile {
   image: string | null;
   bio: string | null;
   age: number | null;
+  hobbies: string[];
+  personalities: string[];
+  hasPets: boolean;
+  operatingCities: string[];
   role: string | null;
   isHost: boolean;
+  isAgent: boolean;
   ratingAverage: number | null;
   ratingCount: number;
   ratings: {
@@ -31,6 +38,22 @@ export interface PublicProfile {
   }[];
 }
 
+export interface MyProfile {
+  id: string;
+  name: string;
+  email: string;
+  image: string | null;
+  bio: string | null;
+  birthDate: Date | null;
+  hobbies: string[];
+  personalities: string[];
+  hasPets: boolean;
+  documentUrl: string | null;
+  operatingCities: string[];
+  role: string | null;
+  isAgent: boolean;
+}
+
 export const profileRouter = {
   byId: publicProcedure
     .input(z.object({ userId: z.string().min(1) }))
@@ -43,6 +66,10 @@ export const profileRouter = {
           image: true,
           bio: true,
           birthDate: true,
+          hobbies: true,
+          personalities: true,
+          hasPets: true,
+          operatingCities: true,
           role: true,
         },
       });
@@ -91,8 +118,13 @@ export const profileRouter = {
         image: profile.image ?? null,
         bio: profile.bio ?? null,
         age: ageFromBirthDate(profile.birthDate),
+        hobbies: profile.hobbies,
+        personalities: profile.personalities,
+        hasPets: profile.hasPets,
+        operatingCities: profile.operatingCities,
         role,
-        isHost: role?.split(",").includes("host") ?? false,
+        isHost: hasRole(role, "host"),
+        isAgent: hasRole(role, "agent") || hasRole(role, "admin"),
         ratingAverage: roundRatingAverage(averageRaw),
         ratingCount,
         ratings: ratings.map((rating) => ({
@@ -107,5 +139,73 @@ export const profileRouter = {
           },
         })),
       };
+    }),
+
+  me: protectedProcedure.query(async ({ ctx }): Promise<MyProfile> => {
+    const profile = await ctx.db.query.user.findFirst({
+      where: eq(user.id, ctx.session.user.id),
+    });
+    if (!profile) {
+      throw new TRPCError({ code: "NOT_FOUND" });
+    }
+
+    const role = profile.role ?? null;
+    return {
+      id: profile.id,
+      name: profile.name,
+      email: profile.email,
+      image: profile.image ?? null,
+      bio: profile.bio ?? null,
+      birthDate: profile.birthDate ?? null,
+      hobbies: profile.hobbies,
+      personalities: profile.personalities,
+      hasPets: profile.hasPets,
+      documentUrl: profile.documentUrl ?? null,
+      operatingCities: profile.operatingCities,
+      role,
+      isAgent: hasRole(role, "agent") || hasRole(role, "admin"),
+    };
+  }),
+
+  update: protectedProcedure
+    .input(
+      z.object({
+        name: z.string().min(1).max(120).optional(),
+        bio: z.string().max(2000).nullable().optional(),
+        birthDate: z.coerce.date().nullable().optional(),
+        image: z.string().url().nullable().optional(),
+        hobbies: z.array(z.string().min(1).max(64)).max(20).optional(),
+        personalities: z.array(z.string().min(1).max(64)).max(20).optional(),
+        hasPets: z.boolean().optional(),
+        documentUrl: z.string().url().nullable().optional(),
+        operatingCities: z.array(CitySchema).optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }): Promise<{ ok: true }> => {
+      await ctx.db
+        .update(user)
+        .set({
+          ...(input.name !== undefined ? { name: input.name } : {}),
+          ...(input.bio !== undefined ? { bio: input.bio } : {}),
+          ...(input.birthDate !== undefined
+            ? { birthDate: input.birthDate }
+            : {}),
+          ...(input.image !== undefined ? { image: input.image } : {}),
+          ...(input.hobbies !== undefined ? { hobbies: input.hobbies } : {}),
+          ...(input.personalities !== undefined
+            ? { personalities: input.personalities }
+            : {}),
+          ...(input.hasPets !== undefined ? { hasPets: input.hasPets } : {}),
+          ...(input.documentUrl !== undefined
+            ? { documentUrl: input.documentUrl }
+            : {}),
+          ...(input.operatingCities !== undefined
+            ? { operatingCities: input.operatingCities }
+            : {}),
+          updatedAt: new Date(),
+        })
+        .where(eq(user.id, ctx.session.user.id));
+
+      return { ok: true };
     }),
 } satisfies TRPCRouterRecord;

@@ -5,7 +5,7 @@ import { z } from "zod/v4";
 
 import { user } from "./auth-schema";
 
-export const cityEnum = pgEnum("city", ["queretaro", "cdmx"]);
+export const cityEnum = pgEnum("city", ["queretaro"]);
 export const roomStatusEnum = pgEnum("room_status", [
   "draft",
   "listed",
@@ -53,6 +53,11 @@ export const cleanlinessEnum = pgEnum("cleanliness", [
   "relaxed",
   "average",
   "tidy",
+]);
+export const tourBookingStatusEnum = pgEnum("tour_booking_status", [
+  "scheduled",
+  "cancelled",
+  "completed",
 ]);
 
 export const Complex = pgTable("complex", (t) => ({
@@ -214,6 +219,68 @@ export const Application = pgTable(
   (t) => [unique("application_room_applicant").on(t.roomId, t.applicantId)],
 );
 
+export const AgentWeeklyHours = pgTable(
+  "agent_weekly_hours",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    agentId: t
+      .text()
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    dayOfWeek: t.integer().notNull(),
+    startMinute: t.integer().notNull(),
+    endMinute: t.integer().notNull(),
+  }),
+  (t) => [
+    unique("agent_weekly_hours_unique").on(
+      t.agentId,
+      t.dayOfWeek,
+      t.startMinute,
+    ),
+  ],
+);
+
+export const AgentBlockedDate = pgTable(
+  "agent_blocked_date",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    agentId: t
+      .text()
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    date: t.date({ mode: "date" }).notNull(),
+    note: t.varchar({ length: 256 }),
+  }),
+  (t) => [unique("agent_blocked_date_unique").on(t.agentId, t.date)],
+);
+
+export const TourBooking = pgTable("tour_booking", (t) => ({
+  id: t.uuid().notNull().primaryKey().defaultRandom(),
+  roomId: t
+    .uuid()
+    .notNull()
+    .references(() => Room.id, { onDelete: "cascade" }),
+  agentId: t
+    .text()
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  seekerId: t
+    .text()
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  startsAt: t.timestamp({ mode: "date", withTimezone: true }).notNull(),
+  endsAt: t.timestamp({ mode: "date", withTimezone: true }).notNull(),
+  status: tourBookingStatusEnum().notNull().default("scheduled"),
+  rescheduledFromId: t.uuid(),
+  createdAt: t
+    .timestamp({ mode: "date", withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: t
+    .timestamp({ mode: "date", withTimezone: true })
+    .$onUpdateFn(() => sql`now()`),
+}));
+
 export const complexRelations = relations(Complex, ({ many }) => ({
   images: many(ComplexImage),
   rooms: many(Room),
@@ -239,6 +306,7 @@ export const roomRelations = relations(Room, ({ one, many }) => ({
   images: many(RoomImage),
   stays: many(Stay),
   applications: many(Application),
+  tourBookings: many(TourBooking),
 }));
 
 export const roomImageRelations = relations(RoomImage, ({ one }) => ({
@@ -266,6 +334,10 @@ export const userRelations = relations(user, ({ many }) => ({
   ratingsGiven: many(RoommeRating, { relationName: "ratingRater" }),
   ratingsReceived: many(RoommeRating, { relationName: "ratingRatee" }),
   applications: many(Application),
+  weeklyHours: many(AgentWeeklyHours),
+  blockedDates: many(AgentBlockedDate),
+  agentTours: many(TourBooking, { relationName: "tourAgent" }),
+  seekerTours: many(TourBooking, { relationName: "tourSeeker" }),
 }));
 
 export const applicationRelations = relations(Application, ({ one }) => ({
@@ -276,6 +348,43 @@ export const applicationRelations = relations(Application, ({ one }) => ({
   applicant: one(user, {
     fields: [Application.applicantId],
     references: [user.id],
+  }),
+}));
+
+export const agentWeeklyHoursRelations = relations(
+  AgentWeeklyHours,
+  ({ one }) => ({
+    agent: one(user, {
+      fields: [AgentWeeklyHours.agentId],
+      references: [user.id],
+    }),
+  }),
+);
+
+export const agentBlockedDateRelations = relations(
+  AgentBlockedDate,
+  ({ one }) => ({
+    agent: one(user, {
+      fields: [AgentBlockedDate.agentId],
+      references: [user.id],
+    }),
+  }),
+);
+
+export const tourBookingRelations = relations(TourBooking, ({ one }) => ({
+  room: one(Room, {
+    fields: [TourBooking.roomId],
+    references: [Room.id],
+  }),
+  agent: one(user, {
+    fields: [TourBooking.agentId],
+    references: [user.id],
+    relationName: "tourAgent",
+  }),
+  seeker: one(user, {
+    fields: [TourBooking.seekerId],
+    references: [user.id],
+    relationName: "tourSeeker",
   }),
 }));
 

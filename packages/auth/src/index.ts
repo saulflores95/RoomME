@@ -6,6 +6,7 @@ import { admin } from "better-auth/plugins";
 
 import { db } from "@acme/db/client";
 
+import { sendPasswordResetEmail, sendVerificationEmail } from "./email";
 import { ac, authRoles } from "./permissions";
 
 export function initAuth<
@@ -18,7 +19,7 @@ export function initAuth<
   extraPlugins?: TExtraPlugins;
 }) {
   const config = {
-    appName: "RoomMe",
+    appName: "RooMe",
     database: drizzleAdapter(db, {
       provider: "pg",
     }),
@@ -26,15 +27,21 @@ export function initAuth<
     secret: options.secret,
     emailAndPassword: {
       enabled: true,
-      sendResetPassword: ({ user, url }): Promise<void> => {
-        console.log("[auth] password reset", user.email, url);
-        return Promise.resolve();
+      sendResetPassword: async ({ user, url }): Promise<void> => {
+        await sendPasswordResetEmail({
+          to: user.email,
+          name: user.name,
+          url,
+        });
       },
     },
     emailVerification: {
-      sendVerificationEmail: ({ user, url }): Promise<void> => {
-        console.log("[auth] verify email", user.email, url);
-        return Promise.resolve();
+      sendVerificationEmail: async ({ user, url }): Promise<void> => {
+        await sendVerificationEmail({
+          to: user.email,
+          name: user.name,
+          url,
+        });
       },
     },
     user: {
@@ -45,6 +52,22 @@ export function initAuth<
         },
         birthDate: {
           type: "date",
+          required: false,
+        },
+        hobbies: {
+          type: "string[]",
+          required: false,
+        },
+        personalities: {
+          type: "string[]",
+          required: false,
+        },
+        hasPets: {
+          type: "boolean",
+          required: false,
+        },
+        operatingCities: {
+          type: "string[]",
           required: false,
         },
       },

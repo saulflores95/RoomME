@@ -15,15 +15,12 @@ export const size = {
 
 export const contentType = "image/png";
 
-export const alt = "RoomMe room listing";
+export const alt = "RooMe room listing";
 
 const cityLabel = (
   city: string | null,
   t: Awaited<ReturnType<typeof getTranslations>>,
 ): string => {
-  if (city === "cdmx") {
-    return t("cdmx");
-  }
   if (city === "queretaro") {
     return t("queretaro");
   }
@@ -115,7 +112,7 @@ export default async function Image({
               letterSpacing: "-0.03em",
             }}
           >
-            RoomMe
+            RooMe
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             <div

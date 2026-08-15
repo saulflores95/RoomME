@@ -153,10 +153,7 @@ export function ComplexForm({
               control={form.control}
               name="city"
               label={t("city")}
-              options={[
-                { value: "cdmx", label: "CDMX" },
-                { value: "queretaro", label: "Querétaro" },
-              ]}
+              options={[{ value: "queretaro", label: "Querétaro" }]}
             />
             <FormTextField
               control={form.control}

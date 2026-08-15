@@ -1,11 +1,9 @@
 {
   "meta": {
-    "title": "RoomMe | メキシコシティとケレタロの部屋探し",
-    "description": "メキシコシティとケレタロで理想の部屋を見つけて借りましょう。RoomMeでルームシェア仲間、ホスト、エージェントとつながります。",
-    "cdmxTitle": "メキシコシティの部屋賃貸 | RoomMe",
-    "cdmxDescription": "CDMXのローマ・ノルテ、コンデサなどで部屋を探しましょう。",
-    "queretaroTitle": "ケレタロの部屋賃貸 | RoomMe",
-    "queretaroDescription": "ケレタロのセントロ・スール、ジュリキージャなどで部屋を探しましょう。"
+    "title": "RooMe | ケレタロの部屋探し",
+    "description": "ケレタロで理想の部屋を見つけて借りましょう。RooMeでルームシェア仲間、ホスト、エージェントとつながります。",
+    "queretaroTitle": "ケレタロの部屋賃貸 | RooMe",
+    "queretaroDescription": "ケレタロのCentro Sur、Juriquillaなどで部屋を探しましょう。"
   },
   "header": {
     "login": "ログイン",
@@ -13,11 +11,13 @@
     "signup": "新規登録",
     "language": "言語",
     "currency": "通貨",
-    "listings": "掲載一覧"
+    "listings": "掲載一覧",
+    "settings": "設定",
+    "calendar": "ツアー"
   },
   "hero": {
     "title": "賃貸の部屋",
-    "subtitle": "メキシコシティとケレタロで理想の部屋を見つけましょう",
+    "subtitle": "ケレタロで理想の部屋を見つける",
     "searchPlaceholder": "エリアを検索"
   },
   "cta": {
@@ -25,14 +25,14 @@
     "findRoom": "+ 部屋を探す"
   },
   "value": {
-    "title": "RoomMeは場所と人をつなぎます",
+    "title": "RooMeは場所と人をつなぎます",
     "local": {
-      "title": "まずCDMXとケレタロ",
-      "body": "メキシコシティとケレタロ — ローマ、コンデサ、セントロ・スール、ジュリキージャで部屋とルームメイトを探せます。"
+      "title": "ケレタロに特化",
+      "body": "ケレタロ全域で部屋とルームメイトを探せます — Centro Sur、Juriquillaなど。"
     },
     "people": {
       "title": "素敵な人と出会う",
-      "body": "RoomMe Ratingで、実際に同居した人からの評価を確認できます。"
+      "body": "RooMe Ratingで、実際に同居した人からの評価を確認できます。"
     },
     "safe": {
       "title": "安心・安全",
@@ -47,7 +47,7 @@
     "title": "人が行う本人確認。より安全に、より早く。",
     "subtitle": "自動チェックと人の確認を組み合わせ、借り手と掲載者が安心してつながれるようにします。",
     "manual": "実在の人がプロフィールを確認し、偽アカウントを見つけます。",
-    "badges": "認証バッジとRoomMe Ratingで信頼できるプロフィールが目立ちます。",
+    "badges": "認証バッジとRooMe Ratingで信頼できるプロフィールが目立ちます。",
     "messaging": "プラットフォーム内での、より安全な初回連絡。",
     "leads": "質の低い問い合わせを減らし、本気のマッチを増やします。",
     "howTitle": "認証の流れ",
@@ -59,19 +59,19 @@
     "step3Body": "モデレーターが確認し、バッジを付与します。近日公開。"
   },
   "testimonials": {
-    "title": "RoomMeユーザーの声",
+    "title": "RooMeユーザーの声",
     "more": "レビューをもっと見る",
     "room": {
       "label": "部屋のレビュー",
       "name": "Sofía M.",
-      "city": "ローマ・ノルテ、メキシコシティ",
+      "city": "Centro Sur, Querétaro",
       "quoteTitle": "1週間で部屋が見つかりました",
-      "quote": "希望を出した数日後には、ローマの部屋を見学できました。"
+      "quote": "希望を投稿して数日後にはCentro Surの部屋を見学できました。"
     },
     "apartment": {
       "label": "アパートのレビュー",
       "name": "Kenji T.",
-      "city": "コンデサ、メキシコシティ",
+      "city": "Juriquilla, Querétaro",
       "quoteTitle": "写真どおりの物件でした",
       "quote": "設備が明確で、ホストの返信も早かったです。"
     },
@@ -92,15 +92,14 @@
   },
   "banner": {
     "title": "理想のルームメイトを見つける準備はできましたか？",
-    "subtitle": "RoomMeに無料で参加して、今日からCDMXとケレタロで探し始めましょう。"
+    "subtitle": "RooMeに無料で参加して、今日からケレタロで探し始めましょう。"
   },
   "featured": {
-    "title": "メキシコシティとケレタロの部屋"
+    "title": "ケレタロの部屋"
   },
   "rooms": {
     "title": "部屋を探す",
-    "allCities": "すべての都市",
-    "cdmx": "メキシコシティ",
+    "allCities": "すべての部屋",
     "queretaro": "ケレタロ",
     "empty": "この条件に合う部屋はまだありません。最初の掲載者になりましょう。",
     "resultsCount": "{count, plural, other {賃貸部屋 # 件}}",
@@ -110,12 +109,13 @@
     "availableDate": "入居可能: {date}",
     "availableNow": "即入居可",
     "perMonth": "/月",
+    "tourCount": "{count}件のツアー",
     "roomies": "ルームシェア {count}人",
+    "scheduleTour": "ツアーを予約",
     "pets": "ペット可",
     "hasPets": "ペットあり",
     "acceptsPets": "ペット可",
-    "searchCdmx": "ローマ、コンデサ、メキシコシティ",
-    "searchQueretaro": "セントロ・スール、ジュリキージャ、ケレタロ",
+    "searchQueretaro": "Centro Sur、Juriquilla、ケレタロ",
     "filters": "フィルター",
     "showResults": "結果を見る",
     "rent": "家賃",
@@ -356,14 +356,82 @@
     "title": "プロフィール",
     "back": "← 部屋一覧に戻る",
     "about": "自己紹介",
-    "reviews": "RoomMe評価",
+    "reviews": "RooMe評価",
     "noBio": "まだ自己紹介がありません。",
     "noRatings": "まだ評価がありません。",
     "roleHost": "ホスト",
     "roleRoomie": "ルーミー",
+    "roleAgent": "エージェント",
+    "hobbies": "趣味",
+    "personalities": "性格",
+    "pets": "ペット",
+    "petsYes": "ペットあり",
+    "petsNo": "ペットなし",
+    "operatingCities": "対応エリア",
     "viewProfile": "プロフィールを見る",
     "ratingSummary": "{average} · {count}件の評価",
     "ratingCount": "{count}件の評価"
+  },
+  "settings": {
+    "title": "設定",
+    "subtitle": "プロフィールと空き状況を編集します。",
+    "profileSection": "プロフィール",
+    "agentSection": "エージェントの空き状況",
+    "blockedSection": "休止日",
+    "name": "名前",
+    "bio": "自己紹介",
+    "birthDate": "生年月日",
+    "hobbies": "趣味",
+    "personalities": "性格",
+    "commaSeparated": "カンマ区切り",
+    "hasPets": "ペットがいます",
+    "avatar": "アバター",
+    "document": "公的書類（ID）",
+    "documentHint": "身分証をアップロード（ツアー案内には必須）。",
+    "documentUploaded": "書類をアップロード済み。",
+    "cityQueretaro": "ケレタロ",
+    "daySun": "日",
+    "dayMon": "月",
+    "dayTue": "火",
+    "dayWed": "水",
+    "dayThu": "木",
+    "dayFri": "金",
+    "daySat": "土",
+    "saveProfile": "プロフィールを保存",
+    "saveAvailability": "空き状況を保存",
+    "addBlocked": "休止日を追加",
+    "remove": "削除",
+    "saved": "保存しました",
+    "hoursSaved": "空き状況を保存しました",
+    "saveFailed": "保存に失敗しました。",
+    "uploadFailed": "アップロードに失敗しました。"
+  },
+  "tours": {
+    "schedule": "ツアーを予約",
+    "scheduleTitle": "ツアーを予約",
+    "scheduleHint": "エージェントと空き時間を選びます。",
+    "whoIsAgent": "担当エージェントは？",
+    "noAgents": "この都市にはまだエージェントがいません。",
+    "noBio": "自己紹介はまだありません。",
+    "viewProfile": "プロフィールを見る",
+    "agentLabel": "エージェント",
+    "changeAgent": "変更",
+    "noSlots": "今後2週間に空きがありません。",
+    "confirm": "ツアーを確定",
+    "booked": "ツアーを予約しました",
+    "bookedDetail": "ツアーが予約されました。エージェントにメールが送られます。",
+    "bookFailed": "この枠は予約できませんでした。",
+    "calendarTitle": "ツアーカレンダー",
+    "calendarHint": "案内予定のツアー一覧。",
+    "noBookings": "予定のツアーはありません。",
+    "withSeeker": "{name} さんと",
+    "reschedule": "日程変更",
+    "cancel": "キャンセル",
+    "cancelled": "ツアーをキャンセルしました",
+    "rescheduled": "ツアーを変更しました",
+    "actionFailed": "操作に失敗しました。",
+    "pickNewSlot": "新しい時間を選択",
+    "confirmReschedule": "変更を確定"
   },
   "auth": {
     "signInTitle": "ログイン",
@@ -387,8 +455,8 @@
     "checkEmail": "そのメールが存在する場合、リンクを送りました（開発時はコンソールを確認）。"
   },
   "phone": {
-    "listingTitle": "テラス付きコンデサのミッドセンチュリーロフト",
-    "location": "コンデサ、メキシコシティ",
+    "listingTitle": "Centro Surの日当たりの良い部屋",
+    "location": "Centro Sur, Querétaro",
     "host": "Abby, 25",
     "price": "$14,500 MXN/月"
   }

@@ -19,6 +19,7 @@ import { authClient } from "~/auth/client";
 import { ApplicantCard } from "~/components/applicant-card";
 import { formatMxn } from "~/components/room-card";
 import { RoomShareButton } from "~/components/room-share-button";
+import { ScheduleTourButton } from "~/components/schedule-tour-button";
 import { Link } from "~/i18n/navigation";
 import { useTRPC } from "~/trpc/react";
 
@@ -170,11 +171,7 @@ export function RoomDetail({ id }: { id: string }): JSX.Element {
   const locationParts = [
     listing.addressLine1,
     listing.neighborhood,
-    listing.city === "cdmx"
-      ? t("cdmx")
-      : listing.city === "queretaro"
-        ? t("queretaro")
-        : null,
+    listing.city === "queretaro" ? t("queretaro") : null,
   ].filter((part): part is string => Boolean(part && part.length > 0));
   const locationLabel = locationParts.join(", ");
 
@@ -231,18 +228,14 @@ export function RoomDetail({ id }: { id: string }): JSX.Element {
     return key;
   };
 
-  const cityLabel = (city: "cdmx" | "queretaro"): string =>
-    city === "cdmx" ? t("cdmx") : t("queretaro");
+  const cityLabel = (city: string): string =>
+    city === "queretaro" ? t("queretaro") : city;
 
   const backHref =
-    listing.city === "cdmx"
-      ? "/rooms-for-rent-cdmx"
-      : listing.city === "queretaro"
-        ? "/rooms-for-rent-queretaro"
-        : "/rooms";
+    listing.city === "queretaro" ? "/rooms-for-rent-queretaro" : "/rooms";
 
   const mapPin =
-    (listing.city === "cdmx" || listing.city === "queretaro") &&
+    listing.city === "queretaro" &&
     listing.latitude !== null &&
     listing.longitude !== null
       ? {
@@ -282,6 +275,15 @@ export function RoomDetail({ id }: { id: string }): JSX.Element {
             title={listing.title}
             description={listing.description}
           />
+          {listing.city === "queretaro" ? (
+            isSignedIn ? (
+              <ScheduleTourButton roomId={listing.id} city={listing.city} />
+            ) : (
+              <Button variant="secondary" asChild>
+                <Link href="/sign-in">{t("scheduleTour")}</Link>
+              </Button>
+            )
+          ) : null}
           {listing.host && !isHost ? (
             isSignedIn ? (
               myApplicationQuery.data &&

@@ -33,6 +33,20 @@ const config = {
       },
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: "/:locale/rooms-for-rent-cdmx",
+        destination: "/:locale/rooms-for-rent-queretaro",
+        permanent: true,
+      },
+      {
+        source: "/rooms-for-rent-cdmx",
+        destination: "/rooms-for-rent-queretaro",
+        permanent: true,
+      },
+    ];
+  },
 
   /** We already do linting and typechecking as separate tasks in CI */
   typescript: { ignoreBuildErrors: true },

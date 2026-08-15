@@ -34,10 +34,9 @@ interface NominatimPlace {
 const NOMINATIM_HEADERS = {
   Accept: "application/json",
   "Accept-Language": "es",
-  "User-Agent": "RoomMe/1.0 (https://roomme.app)",
+  "User-Agent": "RooMe/1.0 (https://roomme.app)",
 } as const;
 
-const CDMX_CENTER = { latitude: 19.4326, longitude: -99.1332 };
 const QUERETARO_CENTER = { latitude: 20.5888, longitude: -100.3899 };
 
 const asRecord = (value: unknown): Record<string, unknown> | null => {
@@ -95,56 +94,11 @@ const parsePlace = (value: unknown): NominatimPlace | null => {
   };
 };
 
-const fold = (value: string): string =>
-  value
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "")
-    .toLowerCase();
-
-const distanceSq = (
-  a: { latitude: number; longitude: number },
-  b: { latitude: number; longitude: number },
-): number => {
-  const dLat = a.latitude - b.latitude;
-  const dLng = a.longitude - b.longitude;
-  return dLat * dLat + dLng * dLng;
-};
-
 export const inferCity = (
-  address: NominatimAddress | undefined,
-  latitude: number,
-  longitude: number,
-): City => {
-  const blob = fold(
-    [
-      address?.city,
-      address?.town,
-      address?.village,
-      address?.county,
-      address?.state,
-    ]
-      .filter((part): part is string => typeof part === "string")
-      .join(" "),
-  );
-
-  if (blob.includes("queretaro")) {
-    return "queretaro";
-  }
-
-  if (
-    blob.includes("ciudad de mexico") ||
-    blob.includes("mexico city") ||
-    blob.includes("cdmx") ||
-    blob.includes("distrito federal")
-  ) {
-    return "cdmx";
-  }
-
-  return distanceSq({ latitude, longitude }, QUERETARO_CENTER) <
-    distanceSq({ latitude, longitude }, CDMX_CENTER)
-    ? "queretaro"
-    : "cdmx";
-};
+  _address: NominatimAddress | undefined,
+  _latitude: number,
+  _longitude: number,
+): City => "queretaro";
 
 const toHit = (place: NominatimPlace): GeocodeHit | null => {
   const latitude = Number(place.lat);
@@ -192,11 +146,13 @@ const nominatimGet = async (path: string): Promise<unknown> => {
 
 export const searchAddresses = async (query: string): Promise<GeocodeHit[]> => {
   const params = new URLSearchParams({
-    q: query,
+    q: `${query}, Querétaro, Mexico`,
     format: "jsonv2",
     addressdetails: "1",
     countrycodes: "mx",
     limit: "6",
+    viewbox: `${QUERETARO_CENTER.longitude - 0.45},${QUERETARO_CENTER.latitude + 0.35},${QUERETARO_CENTER.longitude + 0.45},${QUERETARO_CENTER.latitude - 0.35}`,
+    bounded: "1",
   });
 
   const payload = await nominatimGet(`search?${params.toString()}`);

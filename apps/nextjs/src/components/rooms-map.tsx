@@ -41,7 +41,7 @@ function FitBounds({
 
   useEffect(() => {
     if (clusters.length === 0) {
-      const center = city ? CITY_CENTER[city] : CITY_CENTER.cdmx;
+      const center = city ? CITY_CENTER[city] : CITY_CENTER.queretaro;
       map.setView(center, 12);
       return;
     }
@@ -82,7 +82,7 @@ export function RoomsMap({
     if (first) {
       return [first.latitude, first.longitude];
     }
-    return CITY_CENTER.cdmx;
+    return CITY_CENTER.queretaro;
   }, [city, clusters]);
 
   return (

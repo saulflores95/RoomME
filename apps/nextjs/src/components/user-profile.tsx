@@ -40,8 +40,6 @@ export function UserProfile({ userId }: { userId: string }): JSX.Element {
     trpc.profile.byId.queryOptions({ userId }),
   );
 
-  const roleLabel = profile.isHost ? t("roleHost") : t("roleRoomie");
-
   return (
     <div className="mx-auto max-w-2xl space-y-8">
       <div className="flex flex-col items-center gap-5 text-center sm:flex-row sm:items-start sm:text-left">
@@ -60,7 +58,11 @@ export function UserProfile({ userId }: { userId: string }): JSX.Element {
 
         <div className="min-w-0 flex-1 space-y-2">
           <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-            {roleLabel}
+            {profile.isAgent
+              ? t("roleAgent")
+              : profile.isHost
+                ? t("roleHost")
+                : t("roleRoomie")}
           </p>
           <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
             {profile.name}
@@ -96,6 +98,28 @@ export function UserProfile({ userId }: { userId: string }): JSX.Element {
         ) : (
           <p className="text-muted-foreground text-sm">{t("noBio")}</p>
         )}
+        {profile.hobbies.length > 0 ? (
+          <p className="text-sm">
+            <span className="font-medium">{t("hobbies")}: </span>
+            {profile.hobbies.join(", ")}
+          </p>
+        ) : null}
+        {profile.personalities.length > 0 ? (
+          <p className="text-sm">
+            <span className="font-medium">{t("personalities")}: </span>
+            {profile.personalities.join(", ")}
+          </p>
+        ) : null}
+        <p className="text-sm">
+          <span className="font-medium">{t("pets")}: </span>
+          {profile.hasPets ? t("petsYes") : t("petsNo")}
+        </p>
+        {profile.isAgent && profile.operatingCities.length > 0 ? (
+          <p className="text-sm">
+            <span className="font-medium">{t("operatingCities")}: </span>
+            {profile.operatingCities.join(", ")}
+          </p>
+        ) : null}
       </section>
 
       {profile.ratings.length > 0 ? (

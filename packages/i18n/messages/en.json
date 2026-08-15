@@ -1,11 +1,9 @@
 {
   "meta": {
-    "title": "RoomMe | Rooms for rent in Mexico City and Querétaro",
-    "description": "Find and rent your perfect room in Mexico City and Querétaro. Connect with verified roomies, hosts, and agents on RoomMe.",
-    "cdmxTitle": "Rooms for rent in Mexico City | RoomMe",
-    "cdmxDescription": "Rooms for rent in CDMX: Roma Norte, Condesa, and more. Find roomies and hosts on RoomMe.",
-    "queretaroTitle": "Rooms for rent in Querétaro | RoomMe",
-    "queretaroDescription": "Rooms for rent in Querétaro: Centro Sur, Juriquilla, and more. Find your roomie on RoomMe."
+    "title": "RooMe | Rooms for rent in Querétaro",
+    "description": "Find and rent your perfect room in Querétaro. Connect with verified roomies, hosts, and agents on RooMe.",
+    "queretaroTitle": "Rooms for rent in Querétaro | RooMe",
+    "queretaroDescription": "Rooms for rent in Querétaro: Centro Sur, Juriquilla, and more. Find your roomie on RooMe."
   },
   "header": {
     "login": "Log in",
@@ -13,11 +11,13 @@
     "signup": "Sign up",
     "language": "Language",
     "currency": "Currency",
-    "listings": "My listings"
+    "listings": "My listings",
+    "settings": "Settings",
+    "calendar": "Tours"
   },
   "hero": {
     "title": "Rooms for rent",
-    "subtitle": "Find and rent your perfect room in Mexico City and Querétaro",
+    "subtitle": "Find and rent your perfect room in Querétaro",
     "searchPlaceholder": "Search locations"
   },
   "cta": {
@@ -25,14 +25,14 @@
     "findRoom": "+ Find a room"
   },
   "value": {
-    "title": "RoomMe brings places and people together",
+    "title": "RooMe brings places and people together",
     "local": {
-      "title": "CDMX and Querétaro first",
-      "body": "Search rooms and roommates across Mexico City and Querétaro — Roma, Condesa, Centro Sur, Juriquilla, and more."
+      "title": "Built for Querétaro",
+      "body": "Search rooms and roommates across Querétaro — Centro Sur, Juriquilla, and more."
     },
     "people": {
       "title": "Discover amazing people",
-      "body": "RoomMe Rating lets roomies review people they have already lived with, so you choose with more confidence."
+      "body": "RooMe Rating lets roomies review people they have already lived with, so you choose with more confidence."
     },
     "safe": {
       "title": "Feel safe and secure",
@@ -47,7 +47,7 @@
     "title": "Real ID checks by real people. Meet safer, faster.",
     "subtitle": "We combine smart checks with human review so renters and listers connect with confidence.",
     "manual": "Real people review profiles to catch fakes.",
-    "badges": "Validated badges and RoomMe Rating help trusted profiles stand out.",
+    "badges": "Validated badges and RooMe Rating help trusted profiles stand out.",
     "messaging": "Safer first contact inside the platform.",
     "leads": "Fewer bad leads and more serious matches.",
     "howTitle": "How validation works",
@@ -59,19 +59,19 @@
     "step3Body": "A moderator validates ID and awards the badge. Coming soon."
   },
   "testimonials": {
-    "title": "What users say about RoomMe",
+    "title": "What users say about RooMe",
     "more": "Read more reviews",
     "room": {
       "label": "Room reviews",
       "name": "Sofía M.",
-      "city": "Roma Norte, Mexico City",
+      "city": "Centro Sur, Querétaro",
       "quoteTitle": "Found a place within a week",
-      "quote": "I posted what I needed and was touring a room in Roma a few days later."
+      "quote": "I posted what I needed and was touring a room in Centro Sur a few days later."
     },
     "apartment": {
       "label": "Apartment reviews",
       "name": "Kenji T.",
-      "city": "Condesa, Mexico City",
+      "city": "Juriquilla, Querétaro",
       "quoteTitle": "The apartment matched the photos",
       "quote": "Amenities were clear and the host replied quickly."
     },
@@ -92,15 +92,14 @@
   },
   "banner": {
     "title": "Ready to find the perfect roommate?",
-    "subtitle": "Join RoomMe for free and start searching today in CDMX and Querétaro."
+    "subtitle": "Join RooMe for free and start searching today in Querétaro."
   },
   "featured": {
-    "title": "Rooms in Mexico City and Querétaro"
+    "title": "Rooms in Querétaro"
   },
   "rooms": {
     "title": "Find a room",
-    "allCities": "All cities",
-    "cdmx": "Mexico City",
+    "allCities": "All rooms",
     "queretaro": "Querétaro",
     "empty": "No rooms match these filters yet. Be the first to list one.",
     "resultsCount": "{count, plural, one {# room for rent} other {# rooms for rent}}",
@@ -110,11 +109,12 @@
     "availableDate": "Available: {date}",
     "availableNow": "Immediately",
     "perMonth": "/month",
+    "tourCount": "{count, plural, one {# tour} other {# tours}}",
     "roomies": "{count} roomies",
+    "scheduleTour": "Schedule a tour",
     "pets": "Pet-friendly",
     "hasPets": "Has pets",
     "acceptsPets": "Accepts pets",
-    "searchCdmx": "Roma, Condesa, Mexico City",
     "searchQueretaro": "Centro Sur, Juriquilla, Querétaro",
     "filters": "Filters",
     "showResults": "Show results",
@@ -356,14 +356,82 @@
     "title": "Profile",
     "back": "← Back to rooms",
     "about": "About",
-    "reviews": "RoomMe ratings",
+    "reviews": "RooMe ratings",
     "noBio": "No description yet.",
     "noRatings": "No ratings yet.",
     "roleHost": "Host",
     "roleRoomie": "Roomie",
+    "roleAgent": "Agent",
+    "hobbies": "Hobbies",
+    "personalities": "Personality",
+    "pets": "Pets",
+    "petsYes": "Has pets",
+    "petsNo": "No pets",
+    "operatingCities": "Operates in",
     "viewProfile": "View profile",
     "ratingSummary": "{average} · {count, plural, one {# rating} other {# ratings}}",
     "ratingCount": "{count, plural, one {# rating} other {# ratings}}"
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Edit your profile and availability.",
+    "profileSection": "Profile",
+    "agentSection": "Agent availability",
+    "blockedSection": "Blocked dates",
+    "name": "Name",
+    "bio": "Bio",
+    "birthDate": "Birth date",
+    "hobbies": "Hobbies",
+    "personalities": "Personality traits",
+    "commaSeparated": "Comma-separated",
+    "hasPets": "I have pets",
+    "avatar": "Avatar",
+    "document": "Official document (ID)",
+    "documentHint": "Upload an ID or official document (required for agents to offer tours).",
+    "documentUploaded": "Document uploaded.",
+    "cityQueretaro": "Querétaro",
+    "daySun": "Sun",
+    "dayMon": "Mon",
+    "dayTue": "Tue",
+    "dayWed": "Wed",
+    "dayThu": "Thu",
+    "dayFri": "Fri",
+    "daySat": "Sat",
+    "saveProfile": "Save profile",
+    "saveAvailability": "Save availability",
+    "addBlocked": "Block date",
+    "remove": "Remove",
+    "saved": "Saved",
+    "hoursSaved": "Availability saved",
+    "saveFailed": "Could not save. Try again.",
+    "uploadFailed": "Upload failed."
+  },
+  "tours": {
+    "schedule": "Schedule a tour",
+    "scheduleTitle": "Schedule a tour",
+    "scheduleHint": "Pick an agent and an available time.",
+    "whoIsAgent": "Who is your agent?",
+    "noAgents": "No agents are available in this city yet.",
+    "noBio": "No bio yet.",
+    "viewProfile": "View profile",
+    "agentLabel": "Agent",
+    "changeAgent": "Change",
+    "noSlots": "No open slots in the next two weeks.",
+    "confirm": "Confirm tour",
+    "booked": "Tour booked",
+    "bookedDetail": "Your tour is booked. The agent received an email.",
+    "bookFailed": "Could not book this slot.",
+    "calendarTitle": "Tour calendar",
+    "calendarHint": "Upcoming apartment tours you are guiding.",
+    "noBookings": "No tours scheduled.",
+    "withSeeker": "With {name}",
+    "reschedule": "Reschedule",
+    "cancel": "Cancel",
+    "cancelled": "Tour cancelled",
+    "rescheduled": "Tour rescheduled",
+    "actionFailed": "Action failed. Try again.",
+    "pickNewSlot": "Pick a new time",
+    "confirmReschedule": "Confirm reschedule"
   },
   "auth": {
     "signInTitle": "Log in",
@@ -387,8 +455,8 @@
     "checkEmail": "If that email exists, we sent a link (check the console in development)."
   },
   "phone": {
-    "listingTitle": "Mid-century Condesa loft with terrace",
-    "location": "Condesa, Mexico City",
+    "listingTitle": "Sunny room in Centro Sur with patio",
+    "location": "Centro Sur, Querétaro",
     "host": "Abby, 25",
     "price": "$14,500 MXN/month"
   }

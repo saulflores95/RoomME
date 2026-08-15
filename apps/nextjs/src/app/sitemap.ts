@@ -15,7 +15,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/rooms",
     "/list-a-room",
     "/list-a-complex",
-    "/rooms-for-rent-cdmx",
     "/rooms-for-rent-queretaro",
   ];
 

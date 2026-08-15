@@ -32,9 +32,6 @@ const cityLabel = (
   city: string | null,
   t: Awaited<ReturnType<typeof getTranslations>>,
 ): string => {
-  if (city === "cdmx") {
-    return t("cdmx");
-  }
   if (city === "queretaro") {
     return t("queretaro");
   }
@@ -93,7 +90,7 @@ export async function generateMetadata({
       url: `/${locale}${path}`,
       title,
       description,
-      siteName: "RoomMe",
+      siteName: "RooMe",
     },
     twitter: {
       card: "summary_large_image",

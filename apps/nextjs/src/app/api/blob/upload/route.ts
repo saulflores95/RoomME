@@ -11,6 +11,7 @@ const ALLOWED_CONTENT_TYPES = [
   "image/png",
   "image/webp",
   "image/gif",
+  "application/pdf",
 ] as const;
 
 const MAX_SIZE_BYTES = 8 * 1024 * 1024;

@@ -1,6 +1,6 @@
 import { z } from "zod/v4";
 
-export const CitySchema = z.enum(["queretaro", "cdmx"]);
+export const CitySchema = z.enum(["queretaro"]);
 export type City = z.infer<typeof CitySchema>;
 
 export const CurrencySchema = z.enum(["MXN", "USD"]);

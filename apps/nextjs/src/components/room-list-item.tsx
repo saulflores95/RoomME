@@ -97,6 +97,8 @@ export function RoomListItem({
               </span>
             </>
           ) : null}
+          {" · "}
+          {t("tourCount", { count: listing.tourBookingCount })}
         </p>
       </div>
 

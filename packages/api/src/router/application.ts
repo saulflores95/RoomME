@@ -2,6 +2,7 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod/v4";
 
+import type { db } from "@acme/db/client";
 import { and, avg, count, desc, eq, inArray } from "@acme/db";
 import { Application, Room, RoommeRating } from "@acme/db/schema";
 
@@ -28,7 +29,7 @@ export interface RoomApplication {
 }
 
 const toApplicantSummary = async (
-  database: typeof import("@acme/db/client").db,
+  database: typeof db,
   applicant: {
     id: string;
     name: string;

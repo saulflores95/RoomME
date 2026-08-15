@@ -135,10 +135,10 @@ export default function Index() {
 
   return (
     <SafeAreaView className="bg-background">
-      <Stack.Screen options={{ title: "RoomMe" }} />
+      <Stack.Screen options={{ title: "RooMe" }} />
       <View className="bg-background h-full w-full p-4">
         <Text className="text-foreground pb-2 text-center text-5xl font-bold">
-          RoomMe
+          RooMe
         </Text>
         <Text className="text-muted-foreground mb-4 text-center">
           {t("hero.subtitle")}

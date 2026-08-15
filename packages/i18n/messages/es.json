@@ -1,11 +1,9 @@
 {
   "meta": {
-    "title": "RoomMe | Cuartos en renta en CDMX y Querétaro",
-    "description": "Encuentra y renta tu cuarto ideal en Ciudad de México y Querétaro. Conecta con roomies verificados, hosts y agentes en RoomMe.",
-    "cdmxTitle": "Cuartos en renta en CDMX | RoomMe",
-    "cdmxDescription": "Habitaciones en renta en Ciudad de México: Roma Norte, Condesa y más. Encuentra roomies y hosts en RoomMe.",
-    "queretaroTitle": "Cuartos en renta en Querétaro | RoomMe",
-    "queretaroDescription": "Habitaciones en renta en Querétaro: Centro Sur, Juriquilla y más. Encuentra tu roomie en RoomMe."
+    "title": "RooMe | Cuartos en renta en Querétaro",
+    "description": "Encuentra y renta tu cuarto ideal en Querétaro. Conecta con roomies verificados, hosts y agentes en RooMe.",
+    "queretaroTitle": "Cuartos en renta en Querétaro | RooMe",
+    "queretaroDescription": "Habitaciones en renta en Querétaro: Centro Sur, Juriquilla y más. Encuentra tu roomie en RooMe."
   },
   "header": {
     "login": "Iniciar sesión",
@@ -13,11 +11,13 @@
     "signup": "Crear cuenta",
     "language": "Idioma",
     "currency": "Moneda",
-    "listings": "Mis listados"
+    "listings": "Mis listados",
+    "settings": "Ajustes",
+    "calendar": "Tours"
   },
   "hero": {
     "title": "Cuartos en renta",
-    "subtitle": "Encuentra y renta tu cuarto perfecto en CDMX y Querétaro",
+    "subtitle": "Encuentra y renta tu cuarto perfecto en Querétaro",
     "searchPlaceholder": "Buscar ubicaciones"
   },
   "cta": {
@@ -25,14 +25,14 @@
     "findRoom": "+ Buscar un cuarto"
   },
   "value": {
-    "title": "RoomMe une lugares y personas",
+    "title": "RooMe une lugares y personas",
     "local": {
-      "title": "CDMX y Querétaro primero",
-      "body": "Busca habitaciones y roomies en Ciudad de México y Querétaro, con barrios como Roma, Condesa, Centro Sur y Juriquilla."
+      "title": "Hecho para Querétaro",
+      "body": "Busca habitaciones y roomies en Querétaro, con barrios como Centro Sur y Juriquilla."
     },
     "people": {
       "title": "Conoce roomies increíbles",
-      "body": "RoomMe Rating te ayuda a elegir con quién vivir: calificaciones reales de quienes ya compartieron casa."
+      "body": "RooMe Rating te ayuda a elegir con quién vivir: calificaciones reales de quienes ya compartieron casa."
     },
     "safe": {
       "title": "Siéntete seguro",
@@ -47,7 +47,7 @@
     "title": "Revisión de identidad. Conoce más seguro y más rápido.",
     "subtitle": "Combinamos verificaciones automáticas con revisión humana para que roomies y hosts se conecten con confianza.",
     "manual": "Personas reales revisan perfiles para detectar fraudes.",
-    "badges": "Insignias validadas y RoomMe Rating para destacar perfiles de confianza.",
+    "badges": "Insignias validadas y RooMe Rating para destacar perfiles de confianza.",
     "messaging": "Primer contacto más seguro dentro de la plataforma.",
     "leads": "Menos leads falsos y más coincidencias serias.",
     "howTitle": "Cómo funciona la validación",
@@ -59,19 +59,19 @@
     "step3Body": "Un moderador valida y otorga la insignia. Próximamente."
   },
   "testimonials": {
-    "title": "Lo que dicen de RoomMe",
+    "title": "Lo que dicen de RooMe",
     "more": "Leer más reseñas",
     "room": {
       "label": "Reseñas de cuartos",
       "name": "Sofía M.",
-      "city": "Roma Norte, CDMX",
+      "city": "Centro Sur, Querétaro",
       "quoteTitle": "Encontré lugar en una semana",
-      "quote": "Publiqué lo que buscaba y en días ya estaba visitando un cuarto en la Roma."
+      "quote": "Publiqué lo que necesitaba y a los pocos días ya estaba viendo un cuarto en Centro Sur."
     },
     "apartment": {
       "label": "Reseñas de departamentos",
       "name": "Kenji T.",
-      "city": "Condesa, CDMX",
+      "city": "Juriquilla, Querétaro",
       "quoteTitle": "El depa era tal cual las fotos",
       "quote": "El complejo tenía amenidades claras y el host respondió rápido."
     },
@@ -92,15 +92,14 @@
   },
   "banner": {
     "title": "¿Listo para encontrar al roomie perfecto?",
-    "subtitle": "Únete a RoomMe gratis y empieza a buscar hoy en CDMX y Querétaro."
+    "subtitle": "Únete a RooMe gratis y empieza a buscar hoy en Querétaro."
   },
   "featured": {
-    "title": "Habitaciones en CDMX y Querétaro"
+    "title": "Habitaciones en Querétaro"
   },
   "rooms": {
     "title": "Buscar un cuarto",
-    "allCities": "Todas las ciudades",
-    "cdmx": "Ciudad de México",
+    "allCities": "Todos los cuartos",
     "queretaro": "Querétaro",
     "empty": "Ningún cuarto coincide con estos filtros. Sé el primero en publicar.",
     "resultsCount": "{count, plural, one {# cuarto en renta} other {# cuartos en renta}}",
@@ -110,11 +109,12 @@
     "availableDate": "Disponible: {date}",
     "availableNow": "Inmediatamente",
     "perMonth": "/mes",
+    "tourCount": "{count, plural, one {# tour} other {# tours}}",
     "roomies": "{count} roomies",
+    "scheduleTour": "Agendar un tour",
     "pets": "Pet-friendly",
     "hasPets": "Hay mascotas",
     "acceptsPets": "Se aceptan mascotas",
-    "searchCdmx": "Roma, Condesa, CDMX",
     "searchQueretaro": "Centro Sur, Juriquilla, Querétaro",
     "filters": "Filtros",
     "showResults": "Ver resultados",
@@ -356,14 +356,82 @@
     "title": "Perfil",
     "back": "← Volver a cuartos",
     "about": "Sobre mí",
-    "reviews": "Calificaciones RoomMe",
+    "reviews": "Calificaciones RooMe",
     "noBio": "Aún no hay descripción.",
     "noRatings": "Aún no hay calificaciones.",
     "roleHost": "Anfitrión",
     "roleRoomie": "Roomie",
+    "roleAgent": "Agente",
+    "hobbies": "Hobbies",
+    "personalities": "Personalidad",
+    "pets": "Mascotas",
+    "petsYes": "Tiene mascotas",
+    "petsNo": "Sin mascotas",
+    "operatingCities": "Opera en",
     "viewProfile": "Ver perfil",
     "ratingSummary": "{average} · {count, plural, one {# calificación} other {# calificaciones}}",
     "ratingCount": "{count, plural, one {# calificación} other {# calificaciones}}"
+  },
+  "settings": {
+    "title": "Ajustes",
+    "subtitle": "Edita tu perfil y disponibilidad.",
+    "profileSection": "Perfil",
+    "agentSection": "Disponibilidad de agente",
+    "blockedSection": "Fechas bloqueadas",
+    "name": "Nombre",
+    "bio": "Bio",
+    "birthDate": "Fecha de nacimiento",
+    "hobbies": "Hobbies",
+    "personalities": "Personalidad",
+    "commaSeparated": "Separados por comas",
+    "hasPets": "Tengo mascotas",
+    "avatar": "Avatar",
+    "document": "Documento oficial (ID)",
+    "documentHint": "Sube una identificación (requerido para agentes que ofrecen tours).",
+    "documentUploaded": "Documento cargado.",
+    "cityQueretaro": "Querétaro",
+    "daySun": "Dom",
+    "dayMon": "Lun",
+    "dayTue": "Mar",
+    "dayWed": "Mié",
+    "dayThu": "Jue",
+    "dayFri": "Vie",
+    "daySat": "Sáb",
+    "saveProfile": "Guardar perfil",
+    "saveAvailability": "Guardar disponibilidad",
+    "addBlocked": "Bloquear fecha",
+    "remove": "Quitar",
+    "saved": "Guardado",
+    "hoursSaved": "Disponibilidad guardada",
+    "saveFailed": "No se pudo guardar. Intenta de nuevo.",
+    "uploadFailed": "Error al subir."
+  },
+  "tours": {
+    "schedule": "Agendar un tour",
+    "scheduleTitle": "Agendar un tour",
+    "scheduleHint": "Elige un agente y un horario disponible.",
+    "whoIsAgent": "¿Quién es tu agente?",
+    "noAgents": "Aún no hay agentes disponibles en esta ciudad.",
+    "noBio": "Sin bio todavía.",
+    "viewProfile": "Ver perfil",
+    "agentLabel": "Agente",
+    "changeAgent": "Cambiar",
+    "noSlots": "No hay horarios en las próximas dos semanas.",
+    "confirm": "Confirmar tour",
+    "booked": "Tour agendado",
+    "bookedDetail": "Tu tour está agendado. El agente recibió un correo.",
+    "bookFailed": "No se pudo agendar este horario.",
+    "calendarTitle": "Calendario de tours",
+    "calendarHint": "Tours próximos que vas a guiar.",
+    "noBookings": "No hay tours agendados.",
+    "withSeeker": "Con {name}",
+    "reschedule": "Reprogramar",
+    "cancel": "Cancelar",
+    "cancelled": "Tour cancelado",
+    "rescheduled": "Tour reprogramado",
+    "actionFailed": "No se pudo completar. Intenta de nuevo.",
+    "pickNewSlot": "Elige un nuevo horario",
+    "confirmReschedule": "Confirmar reprogramación"
   },
   "auth": {
     "signInTitle": "Iniciar sesión",
@@ -387,8 +455,8 @@
     "checkEmail": "Si el correo existe, te enviamos un enlace (revisa la consola en desarrollo)."
   },
   "phone": {
-    "listingTitle": "Mid-century en Condesa con terraza",
-    "location": "Condesa, CDMX",
+    "listingTitle": "Cuarto soleado en Centro Sur con patio",
+    "location": "Centro Sur, Querétaro",
     "host": "Abby, 25",
     "price": "$14,500 MXN/mes"
   }

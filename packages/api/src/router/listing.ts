@@ -20,6 +20,7 @@ import {
   and,
   arrayContains,
   asc,
+  count,
   desc,
   eq,
   gte,
@@ -28,7 +29,14 @@ import {
   lte,
   or,
 } from "@acme/db";
-import { Complex, ComplexImage, Room, RoomImage, user } from "@acme/db/schema";
+import {
+  Complex,
+  ComplexImage,
+  Room,
+  RoomImage,
+  TourBooking,
+  user,
+} from "@acme/db/schema";
 import {
   CreateComplexSchema,
   CreateListingSchema,
@@ -92,6 +100,7 @@ export interface ListingSummary extends ListingRoomAttributes {
   addressLine1: string | null;
   latitude: number | null;
   longitude: number | null;
+  tourBookingCount: number;
   complex: ListingComplexSummary;
   host: ListingHost | null;
 }
@@ -425,7 +434,10 @@ const roomWriteValues = (
   availableFrom: input.availableFrom,
 });
 
-const toListingSummary = (room: ListingRoomRow): ListingSummary | null => {
+const toListingSummary = (
+  room: ListingRoomRow,
+  tourBookingCount = 0,
+): ListingSummary | null => {
   const city = room.city ?? room.complex?.city;
   const neighborhood = room.neighborhood ?? room.complex?.neighborhood ?? "";
 
@@ -443,6 +455,7 @@ const toListingSummary = (room: ListingRoomRow): ListingSummary | null => {
     addressLine1: room.addressLine1 ?? room.complex?.addressLine1 ?? null,
     latitude: room.latitude ?? room.complex?.latitude ?? null,
     longitude: room.longitude ?? room.complex?.longitude ?? null,
+    tourBookingCount,
     complex: {
       id: room.complex?.id ?? null,
       title: room.complex?.title ?? null,
@@ -557,8 +570,33 @@ export const listingRouter = {
         orderBy: [asc(Room.rentPriceCents)],
       });
 
+      const roomIds = rooms.map((room) => room.id);
+      const tourCounts =
+        roomIds.length === 0
+          ? []
+          : await ctx.db
+              .select({
+                roomId: TourBooking.roomId,
+                count: count(),
+              })
+              .from(TourBooking)
+              .where(
+                and(
+                  inArray(TourBooking.roomId, roomIds),
+                  inArray(TourBooking.status, ["scheduled", "completed"]),
+                ),
+              )
+              .groupBy(TourBooking.roomId);
+
+      const tourCountByRoom = new Map(
+        tourCounts.map((row) => [row.roomId, Number(row.count)]),
+      );
+
       return rooms.flatMap((room) => {
-        const listing = toListingSummary(room);
+        const listing = toListingSummary(
+          room,
+          tourCountByRoom.get(room.id) ?? 0,
+        );
         return listing ? [listing] : [];
       });
     }),

@@ -158,12 +158,6 @@ export function RoomsBrowser({ city }: { city?: City }): JSX.Element {
             {t("allCities")}
           </Link>
           <Link
-            href="/rooms-for-rent-cdmx"
-            className={cityLinkClass(city === "cdmx")}
-          >
-            {t("cdmx")}
-          </Link>
-          <Link
             href="/rooms-for-rent-queretaro"
             className={cityLinkClass(city === "queretaro")}
           >

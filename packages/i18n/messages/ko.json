@@ -1,11 +1,9 @@
 {
   "meta": {
-    "title": "RoomMe | 멕시코시티와 케레타로의 방 임대",
-    "description": "멕시코시티와 케레타로에서 완벽한 방을 찾고 임대하세요. RoomMe에서 룸메이트, 호스트, 에이전트와 연결됩니다.",
-    "cdmxTitle": "멕시코시티 방 임대 | RoomMe",
-    "cdmxDescription": "CDMX의 로마 노르테, 콘데사 등에서 방을 찾으세요.",
-    "queretaroTitle": "케레타로 방 임대 | RoomMe",
-    "queretaroDescription": "케레타로 센트로 수르, 후리키야 등에서 방을 찾으세요."
+    "title": "RooMe | 케레타로 방 임대",
+    "description": "케레타로에서 완벽한 방을 찾고 임대하세요. RooMe에서 룸메이트, 호스트, 에이전트와 연결됩니다.",
+    "queretaroTitle": "케레타로 방 임대 | RooMe",
+    "queretaroDescription": "케레타로의 Centro Sur, Juriquilla 등에서 방을 찾으세요."
   },
   "header": {
     "login": "로그인",
@@ -13,11 +11,13 @@
     "signup": "회원가입",
     "language": "언어",
     "currency": "통화",
-    "listings": "내 매물"
+    "listings": "내 매물",
+    "settings": "설정",
+    "calendar": "투어"
   },
   "hero": {
     "title": "방 임대",
-    "subtitle": "멕시코시티와 케레타로에서 완벽한 방을 찾아보세요",
+    "subtitle": "케레타로에서 완벽한 방 찾기",
     "searchPlaceholder": "지역 검색"
   },
   "cta": {
@@ -25,14 +25,14 @@
     "findRoom": "+ 방 찾기"
   },
   "value": {
-    "title": "RoomMe는 장소와 사람을 연결합니다",
+    "title": "RooMe는 장소와 사람을 연결합니다",
     "local": {
-      "title": "CDMX와 케레타로 중심",
-      "body": "멕시코시티와 케레타로 — 로마, 콘데사, 센트로 수르, 후리키야에서 방과 룸메이트를 찾으세요."
+      "title": "케레타로에 특화",
+      "body": "케레타로 전역에서 방과 룸메이트를 검색하세요 — Centro Sur, Juriquilla 등."
     },
     "people": {
       "title": "멋진 사람들을 만나세요",
-      "body": "RoomMe Rating으로 함께 살아본 룸메이트의 실제 후기를 확인할 수 있습니다."
+      "body": "RooMe Rating으로 함께 살아본 룸메이트의 실제 후기를 확인할 수 있습니다."
     },
     "safe": {
       "title": "안전하게",
@@ -47,7 +47,7 @@
     "title": "실제 사람이 확인하는 신원. 더 안전하고 빠르게.",
     "subtitle": "자동 검사와 사람 검토를 결합해 임차인과 호스트가 안심하고 연결되도록 합니다.",
     "manual": "실제 사람이 프로필을 검토해 허위 계정을 걸러냅니다.",
-    "badges": "인증 배지와 RoomMe Rating으로 신뢰할 수 있는 프로필이 돋보입니다.",
+    "badges": "인증 배지와 RooMe Rating으로 신뢰할 수 있는 프로필이 돋보입니다.",
     "messaging": "플랫폼 안에서 더 안전한 첫 연락.",
     "leads": "불량 문의는 줄고 진지한 매칭은 늘어납니다.",
     "howTitle": "인증 진행 방식",
@@ -59,19 +59,19 @@
     "step3Body": " моде레이터가 확인하고 배지를 부여합니다. 곧 제공 예정."
   },
   "testimonials": {
-    "title": "RoomMe 사용자 후기",
+    "title": "RooMe 사용자 후기",
     "more": "후기 더 보기",
     "room": {
       "label": "방 후기",
       "name": "Sofía M.",
-      "city": "로마 노르테, 멕시코시티",
+      "city": "Centro Sur, Querétaro",
       "quoteTitle": "일주일 만에 방을 찾았어요",
-      "quote": "원하는 조건을 올렸더니 며칠 만에 로마의 방을 둘러볼 수 있었습니다."
+      "quote": "필요한 조건을 올렸더니 며칠 만에 Centro Sur 방을 구경할 수 있었어요."
     },
     "apartment": {
       "label": "아파트 후기",
       "name": "Kenji T.",
-      "city": "콘데사, 멕시코시티",
+      "city": "Juriquilla, Querétaro",
       "quoteTitle": "사진과 똑같았어요",
       "quote": "편의시설이 명확했고 호스트가 빠르게 답했습니다."
     },
@@ -92,15 +92,14 @@
   },
   "banner": {
     "title": "완벽한 룸메이트를 찾을 준비가 되셨나요?",
-    "subtitle": "RoomMe에 무료로 가입하고 오늘 CDMX와 케레타로에서 검색을 시작하세요."
+    "subtitle": "RooMe에 무료로 가입하고 오늘 케레타로에서 검색을 시작하세요."
   },
   "featured": {
-    "title": "멕시코시티와 케레타로의 방"
+    "title": "케레타로의 방"
   },
   "rooms": {
     "title": "방 찾기",
-    "allCities": "모든 도시",
-    "cdmx": "멕시코시티",
+    "allCities": "모든 방",
     "queretaro": "케레타로",
     "empty": "이 조건에 맞는 방이 아직 없습니다. 첫 번째로 등록해 보세요.",
     "resultsCount": "{count, plural, other {임대 방 #개}}",
@@ -110,12 +109,13 @@
     "availableDate": "입주 가능: {date}",
     "availableNow": "즉시",
     "perMonth": "/월",
+    "tourCount": "투어 {count}회",
     "roomies": "룸메 {count}명",
+    "scheduleTour": "투어 예약",
     "pets": "펫프렌들리",
     "hasPets": "반려동물 있음",
     "acceptsPets": "반려동물 가능",
-    "searchCdmx": "로마, 콘데사, 멕시코시티",
-    "searchQueretaro": "센트로 수르, 후리키야, 케레타로",
+    "searchQueretaro": "Centro Sur, Juriquilla, 케레타로",
     "filters": "필터",
     "showResults": "결과 보기",
     "rent": "월세",
@@ -356,14 +356,82 @@
     "title": "프로필",
     "back": "← 방 목록으로",
     "about": "소개",
-    "reviews": "RoomMe 평점",
+    "reviews": "RooMe 평점",
     "noBio": "아직 소개가 없습니다.",
     "noRatings": "아직 평점이 없습니다.",
     "roleHost": "호스트",
     "roleRoomie": "루미",
+    "roleAgent": "에이전트",
+    "hobbies": "취미",
+    "personalities": "성격",
+    "pets": "반려동물",
+    "petsYes": "반려동물 있음",
+    "petsNo": "반려동물 없음",
+    "operatingCities": "활동 도시",
     "viewProfile": "프로필 보기",
     "ratingSummary": "{average} · 평점 {count}개",
     "ratingCount": "평점 {count}개"
+  },
+  "settings": {
+    "title": "설정",
+    "subtitle": "프로필과 가능 시간을 수정하세요.",
+    "profileSection": "프로필",
+    "agentSection": "에이전트 가능 시간",
+    "blockedSection": "휴무일",
+    "name": "이름",
+    "bio": "소개",
+    "birthDate": "생년월일",
+    "hobbies": "취미",
+    "personalities": "성격",
+    "commaSeparated": "쉼표로 구분",
+    "hasPets": "반려동물이 있어요",
+    "avatar": "아바타",
+    "document": "공식 서류 (신분증)",
+    "documentHint": "신분증을 업로드하세요 (투어 안내에 필요).",
+    "documentUploaded": "서류가 업로드되었습니다.",
+    "cityQueretaro": "케레타로",
+    "daySun": "일",
+    "dayMon": "월",
+    "dayTue": "화",
+    "dayWed": "수",
+    "dayThu": "목",
+    "dayFri": "금",
+    "daySat": "토",
+    "saveProfile": "프로필 저장",
+    "saveAvailability": "가능 시간 저장",
+    "addBlocked": "휴무일 추가",
+    "remove": "삭제",
+    "saved": "저장됨",
+    "hoursSaved": "가능 시간이 저장되었습니다",
+    "saveFailed": "저장하지 못했습니다.",
+    "uploadFailed": "업로드에 실패했습니다."
+  },
+  "tours": {
+    "schedule": "투어 예약",
+    "scheduleTitle": "투어 예약",
+    "scheduleHint": "에이전트와 가능 시간을 선택하세요.",
+    "whoIsAgent": "담당 에이전트는?",
+    "noAgents": "이 도시에 가능한 에이전트가 아직 없습니다.",
+    "noBio": "소개가 아직 없습니다.",
+    "viewProfile": "프로필 보기",
+    "agentLabel": "에이전트",
+    "changeAgent": "변경",
+    "noSlots": "앞으로 2주간 가능한 시간이 없습니다.",
+    "confirm": "투어 확정",
+    "booked": "투어가 예약되었습니다",
+    "bookedDetail": "투어가 예약되었습니다. 에이전트에게 이메일이 발송됩니다.",
+    "bookFailed": "이 시간을 예약할 수 없습니다.",
+    "calendarTitle": "투어 캘린더",
+    "calendarHint": "안내 예정인 투어 목록.",
+    "noBookings": "예정된 투어가 없습니다.",
+    "withSeeker": "{name} 님과",
+    "reschedule": "일정 변경",
+    "cancel": "취소",
+    "cancelled": "투어가 취소되었습니다",
+    "rescheduled": "투어 일정이 변경되었습니다",
+    "actionFailed": "작업에 실패했습니다.",
+    "pickNewSlot": "새 시간 선택",
+    "confirmReschedule": "변경 확정"
   },
   "auth": {
     "signInTitle": "로그인",
@@ -387,8 +455,8 @@
     "checkEmail": "해당 이메일이 있으면 링크를 보냈습니다 (개발 환경에서는 콘솔을 확인하세요)."
   },
   "phone": {
-    "listingTitle": "테라스가 있는 콘데사 미드센추리 로프트",
-    "location": "콘데사, 멕시코시티",
+    "listingTitle": "Centro Sur의 햇살 좋은 방",
+    "location": "Centro Sur, Querétaro",
     "host": "Abby, 25",
     "price": "$14,500 MXN/월"
   }

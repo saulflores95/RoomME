@@ -7,11 +7,6 @@ import { getFormString } from "~/utils/form-data";
 
 const SUGGESTIONS = [
   {
-    city: "cdmx",
-    labels: ["cdmx", "ciudad de méxico", "mexico city", "roma", "condesa"],
-  },
-  {
-    city: "queretaro",
     labels: ["querétaro", "queretaro", "juriquilla", "centro sur"],
   },
 ] as const;
@@ -28,11 +23,7 @@ export function LocationSearch({ placeholder }: { placeholder: string }) {
         (label) => query.includes(label) || label.includes(query),
       ),
     );
-    if (match?.city === "cdmx") {
-      router.push("/rooms-for-rent-cdmx");
-      return;
-    }
-    if (match?.city === "queretaro") {
+    if (match) {
       router.push("/rooms-for-rent-queretaro");
       return;
     }
@@ -55,10 +46,7 @@ export function LocationSearch({ placeholder }: { placeholder: string }) {
         list="roomme-locations"
       />
       <datalist id="roomme-locations">
-        <option value="Ciudad de México" />
         <option value="Querétaro" />
-        <option value="Roma Norte" />
-        <option value="Condesa" />
         <option value="Centro Sur" />
         <option value="Juriquilla" />
       </datalist>
