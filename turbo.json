@@ -51,7 +51,9 @@
     "AUTH_REDIRECT_PROXY_URL",
     "PORT",
     "RESEND_API_KEY",
-    "EMAIL_FROM"
+    "EMAIL_FROM",
+    "BLOB_READ_WRITE_TOKEN",
+    "ROOMME_BLOB_READ_WRITE_TOKEN"
   ],
   "globalPassThroughEnv": [
     "NODE_ENV",

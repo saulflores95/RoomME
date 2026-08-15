@@ -50,3 +50,11 @@ export const withRole = (
   }
   return [...current, extra].join(",");
 };
+
+export const withoutRole = (
+  role: string | null | undefined,
+  remove: Role,
+): string => {
+  const current = parseRoles(role).filter((value) => value !== remove);
+  return current.length === 0 ? "roomie" : current.join(",");
+};

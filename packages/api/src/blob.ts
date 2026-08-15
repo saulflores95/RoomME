@@ -19,8 +19,14 @@ export const deleteBlobUrls = async (
     return;
   }
 
+  const token =
+    process.env.BLOB_READ_WRITE_TOKEN ??
+    process.env.ROOMME_BLOB_READ_WRITE_TOKEN;
+  const tokenOption =
+    token !== undefined && token.length > 0 ? { token } : undefined;
+
   try {
-    await del(blobUrls);
+    await del(blobUrls, tokenOption);
   } catch {
     // Ignore missing / already-deleted blobs so save/remove stays resilient.
   }

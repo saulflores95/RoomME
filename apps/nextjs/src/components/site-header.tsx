@@ -56,7 +56,7 @@ function AccountMenuItems({
       ) : null}
       {isAdmin ? (
         <DropdownMenuItem asChild>
-          <Link href="/admin/agents">{t("admin")}</Link>
+          <Link href="/admin">{t("admin")}</Link>
         </DropdownMenuItem>
       ) : null}
       <DropdownMenuSeparator />

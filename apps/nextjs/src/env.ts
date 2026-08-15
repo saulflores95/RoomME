@@ -4,6 +4,16 @@ import { z } from "zod/v4";
 
 import { authEnv } from "@acme/auth/env";
 
+const roommeBlobToken = process.env.ROOMME_BLOB_READ_WRITE_TOKEN;
+if (
+  (process.env.BLOB_READ_WRITE_TOKEN === undefined ||
+    process.env.BLOB_READ_WRITE_TOKEN.length === 0) &&
+  roommeBlobToken !== undefined &&
+  roommeBlobToken.length > 0
+) {
+  process.env.BLOB_READ_WRITE_TOKEN = roommeBlobToken;
+}
+
 export const env = createEnv({
   extends: [authEnv(), vercel()],
   shared: {
