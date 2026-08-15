@@ -15,7 +15,12 @@ import type {
   OvernightGuests,
   SmokingPolicy,
 } from "@acme/validators";
-import { canManageComplexes, hasRole, withRole } from "@acme/auth/roles";
+import {
+  canCreateListing,
+  canManageComplexes,
+  hasRole,
+  withRole,
+} from "@acme/auth/roles";
 import {
   and,
   arrayContains,
@@ -298,6 +303,27 @@ const toComplexAmenities = (values: string[]): string[] => {
   }
 
   return amenities;
+};
+
+const assertCanCreateListing = async (
+  database: typeof db,
+  actor: { id: string; role?: string | null },
+): Promise<void> => {
+  if (hasRole(actor.role, "admin")) {
+    return;
+  }
+
+  const row = await database.query.user.findFirst({
+    where: eq(user.id, actor.id),
+    columns: { role: true, agentApproved: true },
+  });
+
+  if (!canCreateListing(row?.role, row?.agentApproved)) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Only approved agents can create listings.",
+    });
+  }
 };
 
 const assertCanManage = (
@@ -692,9 +718,20 @@ export const listingRouter = {
       rooms: HostRoomSummary[];
       complexes: HostComplexSummary[];
       canManageComplexes: boolean;
+      canCreateListing: boolean;
     }> => {
       const hostId = ctx.session.user.id;
-      const canManage = canManageComplexes(ctx.session.user.role);
+      const actor = await ctx.db.query.user.findFirst({
+        where: eq(user.id, hostId),
+        columns: { role: true, agentApproved: true },
+      });
+      const canManage = canManageComplexes(
+        actor?.role ?? ctx.session.user.role,
+      );
+      const canCreate = canCreateListing(
+        actor?.role ?? ctx.session.user.role,
+        actor?.agentApproved,
+      );
 
       const rooms = await ctx.db.query.Room.findMany({
         where: eq(Room.hostId, hostId),
@@ -731,6 +768,7 @@ export const listingRouter = {
           coverUrl: complex.images[0]?.url ?? null,
         })),
         canManageComplexes: canManage,
+        canCreateListing: canCreate,
       };
     },
   ),
@@ -818,6 +856,7 @@ export const listingRouter = {
   create: protectedProcedure
     .input(CreateListingSchema)
     .mutation(async ({ ctx, input }): Promise<CreateListingResult> => {
+      await assertCanCreateListing(ctx.db, ctx.session.user);
       const hostId = ctx.session.user.id;
       const selectedComplex =
         input.isComplex && input.complexId
@@ -907,6 +946,7 @@ export const listingRouter = {
   createComplex: agentProcedure
     .input(CreateComplexSchema)
     .mutation(async ({ ctx, input }): Promise<CreateComplexResult> => {
+      await assertCanCreateListing(ctx.db, ctx.session.user);
       const [complex] = await ctx.db
         .insert(Complex)
         .values({

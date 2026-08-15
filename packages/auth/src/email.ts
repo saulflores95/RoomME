@@ -1,6 +1,13 @@
 import { Resend } from "resend";
 
 import { authEnv } from "../env";
+import { emailAppUrl } from "./emails/brand";
+import {
+  emailDetailsBlock,
+  emailParagraph,
+  escapeHtml,
+  renderEmail,
+} from "./emails/layout";
 
 const env = authEnv();
 
@@ -52,7 +59,13 @@ export const sendPasswordResetEmail = async (args: {
 }): Promise<void> => {
   const subject = "Reset your RooMe password";
   const text = `Hi ${args.name},\n\nReset your password: ${args.url}\n\nIf you did not request this, ignore this email.`;
-  const html = `<p>Hi ${args.name},</p><p><a href="${args.url}">Reset your password</a></p><p>If you did not request this, ignore this email.</p>`;
+  const html = renderEmail({
+    preheader: "Reset your RooMe password",
+    heading: "Reset your password",
+    bodyHtml: `${emailParagraph(`Hi ${escapeHtml(args.name)},`)}${emailParagraph("Use the button below to reset your RooMe password.")}`,
+    cta: { label: "Reset password", url: args.url },
+    footerNote: "If you did not request this, ignore this email.",
+  });
   await sendEmail({ to: args.to, subject, html, text });
 };
 
@@ -63,9 +76,21 @@ export const sendVerificationEmail = async (args: {
 }): Promise<void> => {
   const subject = "Verify your RooMe email";
   const text = `Hi ${args.name},\n\nVerify your email: ${args.url}`;
-  const html = `<p>Hi ${args.name},</p><p><a href="${args.url}">Verify your email</a></p>`;
+  const html = renderEmail({
+    preheader: "Verify your RooMe email",
+    heading: "Verify your email",
+    bodyHtml: `${emailParagraph(`Hi ${escapeHtml(args.name)},`)}${emailParagraph("Use the button below to verify your RooMe email.")}`,
+    cta: { label: "Verify email", url: args.url },
+  });
   await sendEmail({ to: args.to, subject, html, text });
 };
+
+const tourStatusLabels: Record<"booked" | "cancelled" | "rescheduled", string> =
+  {
+    booked: "Booked",
+    cancelled: "Cancelled",
+    rescheduled: "Rescheduled",
+  };
 
 export const sendTourBookingEmails = async (args: {
   agentEmail: string;
@@ -76,10 +101,15 @@ export const sendTourBookingEmails = async (args: {
   startsAt: Date;
   kind: "booked" | "cancelled" | "rescheduled";
 }): Promise<void> => {
-  const when = args.startsAt.toLocaleString("es-MX", {
-    dateStyle: "full",
-    timeStyle: "short",
+  const when = args.startsAt.toLocaleString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
     timeZone: "America/Mexico_City",
+    timeZoneName: "short",
   });
 
   const titles: Record<typeof args.kind, string> = {
@@ -88,22 +118,61 @@ export const sendTourBookingEmails = async (args: {
     rescheduled: "Tour rescheduled",
   };
   const subject = `${titles[args.kind]}: ${args.roomTitle}`;
+  const status = tourStatusLabels[args.kind];
+  const agentToursUrl = emailAppUrl("/en/agent/calendar");
+  const seekerToursUrl = emailAppUrl("/en/tours");
 
-  const agentText = `Hi ${args.agentName},\n\nTour with ${args.seekerName} for "${args.roomTitle}" — ${when}.\nStatus: ${args.kind}.`;
-  const seekerText = `Hi ${args.seekerName},\n\nYour tour of "${args.roomTitle}" with agent ${args.agentName} — ${when}.\nStatus: ${args.kind}.`;
+  const agentDetails = emailDetailsBlock([
+    { label: "Room", value: args.roomTitle },
+    { label: "When", value: when },
+    { label: "Guest", value: args.seekerName },
+    { label: "Status", value: status },
+  ]);
+  const seekerDetails = emailDetailsBlock([
+    { label: "Room", value: args.roomTitle },
+    { label: "When", value: when },
+    { label: "Agent", value: args.agentName },
+    { label: "Status", value: status },
+  ]);
+
+  const agentIntro =
+    args.kind === "booked"
+      ? `${escapeHtml(args.seekerName)} booked a tour with you.`
+      : args.kind === "cancelled"
+        ? `The tour with ${escapeHtml(args.seekerName)} was cancelled.`
+        : `The tour with ${escapeHtml(args.seekerName)} was rescheduled.`;
+  const seekerIntro =
+    args.kind === "booked"
+      ? `Your tour with ${escapeHtml(args.agentName)} is confirmed.`
+      : args.kind === "cancelled"
+        ? `Your tour with ${escapeHtml(args.agentName)} was cancelled.`
+        : `Your tour with ${escapeHtml(args.agentName)} was rescheduled.`;
+
+  const agentText = `Hi ${args.agentName},\n\n${args.seekerName} — "${args.roomTitle}" — ${when}.\nStatus: ${status}.\n\n${agentToursUrl}`;
+  const seekerText = `Hi ${args.seekerName},\n\n"${args.roomTitle}" with ${args.agentName} — ${when}.\nStatus: ${status}.\n\n${seekerToursUrl}`;
 
   await Promise.all([
     sendEmail({
       to: args.agentEmail,
       subject,
       text: agentText,
-      html: `<p>${agentText.replaceAll("\n", "<br/>")}</p>`,
+      html: renderEmail({
+        preheader: subject,
+        heading: titles[args.kind],
+        bodyHtml: `${emailParagraph(`Hi ${escapeHtml(args.agentName)},`)}${emailParagraph(agentIntro)}${agentDetails}`,
+        cta: { label: "View calendar", url: agentToursUrl },
+      }),
     }),
     sendEmail({
       to: args.seekerEmail,
       subject,
       text: seekerText,
-      html: `<p>${seekerText.replaceAll("\n", "<br/>")}</p>`,
+      html: renderEmail({
+        preheader: subject,
+        heading: titles[args.kind],
+        bodyHtml: `${emailParagraph(`Hi ${escapeHtml(args.seekerName)},`)}${emailParagraph(seekerIntro)}${seekerDetails}`,
+        cta: { label: "View my tours", url: seekerToursUrl },
+      }),
     }),
   ]);
 };

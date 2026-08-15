@@ -27,6 +27,7 @@ export function HostListings(): JSX.Element {
   const rooms = query.data?.rooms ?? [];
   const complexes = query.data?.complexes ?? [];
   const canManageComplexes = query.data?.canManageComplexes ?? false;
+  const canCreateListing = query.data?.canCreateListing ?? false;
   const applicationsByRoom = applicationsQuery.data ?? [];
 
   if (query.isPending) {
@@ -39,7 +40,7 @@ export function HostListings(): JSX.Element {
         <Button asChild>
           <Link href="/list-a-room">{t("createRoom")}</Link>
         </Button>
-        {canManageComplexes ? (
+        {canCreateListing && canManageComplexes ? (
           <Button variant="outline" asChild>
             <Link href="/list-a-complex">{t("createComplex")}</Link>
           </Button>

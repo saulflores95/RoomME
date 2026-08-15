@@ -2,10 +2,15 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod/v4";
 
-import { hasRole } from "@acme/auth/roles";
+import { canCreateListing, hasRole } from "@acme/auth/roles";
 import { avg, count, desc, eq } from "@acme/db";
 import { RoommeRating, user } from "@acme/db/schema";
-import { CitySchema } from "@acme/validators";
+import {
+  CitySchema,
+  PetSizeSchema,
+  PetTypeSchema,
+  ProfileTagSchema,
+} from "@acme/validators";
 
 import { ageFromBirthDate, roundRatingAverage } from "../lib/profile";
 import { protectedProcedure, publicProcedure } from "../trpc";
@@ -19,6 +24,8 @@ export interface PublicProfile {
   hobbies: string[];
   personalities: string[];
   hasPets: boolean;
+  petType: string | null;
+  petSize: string | null;
   operatingCities: string[];
   role: string | null;
   isHost: boolean;
@@ -48,10 +55,14 @@ export interface MyProfile {
   hobbies: string[];
   personalities: string[];
   hasPets: boolean;
+  petType: string | null;
+  petSize: string | null;
   documentUrl: string | null;
   operatingCities: string[];
   role: string | null;
   isAgent: boolean;
+  agentApproved: boolean;
+  canCreateListing: boolean;
 }
 
 export const profileRouter = {
@@ -69,6 +80,8 @@ export const profileRouter = {
           hobbies: true,
           personalities: true,
           hasPets: true,
+          petType: true,
+          petSize: true,
           operatingCities: true,
           role: true,
         },
@@ -121,6 +134,8 @@ export const profileRouter = {
         hobbies: profile.hobbies,
         personalities: profile.personalities,
         hasPets: profile.hasPets,
+        petType: profile.petType ?? null,
+        petSize: profile.petSize ?? null,
         operatingCities: profile.operatingCities,
         role,
         isHost: hasRole(role, "host"),
@@ -160,26 +175,53 @@ export const profileRouter = {
       hobbies: profile.hobbies,
       personalities: profile.personalities,
       hasPets: profile.hasPets,
+      petType: profile.petType ?? null,
+      petSize: profile.petSize ?? null,
       documentUrl: profile.documentUrl ?? null,
       operatingCities: profile.operatingCities,
       role,
       isAgent: hasRole(role, "agent") || hasRole(role, "admin"),
+      agentApproved: profile.agentApproved,
+      canCreateListing: canCreateListing(role, profile.agentApproved),
     };
   }),
 
   update: protectedProcedure
     .input(
-      z.object({
-        name: z.string().min(1).max(120).optional(),
-        bio: z.string().max(2000).nullable().optional(),
-        birthDate: z.coerce.date().nullable().optional(),
-        image: z.string().url().nullable().optional(),
-        hobbies: z.array(z.string().min(1).max(64)).max(20).optional(),
-        personalities: z.array(z.string().min(1).max(64)).max(20).optional(),
-        hasPets: z.boolean().optional(),
-        documentUrl: z.string().url().nullable().optional(),
-        operatingCities: z.array(CitySchema).optional(),
-      }),
+      z
+        .object({
+          name: z.string().min(1).max(120).optional(),
+          bio: z.string().max(2000).nullable().optional(),
+          birthDate: z.coerce.date().nullable().optional(),
+          image: z.string().url().nullable().optional(),
+          hobbies: z.array(ProfileTagSchema).max(20).optional(),
+          personalities: z.array(ProfileTagSchema).max(20).optional(),
+          hasPets: z.boolean().optional(),
+          petType: PetTypeSchema.nullable().optional(),
+          petSize: PetSizeSchema.nullable().optional(),
+          documentUrl: z.string().url().nullable().optional(),
+          operatingCities: z.array(CitySchema).optional(),
+        })
+        .superRefine((data, ctx) => {
+          if (data.hasPets === true && data.petType == null) {
+            ctx.addIssue({
+              code: "custom",
+              path: ["petType"],
+              message: "Pet type is required",
+            });
+          }
+          if (
+            data.hasPets === true &&
+            data.petType === "dog" &&
+            data.petSize == null
+          ) {
+            ctx.addIssue({
+              code: "custom",
+              path: ["petSize"],
+              message: "Dog size is required",
+            });
+          }
+        }),
     )
     .mutation(async ({ ctx, input }): Promise<{ ok: true }> => {
       await ctx.db
@@ -196,6 +238,8 @@ export const profileRouter = {
             ? { personalities: input.personalities }
             : {}),
           ...(input.hasPets !== undefined ? { hasPets: input.hasPets } : {}),
+          ...(input.petType !== undefined ? { petType: input.petType } : {}),
+          ...(input.petSize !== undefined ? { petSize: input.petSize } : {}),
           ...(input.documentUrl !== undefined
             ? { documentUrl: input.documentUrl }
             : {}),

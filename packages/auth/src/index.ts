@@ -66,9 +66,22 @@ export function initAuth<
           type: "boolean",
           required: false,
         },
+        petType: {
+          type: "string",
+          required: false,
+        },
+        petSize: {
+          type: "string",
+          required: false,
+        },
         operatingCities: {
           type: "string[]",
           required: false,
+        },
+        agentApproved: {
+          type: "boolean",
+          required: false,
+          defaultValue: false,
         },
       },
     },

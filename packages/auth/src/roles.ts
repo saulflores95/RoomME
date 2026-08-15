@@ -31,6 +31,12 @@ export const COMPLEX_MANAGER_ROLES = ["agent", "admin"] as const;
 export const canManageComplexes = (role: string | null | undefined): boolean =>
   hasAnyRole(role, COMPLEX_MANAGER_ROLES);
 
+export const canCreateListing = (
+  role: string | null | undefined,
+  agentApproved: boolean | null | undefined,
+): boolean =>
+  hasRole(role, "admin") || (hasRole(role, "agent") && agentApproved === true);
+
 export const withRole = (
   role: string | null | undefined,
   extra: Role,

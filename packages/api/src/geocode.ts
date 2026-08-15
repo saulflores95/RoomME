@@ -34,7 +34,7 @@ interface NominatimPlace {
 const NOMINATIM_HEADERS = {
   Accept: "application/json",
   "Accept-Language": "es",
-  "User-Agent": "RooMe/1.0 (https://roomme.app)",
+  "User-Agent": "RooMe/1.0 (https://roome.mx)",
 } as const;
 
 const QUERETARO_CENTER = { latitude: 20.5888, longitude: -100.3899 };

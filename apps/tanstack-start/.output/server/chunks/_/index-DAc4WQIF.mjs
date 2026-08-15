@@ -4,7 +4,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { createAuthClient } from "better-auth/react";
 
-import { B as Button, u as useTRPC } from "./router-DT_aQl4p.mjs";
+import { B as Button, u as useTRPC } from "./router-BydVigxg.mjs";
 
 import "@tanstack/react-router-ssr-query";
 import "@trpc/tanstack-react-query";
@@ -19,18 +19,48 @@ import "tls";
 import "crypto";
 import "stream";
 import "perf_hooks";
+import "node:buffer";
+import "node:crypto";
+import "node:util";
+import "node:http";
+import "node:https";
+import "node:events";
+import "path";
+import "node:fs/promises";
+import "node:path";
+import "child_process";
+import "assert";
+import "events";
+import "buffer";
+import "util";
+import "zod";
+import "node:fs";
+import "node:os";
+import "node:assert";
+import "node:net";
+import "node:stream";
+import "node:querystring";
+import "node:diagnostics_channel";
+import "node:tls";
+import "node:zlib";
+import "node:perf_hooks";
+import "node:util/types";
+import "node:worker_threads";
+import "node:url";
+import "node:async_hooks";
+import "node:console";
+import "node:dns";
+import "string_decoder";
+import "@t3-oss/env-core";
 import "better-auth/react-start";
 import "better-auth/api";
-import "zod";
 import "better-auth";
 import "better-auth/adapters/drizzle";
 import "better-auth/plugins";
 import "better-auth/plugins/access";
 import "better-auth/plugins/admin/access";
-import "@t3-oss/env-core";
 import "@t3-oss/env-core/presets-zod";
 import "./server.mjs";
-import "node:async_hooks";
 import "@tanstack/react-router/ssr/server";
 import "@tanstack/react-router-devtools";
 import "react-dom";
@@ -74,7 +104,7 @@ function RouteComponent() {
       children: [
         /* @__PURE__ */ jsx("h1", {
           className: "text-5xl font-extrabold tracking-tight",
-          children: "RoomMe",
+          children: "RooMe",
         }),
         /* @__PURE__ */ jsx("p", {
           className: "text-muted-foreground",

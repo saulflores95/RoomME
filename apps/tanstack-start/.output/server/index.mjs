@@ -1,7 +1,7 @@
 import { promises } from "node:fs";
-import nodeHTTP from "node:http";
+import require$$2__default__default from "node:http";
 import nodeHTTP2 from "node:http2";
-import nodeHTTPS from "node:https";
+import nodeHTTPS__default from "node:https";
 import { dirname, resolve } from "node:path";
 import { Readable } from "node:stream";
 import { fileURLToPath } from "node:url";
@@ -816,8 +816,12 @@ var NodeServer = class {
         );
       else throw new Error("node.http2 option requires tls certificate!");
     else if (this.#isSecure)
-      server = nodeHTTPS.createServer(this.serveOptions, handler);
-    else server = nodeHTTP.createServer(this.serveOptions, handler);
+      server = nodeHTTPS__default.createServer(this.serveOptions, handler);
+    else
+      server = require$$2__default__default.createServer(
+        this.serveOptions,
+        handler,
+      );
     this.node = {
       server,
       handler,
@@ -1478,72 +1482,72 @@ const assets = {
   "/favicon.ico": {
     type: "image/vnd.microsoft.icon",
     etag: '"19273-T8mOZ+WXaxxgwsnV8H+ThRBCY0A"',
-    mtime: "2026-08-14T20:15:02.401Z",
+    mtime: "2026-08-15T20:53:55.348Z",
     size: 103027,
     path: "../public/favicon.ico",
   },
   "/assets/geist-cyrillic-wght-normal-CHSlOQsW.woff2": {
     type: "font/woff2",
     etag: '"3964-jfUkxTfHRj1cpO33jEsDk2lkrvM"',
-    mtime: "2026-08-14T20:15:02.683Z",
+    mtime: "2026-08-15T20:53:55.532Z",
     size: 14692,
     path: "../public/assets/geist-cyrillic-wght-normal-CHSlOQsW.woff2",
   },
   "/assets/geist-latin-ext-wght-normal-DMtmJ5ZE.woff2": {
     type: "font/woff2",
     etag: '"3bcc-oSFlPnDlb7fAcQTPv6sqm6NgXXU"',
-    mtime: "2026-08-14T20:15:02.683Z",
+    mtime: "2026-08-15T20:53:55.532Z",
     size: 15308,
     path: "../public/assets/geist-latin-ext-wght-normal-DMtmJ5ZE.woff2",
   },
   "/assets/geist-latin-wght-normal-Dm3htQBi.woff2": {
     type: "font/woff2",
     etag: '"6ef0-pZqr0k2V92t+lxQ/ogxqTIOgDGM"',
-    mtime: "2026-08-14T20:15:02.683Z",
+    mtime: "2026-08-15T20:53:55.532Z",
     size: 28400,
     path: "../public/assets/geist-latin-wght-normal-Dm3htQBi.woff2",
   },
   "/assets/geist-mono-cyrillic-wght-normal-BZdD_g9V.woff2": {
     type: "font/woff2",
     etag: '"3148-fDEowP3hdBu549ke2NSllgnKwFo"',
-    mtime: "2026-08-14T20:15:02.683Z",
+    mtime: "2026-08-15T20:53:55.532Z",
     size: 12616,
     path: "../public/assets/geist-mono-cyrillic-wght-normal-BZdD_g9V.woff2",
   },
   "/assets/geist-mono-latin-ext-wght-normal-b6lpi8_2.woff2": {
     type: "font/woff2",
     etag: '"32f4-mFhyUXRKosFvmVg6XWwBAV3kvk4"',
-    mtime: "2026-08-14T20:15:02.683Z",
+    mtime: "2026-08-15T20:53:55.532Z",
     size: 13044,
     path: "../public/assets/geist-mono-latin-ext-wght-normal-b6lpi8_2.woff2",
   },
   "/assets/geist-mono-latin-wght-normal-Cjtb1TV-.woff2": {
     type: "font/woff2",
     etag: '"7a88-DQWpi033XojA2ZmNMyp8i2zZURE"',
-    mtime: "2026-08-14T20:15:02.684Z",
+    mtime: "2026-08-15T20:53:55.532Z",
     size: 31368,
     path: "../public/assets/geist-mono-latin-wght-normal-Cjtb1TV-.woff2",
   },
-  "/assets/index-BubC0Lhi.js": {
+  "/assets/index-czoQ8HiM.js": {
     type: "text/javascript; charset=utf-8",
-    etag: '"74c0-z/jS+Njca6CPn2GVOUreg0jySrM"',
-    mtime: "2026-08-14T20:15:02.684Z",
-    size: 29888,
-    path: "../public/assets/index-BubC0Lhi.js",
+    etag: '"74bf-kBv1FFitzGmlVYH9dGVqqMczJ24"',
+    mtime: "2026-08-15T20:53:55.532Z",
+    size: 29887,
+    path: "../public/assets/index-czoQ8HiM.js",
   },
-  "/assets/main-C8eTrL1h.js": {
+  "/assets/main-WSk9Eua5.js": {
     type: "text/javascript; charset=utf-8",
-    etag: '"8b965-cEaVrBB0KL6K31OU6tlDREYGX0Q"',
-    mtime: "2026-08-14T20:15:02.683Z",
-    size: 571749,
-    path: "../public/assets/main-C8eTrL1h.js",
+    etag: '"8b981-Rd2HyzhRPuWAvlxM892y/W1h9No"',
+    mtime: "2026-08-15T20:53:55.532Z",
+    size: 571777,
+    path: "../public/assets/main-WSk9Eua5.js",
   },
-  "/assets/styles-D4ps3Aeo.css": {
+  "/assets/styles-lIpQMYnc.css": {
     type: "text/css; charset=utf-8",
-    etag: '"8ffc-GLGFLG+BK3B3qz1+H7gis0eN2EI"',
-    mtime: "2026-08-14T20:15:02.684Z",
-    size: 36860,
-    path: "../public/assets/styles-D4ps3Aeo.css",
+    etag: '"b7aa-b7c6uT3MBMMsdOqTAXJJY86irxI"',
+    mtime: "2026-08-15T20:53:55.532Z",
+    size: 47018,
+    path: "../public/assets/styles-lIpQMYnc.css",
   },
 };
 function readAsset(id) {

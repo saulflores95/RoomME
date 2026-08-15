@@ -23,7 +23,12 @@
   * {
     @apply border-border;
   }
+  html {
+    overflow-x: clip;
+    touch-action: manipulation;
+  }
   body {
+    overflow-x: clip;
     letter-spacing: var(--tracking-normal);
   }
   .roomme-map-pin,

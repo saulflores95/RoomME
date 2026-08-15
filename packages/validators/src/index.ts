@@ -65,6 +65,73 @@ export type ComplexAmenity = z.infer<typeof ComplexAmenitySchema>;
 export const isPresetAmenity = (value: string): value is PresetAmenity =>
   COMPLEX_AMENITIES.some((item) => item === value);
 
+export const PROFILE_HOBBIES = [
+  "cooking",
+  "gym",
+  "running",
+  "music",
+  "movies",
+  "reading",
+  "hiking",
+  "photography",
+  "gaming",
+  "yoga",
+  "art",
+  "travel",
+  "coffee",
+  "cycling",
+  "dancing",
+] as const;
+export type PresetHobby = (typeof PROFILE_HOBBIES)[number];
+
+export const PROFILE_PERSONALITIES = [
+  "organized",
+  "quiet",
+  "social",
+  "earlyRiser",
+  "nightOwl",
+  "clean",
+  "easygoing",
+  "punctual",
+  "introvert",
+  "extrovert",
+  "adventurous",
+] as const;
+export type PresetPersonality = (typeof PROFILE_PERSONALITIES)[number];
+
+export const PET_TYPES = [
+  "dog",
+  "cat",
+  "bird",
+  "fish",
+  "rabbit",
+  "other",
+] as const;
+export type PetType = (typeof PET_TYPES)[number];
+
+export const PET_SIZES = ["small", "medium", "large"] as const;
+export type PetSize = (typeof PET_SIZES)[number];
+
+export const MAX_PROFILE_TAG_LENGTH = 64;
+export const MAX_PROFILE_TAGS = 20;
+
+export const ProfileTagSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(MAX_PROFILE_TAG_LENGTH);
+
+export const PetTypeSchema = z.enum(PET_TYPES);
+export const PetSizeSchema = z.enum(PET_SIZES);
+
+export const isPresetHobby = (value: string): value is PresetHobby =>
+  PROFILE_HOBBIES.some((item) => item === value);
+
+export const isPresetPersonality = (
+  value: string,
+): value is PresetPersonality =>
+  PROFILE_PERSONALITIES.some((item) => item === value);
+
 export const LEASE_MONTHS = [1, 3, 6, 12] as const;
 export const LeaseMonthsSchema = z.coerce
   .number()

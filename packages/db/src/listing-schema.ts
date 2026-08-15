@@ -1,5 +1,5 @@
 import { relations, sql } from "drizzle-orm";
-import { pgEnum, pgTable, unique } from "drizzle-orm/pg-core";
+import { pgEnum, pgTable, unique, uniqueIndex } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -254,32 +254,40 @@ export const AgentBlockedDate = pgTable(
   (t) => [unique("agent_blocked_date_unique").on(t.agentId, t.date)],
 );
 
-export const TourBooking = pgTable("tour_booking", (t) => ({
-  id: t.uuid().notNull().primaryKey().defaultRandom(),
-  roomId: t
-    .uuid()
-    .notNull()
-    .references(() => Room.id, { onDelete: "cascade" }),
-  agentId: t
-    .text()
-    .notNull()
-    .references(() => user.id, { onDelete: "cascade" }),
-  seekerId: t
-    .text()
-    .notNull()
-    .references(() => user.id, { onDelete: "cascade" }),
-  startsAt: t.timestamp({ mode: "date", withTimezone: true }).notNull(),
-  endsAt: t.timestamp({ mode: "date", withTimezone: true }).notNull(),
-  status: tourBookingStatusEnum().notNull().default("scheduled"),
-  rescheduledFromId: t.uuid(),
-  createdAt: t
-    .timestamp({ mode: "date", withTimezone: true })
-    .defaultNow()
-    .notNull(),
-  updatedAt: t
-    .timestamp({ mode: "date", withTimezone: true })
-    .$onUpdateFn(() => sql`now()`),
-}));
+export const TourBooking = pgTable(
+  "tour_booking",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    roomId: t
+      .uuid()
+      .notNull()
+      .references(() => Room.id, { onDelete: "cascade" }),
+    agentId: t
+      .text()
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    seekerId: t
+      .text()
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    startsAt: t.timestamp({ mode: "date", withTimezone: true }).notNull(),
+    endsAt: t.timestamp({ mode: "date", withTimezone: true }).notNull(),
+    status: tourBookingStatusEnum().notNull().default("scheduled"),
+    rescheduledFromId: t.uuid(),
+    createdAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .$onUpdateFn(() => sql`now()`),
+  }),
+  (t) => [
+    uniqueIndex("tour_booking_agent_starts_scheduled_uidx")
+      .on(t.agentId, t.startsAt)
+      .where(sql`${t.status} = 'scheduled'`),
+  ],
+);
 
 export const complexRelations = relations(Complex, ({ many }) => ({
   images: many(ComplexImage),

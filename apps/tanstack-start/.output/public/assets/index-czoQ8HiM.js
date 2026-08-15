@@ -20,7 +20,7 @@ import {
   S as Ue,
   b as ue,
   l as v,
-} from "./main-C8eTrL1h.js";
+} from "./main-WSk9Eua5.js";
 
 var ke = class extends Ue {
   constructor(e, t) {
@@ -1696,7 +1696,7 @@ function lr() {
       children: [
         v.jsx("h1", {
           className: "text-5xl font-extrabold tracking-tight",
-          children: "RoomMe",
+          children: "RooMe",
         }),
         v.jsx("p", {
           className: "text-muted-foreground",

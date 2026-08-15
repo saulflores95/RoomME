@@ -3910,7 +3910,7 @@ function getResponse() {
 }
 async function getStartManifest() {
   const { tsrStartManifest } = await import(
-    "./_tanstack-start-manifest_v-BwWKDVYu.mjs"
+    "./_tanstack-start-manifest_v-Gjutqu0M.mjs"
   );
   const startManifest = tsrStartManifest();
   const rootRoute = (startManifest.routes[rootRouteId] =
@@ -4221,7 +4221,7 @@ function createStartHandler(cb) {
   let routerEntry = null;
   const getEntries = async () => {
     if (routerEntry === null) {
-      routerEntry = await import("./router-DT_aQl4p.mjs").then((n) => n.r);
+      routerEntry = await import("./router-BydVigxg.mjs").then((n) => n.c);
     }
     if (startEntry === null) {
       startEntry = await import("./start-HYkvq4Ni.mjs");

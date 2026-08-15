@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import type { JSX } from "react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
-import { getSession } from "~/auth/server";
 import { ComplexForm } from "~/components/complex-form";
-import { Link } from "~/i18n/navigation";
+import { ListingInquiryCard } from "~/components/listing-inquiry-card";
+import { getListingAccess } from "~/lib/listing-access";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("list");
@@ -19,24 +19,19 @@ export default async function ListAComplexPage({
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("list");
-  const session = await getSession();
+  const access = await getListingAccess();
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-12">
-      <h1 className="mb-2 text-4xl font-bold">{t("createComplexTitle")}</h1>
+      <h1 className="mb-2 text-4xl font-bold tracking-tight">
+        {t("createComplexTitle")}
+      </h1>
       <p className="text-muted-foreground mb-10">
-        {t("createComplexSubtitle")}
+        {access.canCreateListing
+          ? t("createComplexSubtitle")
+          : t("inquirySubtitle")}
       </p>
-      {session?.user ? (
-        <ComplexForm />
-      ) : (
-        <p className="text-muted-foreground">
-          {t("needAuthComplex")}{" "}
-          <Link href="/sign-up" className="underline">
-            {t("createComplexTitle")}
-          </Link>
-        </p>
-      )}
+      {access.canCreateListing ? <ComplexForm /> : <ListingInquiryCard />}
     </main>
   );
 }

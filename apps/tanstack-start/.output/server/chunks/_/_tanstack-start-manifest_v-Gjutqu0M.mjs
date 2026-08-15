@@ -4,16 +4,16 @@ const tsrStartManifest = () => ({
       filePath:
         "/Users/saulflores/Documents/github/RoomME/apps/tanstack-start/src/routes/__root.tsx",
       children: ["/", "/api/auth/$", "/api/trpc/$"],
-      preloads: ["/assets/main-C8eTrL1h.js"],
+      preloads: ["/assets/main-WSk9Eua5.js"],
       assets: [],
     },
     "/": {
       filePath:
         "/Users/saulflores/Documents/github/RoomME/apps/tanstack-start/src/routes/index.tsx",
       assets: [],
-      preloads: ["/assets/index-BubC0Lhi.js"],
+      preloads: ["/assets/index-czoQ8HiM.js"],
     },
   },
-  clientEntry: "/assets/main-C8eTrL1h.js",
+  clientEntry: "/assets/main-WSk9Eua5.js",
 });
 export { tsrStartManifest };

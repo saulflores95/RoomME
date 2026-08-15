@@ -5,6 +5,12 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 
 import { cn } from "@acme/ui";
+import {
+  isPresetHobby,
+  isPresetPersonality,
+  PET_SIZES,
+  PET_TYPES,
+} from "@acme/validators";
 
 import { Link } from "~/i18n/navigation";
 import { useTRPC } from "~/trpc/react";
@@ -35,10 +41,22 @@ const StarRow = ({
 
 export function UserProfile({ userId }: { userId: string }): JSX.Element {
   const t = useTranslations("profile");
+  const tags = useTranslations("tags");
   const trpc = useTRPC();
   const { data: profile } = useSuspenseQuery(
     trpc.profile.byId.queryOptions({ userId }),
   );
+
+  const petType = PET_TYPES.find((item) => item === profile.petType);
+  const petSize = PET_SIZES.find((item) => item === profile.petSize);
+  const petLabel = profile.hasPets
+    ? [
+        petType ? tags(`petType.${petType}`) : t("petsYes"),
+        petType === "dog" && petSize ? tags(`petSize.${petSize}`) : null,
+      ]
+        .filter((item): item is string => item != null)
+        .join(" · ")
+    : t("petsNo");
 
   return (
     <div className="mx-auto max-w-2xl space-y-8">
@@ -99,20 +117,40 @@ export function UserProfile({ userId }: { userId: string }): JSX.Element {
           <p className="text-muted-foreground text-sm">{t("noBio")}</p>
         )}
         {profile.hobbies.length > 0 ? (
-          <p className="text-sm">
-            <span className="font-medium">{t("hobbies")}: </span>
-            {profile.hobbies.join(", ")}
-          </p>
+          <div className="space-y-2">
+            <p className="text-sm font-medium">{t("hobbies")}</p>
+            <div className="flex flex-wrap gap-2">
+              {profile.hobbies.map((hobby) => (
+                <span
+                  key={hobby}
+                  className="border-input bg-muted/40 inline-flex h-8 items-center rounded-full border px-3 text-sm"
+                >
+                  {isPresetHobby(hobby) ? tags(`hobby.${hobby}`) : hobby}
+                </span>
+              ))}
+            </div>
+          </div>
         ) : null}
         {profile.personalities.length > 0 ? (
-          <p className="text-sm">
-            <span className="font-medium">{t("personalities")}: </span>
-            {profile.personalities.join(", ")}
-          </p>
+          <div className="space-y-2">
+            <p className="text-sm font-medium">{t("personalities")}</p>
+            <div className="flex flex-wrap gap-2">
+              {profile.personalities.map((trait) => (
+                <span
+                  key={trait}
+                  className="border-input bg-muted/40 inline-flex h-8 items-center rounded-full border px-3 text-sm"
+                >
+                  {isPresetPersonality(trait)
+                    ? tags(`personality.${trait}`)
+                    : trait}
+                </span>
+              ))}
+            </div>
+          </div>
         ) : null}
         <p className="text-sm">
           <span className="font-medium">{t("pets")}: </span>
-          {profile.hasPets ? t("petsYes") : t("petsNo")}
+          {petLabel}
         </p>
         {profile.isAgent && profile.operatingCities.length > 0 ? (
           <p className="text-sm">

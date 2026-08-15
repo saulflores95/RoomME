@@ -1,6 +1,6 @@
 "use client";
 
-import type { JSX } from "react";
+import type { JSX, ReactNode } from "react";
 import { useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { notFound } from "next/navigation";
@@ -14,6 +14,12 @@ import { useTranslations } from "next-intl";
 
 import { cn } from "@acme/ui";
 import { Button } from "@acme/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@acme/ui/tooltip";
 
 import { authClient } from "~/auth/client";
 import { ApplicantCard } from "~/components/applicant-card";
@@ -269,45 +275,59 @@ export function RoomDetail({ id }: { id: string }): JSX.Element {
         >
           {t("backToResults")}
         </Link>
-        <div className="flex flex-wrap items-center gap-2">
-          <RoomShareButton
-            listingId={listing.id}
-            title={listing.title}
-            description={listing.description}
-          />
-          {listing.city === "queretaro" ? (
-            isSignedIn ? (
-              <ScheduleTourButton roomId={listing.id} city={listing.city} />
-            ) : (
-              <Button variant="secondary" asChild>
-                <Link href="/sign-in">{t("scheduleTour")}</Link>
-              </Button>
-            )
-          ) : null}
-          {listing.host && !isHost ? (
-            isSignedIn ? (
-              myApplicationQuery.data &&
-              myApplicationQuery.data.status !== "withdrawn" ? (
-                <Button variant="outline" disabled>
-                  {t("applied")}
-                </Button>
+        <TooltipProvider>
+          <div className="flex flex-wrap items-center gap-2">
+            <ActionTooltip label={t("shareTooltip")}>
+              <RoomShareButton
+                listingId={listing.id}
+                title={listing.title}
+                description={listing.description}
+              />
+            </ActionTooltip>
+            {listing.city === "queretaro" ? (
+              isSignedIn ? (
+                <ActionTooltip label={t("scheduleTourTooltip")}>
+                  <ScheduleTourButton roomId={listing.id} city={listing.city} />
+                </ActionTooltip>
               ) : (
-                <Button
-                  disabled={applyMutation.isPending}
-                  onClick={() => {
-                    applyMutation.mutate({ roomId: listing.id });
-                  }}
-                >
-                  {applyMutation.isPending ? t("applying") : t("apply")}
-                </Button>
+                <ActionTooltip label={t("scheduleTourSignInTooltip")}>
+                  <Button asChild>
+                    <Link href="/sign-in">{t("scheduleTour")}</Link>
+                  </Button>
+                </ActionTooltip>
               )
-            ) : (
-              <Button asChild>
-                <Link href="/sign-in">{t("apply")}</Link>
-              </Button>
-            )
-          ) : null}
-        </div>
+            ) : null}
+            {listing.host && !isHost ? (
+              isSignedIn ? (
+                myApplicationQuery.data &&
+                myApplicationQuery.data.status !== "withdrawn" ? (
+                  <ActionTooltip label={t("appliedTooltip")}>
+                    <Button variant="outline" disabled>
+                      {t("applied")}
+                    </Button>
+                  </ActionTooltip>
+                ) : (
+                  <ActionTooltip label={t("applyTooltip")}>
+                    <Button
+                      disabled={applyMutation.isPending}
+                      onClick={() => {
+                        applyMutation.mutate({ roomId: listing.id });
+                      }}
+                    >
+                      {applyMutation.isPending ? t("applying") : t("apply")}
+                    </Button>
+                  </ActionTooltip>
+                )
+              ) : (
+                <ActionTooltip label={t("applySignInTooltip")}>
+                  <Button asChild>
+                    <Link href="/sign-in">{t("apply")}</Link>
+                  </Button>
+                </ActionTooltip>
+              )
+            ) : null}
+          </div>
+        </TooltipProvider>
       </div>
       {applyError ? (
         <p className="text-destructive text-sm">{applyError}</p>
@@ -634,5 +654,22 @@ export function RoomDetail({ id }: { id: string }): JSX.Element {
         </section>
       ) : null}
     </div>
+  );
+}
+
+function ActionTooltip({
+  label,
+  children,
+}: {
+  label: string;
+  children: ReactNode;
+}): JSX.Element {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="inline-flex">{children}</span>
+      </TooltipTrigger>
+      <TooltipContent side="bottom">{label}</TooltipContent>
+    </Tooltip>
   );
 }

@@ -15,10 +15,20 @@ import {
 import { CitySchema } from "@acme/validators";
 
 import { ageFromBirthDate } from "../lib/profile";
-import { computeAvailableSlots } from "../lib/tour-slots";
+import {
+  addCalendarDays,
+  calendarDateKey,
+  computeAvailableSlots,
+  dateKeyInTimeZone,
+  startOfZonedDayUtc,
+} from "../lib/tour-slots";
 import { agentProcedure, protectedProcedure, publicProcedure } from "../trpc";
 
 const SLOT_MINUTES = 60;
+
+const CalendarDateSchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Expected YYYY-MM-DD");
 
 const DEFAULT_ADMIN_HOURS = [1, 2, 3, 4, 5].map((dayOfWeek) => ({
   dayOfWeek,
@@ -43,6 +53,7 @@ export interface TourBookingItem {
   roomTitle: string;
   roomNeighborhood: string | null;
   roomCity: string | null;
+  roomAddressLine1: string | null;
   agentId: string;
   agentName: string;
   seekerId: string;
@@ -51,6 +62,38 @@ export interface TourBookingItem {
   endsAt: Date;
   status: "scheduled" | "cancelled" | "completed";
 }
+
+const toTourBookingItem = (row: {
+  id: string;
+  roomId: string;
+  agentId: string;
+  seekerId: string;
+  startsAt: Date;
+  endsAt: Date;
+  status: "scheduled" | "cancelled" | "completed";
+  room: {
+    title: string;
+    neighborhood: string | null;
+    city: string | null;
+    addressLine1: string | null;
+  };
+  agent: { name: string };
+  seeker: { name: string };
+}): TourBookingItem => ({
+  id: row.id,
+  roomId: row.roomId,
+  roomTitle: row.room.title,
+  roomNeighborhood: row.room.neighborhood,
+  roomCity: row.room.city,
+  roomAddressLine1: row.room.addressLine1,
+  agentId: row.agentId,
+  agentName: row.agent.name,
+  seekerId: row.seekerId,
+  seekerName: row.seeker.name,
+  startsAt: row.startsAt,
+  endsAt: row.endsAt,
+  status: row.status,
+});
 
 const isAdmin = (role: string | null | undefined): boolean =>
   hasRole(role, "admin");
@@ -95,6 +138,21 @@ const resolveWeeklyHours = <
   }
   return hours;
 };
+
+const blockedKeysFromRows = (rows: { date: Date }[]): string[] =>
+  rows.map((row) => calendarDateKey(row.date));
+
+const zonedDayBounds = (
+  instant: Date,
+): { dayStart: Date; dayEnd: Date; dayKey: string } => {
+  const dayKey = dateKeyInTimeZone(instant);
+  const dayStart = startOfZonedDayUtc(dayKey);
+  const dayEnd = startOfZonedDayUtc(addCalendarDays(dayKey, 1));
+  return { dayStart, dayEnd, dayKey };
+};
+
+const calendarDateToDbDate = (dateKey: string): Date =>
+  new Date(`${dateKey}T00:00:00.000Z`);
 
 export const tourRouter = {
   listAgentsForCity: publicProcedure
@@ -204,15 +262,16 @@ export const tourRouter = {
   addBlockedDate: agentProcedure
     .input(
       z.object({
-        date: z.coerce.date(),
+        date: CalendarDateSchema,
         note: z.string().max(256).optional(),
       }),
     )
     .mutation(async ({ ctx, input }): Promise<{ id: string }> => {
+      const date = calendarDateToDbDate(input.date);
       const existing = await ctx.db.query.AgentBlockedDate.findFirst({
         where: and(
           eq(AgentBlockedDate.agentId, ctx.session.user.id),
-          eq(AgentBlockedDate.date, input.date),
+          eq(AgentBlockedDate.date, date),
         ),
       });
       if (existing) {
@@ -226,7 +285,7 @@ export const tourRouter = {
         .insert(AgentBlockedDate)
         .values({
           agentId: ctx.session.user.id,
-          date: input.date,
+          date,
           note: input.note,
         })
         .returning({ id: AgentBlockedDate.id });
@@ -288,7 +347,7 @@ export const tourRouter = {
         from: input.from,
         to: input.to,
         weeklyHours: resolveWeeklyHours(agentRow.role, hours),
-        blockedDates: blocked.map((row) => row.date),
+        blockedDateKeys: blockedKeysFromRows(blocked),
         existingStarts: bookings.map((row) => row.startsAt),
         slotMinutes: SLOT_MINUTES,
       }).map((startsAt) => ({ startsAt }));
@@ -335,10 +394,7 @@ export const tourRouter = {
         });
       }
 
-      const dayStart = new Date(input.startsAt);
-      dayStart.setHours(0, 0, 0, 0);
-      const dayEnd = new Date(dayStart);
-      dayEnd.setDate(dayEnd.getDate() + 1);
+      const { dayStart, dayEnd } = zonedDayBounds(input.startsAt);
 
       const slots = await ctx.db.query.AgentWeeklyHours.findMany({
         where: eq(AgentWeeklyHours.agentId, input.agentId),
@@ -359,7 +415,7 @@ export const tourRouter = {
         from: dayStart,
         to: dayEnd,
         weeklyHours: resolveWeeklyHours(agent.role, slots),
-        blockedDates: blocked.map((row) => row.date),
+        blockedDateKeys: blockedKeysFromRows(blocked),
         existingStarts: existing.map((row) => row.startsAt),
         slotMinutes: SLOT_MINUTES,
       });
@@ -375,39 +431,53 @@ export const tourRouter = {
       }
 
       const endsAt = new Date(input.startsAt.getTime() + SLOT_MINUTES * 60_000);
-      const [booking] = await ctx.db
-        .insert(TourBooking)
-        .values({
-          roomId: input.roomId,
-          agentId: input.agentId,
-          seekerId: ctx.session.user.id,
-          startsAt: input.startsAt,
-          endsAt,
-          status: "scheduled",
-        })
-        .returning({ id: TourBooking.id });
 
-      if (!booking) {
-        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      }
+      try {
+        const [booking] = await ctx.db
+          .insert(TourBooking)
+          .values({
+            roomId: input.roomId,
+            agentId: input.agentId,
+            seekerId: ctx.session.user.id,
+            startsAt: input.startsAt,
+            endsAt,
+            status: "scheduled",
+          })
+          .returning({ id: TourBooking.id });
 
-      const seeker = await ctx.db.query.user.findFirst({
-        where: eq(user.id, ctx.session.user.id),
-      });
+        if (!booking) {
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        }
 
-      if (agent.email && seeker?.email) {
-        await sendTourBookingEmails({
-          agentEmail: agent.email,
-          agentName: agent.name,
-          seekerEmail: seeker.email,
-          seekerName: seeker.name,
-          roomTitle: room.title,
-          startsAt: input.startsAt,
-          kind: "booked",
+        const seeker = await ctx.db.query.user.findFirst({
+          where: eq(user.id, ctx.session.user.id),
         });
-      }
 
-      return { id: booking.id };
+        if (agent.email && seeker?.email) {
+          await sendTourBookingEmails({
+            agentEmail: agent.email,
+            agentName: agent.name,
+            seekerEmail: seeker.email,
+            seekerName: seeker.name,
+            roomTitle: room.title,
+            startsAt: input.startsAt,
+            kind: "booked",
+          });
+        }
+
+        return { id: booking.id };
+      } catch (error) {
+        if (
+          error instanceof Error &&
+          /tour_booking_agent_starts_scheduled_uidx|unique/i.test(error.message)
+        ) {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: "Slot is no longer available",
+          });
+        }
+        throw error;
+      }
     }),
 
   cancel: protectedProcedure
@@ -472,10 +542,7 @@ export const tourRouter = {
         throw new TRPCError({ code: "NOT_FOUND" });
       }
 
-      const dayStart = new Date(input.startsAt);
-      dayStart.setHours(0, 0, 0, 0);
-      const dayEnd = new Date(dayStart);
-      dayEnd.setDate(dayEnd.getDate() + 1);
+      const { dayStart, dayEnd } = zonedDayBounds(input.startsAt);
 
       const hours = await ctx.db.query.AgentWeeklyHours.findMany({
         where: eq(AgentWeeklyHours.agentId, ctx.session.user.id),
@@ -496,8 +563,8 @@ export const tourRouter = {
       const available = computeAvailableSlots({
         from: dayStart,
         to: dayEnd,
-        weeklyHours: hours,
-        blockedDates: blocked.map((row) => row.date),
+        weeklyHours: resolveWeeklyHours(booking.agent.role, hours),
+        blockedDateKeys: blockedKeysFromRows(blocked),
         existingStarts: existing.map((row) => row.startsAt),
         slotMinutes: SLOT_MINUTES,
       });
@@ -512,14 +579,28 @@ export const tourRouter = {
       }
 
       const endsAt = new Date(input.startsAt.getTime() + SLOT_MINUTES * 60_000);
-      await ctx.db
-        .update(TourBooking)
-        .set({
-          startsAt: input.startsAt,
-          endsAt,
-          rescheduledFromId: booking.id,
-        })
-        .where(eq(TourBooking.id, input.id));
+
+      try {
+        await ctx.db
+          .update(TourBooking)
+          .set({
+            startsAt: input.startsAt,
+            endsAt,
+            rescheduledFromId: booking.id,
+          })
+          .where(eq(TourBooking.id, input.id));
+      } catch (error) {
+        if (
+          error instanceof Error &&
+          /tour_booking_agent_starts_scheduled_uidx|unique/i.test(error.message)
+        ) {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: "Slot is no longer available",
+          });
+        }
+        throw error;
+      }
 
       await sendTourBookingEmails({
         agentEmail: booking.agent.email,
@@ -546,20 +627,7 @@ export const tourRouter = {
         orderBy: (table, { desc }) => [desc(table.startsAt)],
       });
 
-      return rows.map((row) => ({
-        id: row.id,
-        roomId: row.roomId,
-        roomTitle: row.room.title,
-        roomNeighborhood: row.room.neighborhood,
-        roomCity: row.room.city,
-        agentId: row.agentId,
-        agentName: row.agent.name,
-        seekerId: row.seekerId,
-        seekerName: row.seeker.name,
-        startsAt: row.startsAt,
-        endsAt: row.endsAt,
-        status: row.status,
-      }));
+      return rows.map(toTourBookingItem);
     },
   ),
 
@@ -576,7 +644,7 @@ export const tourRouter = {
           eq(TourBooking.agentId, ctx.session.user.id),
           gte(TourBooking.startsAt, input.from),
           lte(TourBooking.startsAt, input.to),
-          inArray(TourBooking.status, ["scheduled", "completed"]),
+          inArray(TourBooking.status, ["scheduled", "cancelled", "completed"]),
         ),
         with: {
           room: true,
@@ -586,19 +654,6 @@ export const tourRouter = {
         orderBy: (table, { asc }) => [asc(table.startsAt)],
       });
 
-      return rows.map((row) => ({
-        id: row.id,
-        roomId: row.roomId,
-        roomTitle: row.room.title,
-        roomNeighborhood: row.room.neighborhood,
-        roomCity: row.room.city,
-        agentId: row.agentId,
-        agentName: row.agent.name,
-        seekerId: row.seekerId,
-        seekerName: row.seeker.name,
-        startsAt: row.startsAt,
-        endsAt: row.endsAt,
-        status: row.status,
-      }));
+      return rows.map(toTourBookingItem);
     }),
 } satisfies TRPCRouterRecord;
