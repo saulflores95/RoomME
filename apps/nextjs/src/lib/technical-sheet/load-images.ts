@@ -1,6 +1,17 @@
-import sharp from "sharp";
+import type { Sharp, SharpInput } from "sharp";
 
 import type { SheetImage } from "./types";
+
+type SharpFactory = (input: SharpInput) => Sharp;
+
+let sharpModule: Promise<SharpFactory> | undefined;
+
+/** Loaded lazily so a missing native binary drops photos instead of failing the whole sheet. */
+const loadSharp = (): Promise<SharpFactory> => {
+  sharpModule ??= (async (): Promise<SharpFactory> =>
+    (await import("sharp")).default)();
+  return sharpModule;
+};
 
 const FETCH_TIMEOUT_MS = 10_000;
 const HERO_WIDTH = 1600;
@@ -31,6 +42,7 @@ const toJpegDataUrl = async (
     throw new Error(`HTTP ${response.status}`);
   }
   const input = Buffer.from(await response.arrayBuffer());
+  const sharp = await loadSharp();
   const output = await sharp(input)
     .rotate()
     .resize({ width, withoutEnlargement: true })

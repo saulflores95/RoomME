@@ -23,7 +23,12 @@ const config = {
   ],
   serverExternalPackages: ["@react-pdf/renderer", "sharp"],
   outputFileTracingIncludes: {
-    "/api/listings/[id]/technical-sheet": ["./src/assets/fonts/**"],
+    // Keys are picomatch globs, so a literal `[id]` would be read as a character class.
+    "/api/listings/*/technical-sheet": [
+      "./src/assets/fonts/**",
+      // sharp dlopens libvips from a sibling pnpm package, which file tracing can't see.
+      "../../node_modules/.pnpm/@img+sharp-libvips-*/node_modules/@img/sharp-libvips-*/lib/**",
+    ],
   },
   images: {
     remotePatterns: [
