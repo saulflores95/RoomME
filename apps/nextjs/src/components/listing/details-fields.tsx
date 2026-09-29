@@ -2,7 +2,7 @@
 
 import type { JSX } from "react";
 import { useTranslations } from "next-intl";
-import { Controller, useFormContext } from "react-hook-form";
+import { Controller, useFormContext, useWatch } from "react-hook-form";
 
 import type { ListingFormValues } from "@acme/validators";
 import { FieldGroup } from "@acme/ui/field";
@@ -15,32 +15,40 @@ import {
 import { ImageUploader } from "./image-uploader";
 import { ListingSectionCard } from "./section-card";
 
-export function BedroomFields(): JSX.Element {
+export function DetailsFields({ step }: { step: number }): JSX.Element {
   const t = useTranslations("list");
   const { control } = useFormContext<ListingFormValues>();
+  const listingType = useWatch({ control, name: "listingType" });
+  const isRoom = listingType === "room";
 
   return (
-    <ListingSectionCard step={1} title={t("room")} description={t("roomHint")}>
+    <ListingSectionCard
+      step={step}
+      title={isRoom ? t("room") : t("details")}
+      description={isRoom ? t("roomHint") : t("detailsHint")}
+    >
       <FieldGroup>
         <FormTextField
           control={control}
-          name="roomTitle"
-          label={t("roomTitle")}
+          name="title"
+          label={isRoom ? t("roomTitle") : t("listingTitle")}
         />
         <FormTextareaField
           control={control}
-          name="roomDescription"
-          label={t("roomDescription")}
+          name="description"
+          label={isRoom ? t("roomDescription") : t("listingDescription")}
         />
-        <FormSelectField
-          control={control}
-          name="bathroomType"
-          label={t("bathroomType")}
-          options={[
-            { value: "private", label: t("bathroomPrivate") },
-            { value: "shared", label: t("bathroomShared") },
-          ]}
-        />
+        {isRoom ? (
+          <FormSelectField
+            control={control}
+            name="bathroomType"
+            label={t("bathroomType")}
+            options={[
+              { value: "private", label: t("bathroomPrivate") },
+              { value: "shared", label: t("bathroomShared") },
+            ]}
+          />
+        ) : null}
         <FormSelectField
           control={control}
           name="furnished"
@@ -62,7 +70,7 @@ export function BedroomFields(): JSX.Element {
           name="images"
           render={({ field, fieldState }) => (
             <ImageUploader
-              label={t("roomImage")}
+              label={isRoom ? t("roomImage") : t("listingImage")}
               hint={t("imagesHint")}
               value={field.value}
               onChange={field.onChange}

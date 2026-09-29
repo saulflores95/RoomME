@@ -11,7 +11,7 @@ import superjson from "superjson";
 import { z, ZodError } from "zod/v4";
 
 import type { Role } from "@acme/auth/roles";
-import { COMPLEX_MANAGER_ROLES, hasAnyRole } from "@acme/auth/roles";
+import { AGENT_ROLES, hasAnyRole } from "@acme/auth/roles";
 import { db } from "@acme/db/client";
 
 export interface AppUser {
@@ -159,5 +159,5 @@ const requireRoles = (roles: readonly Role[]) =>
   });
 
 export const hostProcedure = requireRoles(["host", "agent", "admin"]);
-export const agentProcedure = requireRoles(COMPLEX_MANAGER_ROLES);
+export const agentProcedure = requireRoles(AGENT_ROLES);
 export const adminProcedure = requireRoles(["admin"]);

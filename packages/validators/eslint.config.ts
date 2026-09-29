@@ -7,4 +7,10 @@ export default defineConfig(
     ignores: ["dist/**"],
   },
   baseConfig,
+  {
+    files: ["src/**/*.test.ts"],
+    rules: {
+      "@typescript-eslint/no-floating-promises": "off",
+    },
+  },
 );

@@ -11,20 +11,21 @@ import { toast } from "@acme/ui/toast";
 import { AdminConfirmDialog } from "~/components/admin-confirm-dialog";
 import { useTRPC } from "~/trpc/react";
 
-export function AdminComplexes(): JSX.Element {
+export function AdminProperties(): JSX.Element {
   const t = useTranslations("admin");
+  const tList = useTranslations("list");
   const trpc = useTRPC();
   const queryClient = useQueryClient();
-  const complexesQuery = useQuery(trpc.admin.complexes.queryOptions());
+  const propertiesQuery = useQuery(trpc.admin.properties.queryOptions());
   const [removeId, setRemoveId] = useState<string | null>(null);
 
   const deleteMutation = useMutation(
-    trpc.admin.deleteComplex.mutationOptions({
+    trpc.admin.deleteProperty.mutationOptions({
       onSuccess: async () => {
-        toast.success(t("complexRemoved"));
+        toast.success(t("propertyRemoved"));
         setRemoveId(null);
         await Promise.all([
-          queryClient.invalidateQueries(trpc.admin.complexes.queryFilter()),
+          queryClient.invalidateQueries(trpc.admin.properties.queryFilter()),
           queryClient.invalidateQueries(trpc.admin.rooms.queryFilter()),
         ]);
       },
@@ -32,22 +33,22 @@ export function AdminComplexes(): JSX.Element {
     }),
   );
 
-  if (complexesQuery.isPending) {
+  if (propertiesQuery.isPending) {
     return <div className="bg-muted h-64 animate-pulse rounded-2xl" />;
   }
 
-  const complexes = complexesQuery.data ?? [];
-  const removeTarget = complexes.find((row) => row.id === removeId) ?? null;
+  const properties = propertiesQuery.data ?? [];
+  const removeTarget = properties.find((row) => row.id === removeId) ?? null;
 
   return (
     <section className="border-border bg-card overflow-hidden rounded-2xl border shadow-sm">
-      {complexes.length === 0 ? (
+      {properties.length === 0 ? (
         <p className="text-muted-foreground px-5 py-8 text-sm">
-          {t("emptyComplexes")}
+          {t("emptyProperties")}
         </p>
       ) : (
         <ul className="divide-border divide-y">
-          {complexes.map((row) => (
+          {properties.map((row) => (
             <li
               key={row.id}
               className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 sm:px-6"
@@ -58,7 +59,11 @@ export function AdminComplexes(): JSX.Element {
                   {[row.neighborhood, row.city].filter(Boolean).join(" · ")}
                 </p>
                 <p className="text-muted-foreground mt-1 text-xs">
-                  {t("roomCount", { count: row.roomCount })}
+                  {[
+                    tList(`propertyTypeOption.${row.propertyType}`),
+                    row.ownerName ?? t("sharedBuilding"),
+                    t("roomCount", { count: row.roomCount }),
+                  ].join(" · ")}
                 </p>
               </div>
               <Button
@@ -77,8 +82,8 @@ export function AdminComplexes(): JSX.Element {
 
       <AdminConfirmDialog
         open={removeTarget != null}
-        title={t("removeComplexTitle")}
-        description={t("removeComplexHint", {
+        title={t("removePropertyTitle")}
+        description={t("removePropertyHint", {
           title: removeTarget?.title ?? "",
           count: removeTarget?.roomCount ?? 0,
         })}

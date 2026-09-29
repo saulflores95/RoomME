@@ -7,10 +7,10 @@ import { useTranslations } from "next-intl";
 import { cn } from "@acme/ui";
 
 import { AdminAgents } from "~/components/admin-agents";
-import { AdminComplexes } from "~/components/admin-complexes";
 import { AdminListings } from "~/components/admin-listings";
+import { AdminProperties } from "~/components/admin-properties";
 
-type AdminTab = "agents" | "listings" | "complexes";
+type AdminTab = "agents" | "listings" | "properties";
 
 export function AdminPanel(): JSX.Element {
   const t = useTranslations("admin");
@@ -19,7 +19,7 @@ export function AdminPanel(): JSX.Element {
   const tabs: { id: AdminTab; label: string }[] = [
     { id: "agents", label: t("tabAgents") },
     { id: "listings", label: t("tabListings") },
-    { id: "complexes", label: t("tabComplexes") },
+    { id: "properties", label: t("tabProperties") },
   ];
 
   return (
@@ -44,7 +44,7 @@ export function AdminPanel(): JSX.Element {
 
       {tab === "agents" ? <AdminAgents /> : null}
       {tab === "listings" ? <AdminListings /> : null}
-      {tab === "complexes" ? <AdminComplexes /> : null}
+      {tab === "properties" ? <AdminProperties /> : null}
     </div>
   );
 }

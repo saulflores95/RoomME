@@ -26,12 +26,14 @@ export const hasAnyRole = (
   return wanted.some((value) => current.includes(value));
 };
 
-export const COMPLEX_MANAGER_ROLES = ["agent", "admin"] as const;
+/** Roles that run tours and manage ownerless shared buildings. */
+export const AGENT_ROLES = ["agent", "admin"] as const;
 
-export const canManageComplexes = (role: string | null | undefined): boolean =>
-  hasAnyRole(role, COMPLEX_MANAGER_ROLES);
+export const isAgentOrAdmin = (role: string | null | undefined): boolean =>
+  hasAnyRole(role, AGENT_ROLES);
 
-export const canCreateListing = (
+/** Approved agents can host tours. Publishing listings is open to everyone. */
+export const isApprovedAgent = (
   role: string | null | undefined,
   agentApproved: boolean | null | undefined,
 ): boolean =>

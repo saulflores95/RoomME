@@ -1,19 +1,19 @@
 import type { RouterOutputs } from "@acme/api";
 import type {
-  ComplexFormValues,
   CreateListingInput,
   LeaseMonths,
   ListingFormValues,
   ListingInclude,
+  PropertyFormValues,
 } from "@acme/validators";
 import {
   LEASE_MONTHS,
   LISTING_INCLUDES,
-  NONE_COMPLEX_ID,
+  NONE_PROPERTY_ID,
 } from "@acme/validators";
 
 type RoomForEdit = RouterOutputs["listing"]["roomForEdit"];
-type ComplexForEdit = RouterOutputs["listing"]["complexForEdit"];
+type PropertyForEdit = RouterOutputs["listing"]["propertyForEdit"];
 
 export const todayInputValue = (): string => {
   const now = new Date();
@@ -45,19 +45,24 @@ const toListingIncludes = (values: string[]): ListingInclude[] =>
     LISTING_INCLUDES.some((include) => include === item),
   );
 
-export const listingFormDefaults = (): ListingFormValues => ({
-  isComplex: false,
-  complexId: NONE_COMPLEX_ID,
+export const listingFormDefaults = (
+  listingType: ListingFormValues["listingType"] = "room",
+): ListingFormValues => ({
+  listingType,
+  propertyType: listingType === "room" ? "house" : "apartment",
+  propertyId: NONE_PROPERTY_ID,
+  bedroomCount: listingType === "room" ? 0 : 1,
+  bathroomCount: listingType === "room" ? 0 : 1,
   addressLine1: "",
   city: "queretaro",
   neighborhood: "",
   latitude: undefined,
   longitude: undefined,
-  roomTitle: "",
-  roomDescription: "",
+  title: "",
+  description: "",
   rentPriceMxn: Number.NaN,
   includes: [],
-  capacity: 1,
+  capacity: listingType === "room" ? 1 : 2,
   householdGender: "mixed",
   preferredAgeMin: 18,
   preferredAgeMax: 35,
@@ -77,7 +82,9 @@ export const listingFormDefaults = (): ListingFormValues => ({
   images: [],
 });
 
-export const complexFormDefaults = (): ComplexFormValues => ({
+export const propertyFormDefaults = (): PropertyFormValues => ({
+  propertyType: "house",
+  isSharedBuilding: false,
   title: "",
   description: "",
   addressLine1: "",
@@ -85,23 +92,35 @@ export const complexFormDefaults = (): ComplexFormValues => ({
   neighborhood: "",
   latitude: undefined,
   longitude: undefined,
+  bedroomCount: undefined,
+  bathroomCount: undefined,
   petFriendly: false,
   amenities: [],
   images: [],
 });
 
+/**
+ * Shared buildings stay selected so the address remains locked. The host's
+ * own property is edited in place through the address fields instead.
+ */
 export const roomToListingFormValues = (
   room: RoomForEdit,
 ): ListingFormValues => ({
-  isComplex: room.complexId !== null,
-  complexId: room.complexId ?? NONE_COMPLEX_ID,
+  listingType: room.listingType,
+  propertyType: room.propertyType,
+  propertyId:
+    room.propertyIsShared && room.propertyId
+      ? room.propertyId
+      : NONE_PROPERTY_ID,
+  bedroomCount: room.bedroomCount ?? (room.listingType === "room" ? 0 : 1),
+  bathroomCount: room.bathroomCount ?? (room.listingType === "room" ? 0 : 1),
   addressLine1: room.addressLine1,
   city: room.city,
   neighborhood: room.neighborhood,
   latitude: room.latitude ?? undefined,
   longitude: room.longitude ?? undefined,
-  roomTitle: room.title,
-  roomDescription: room.description,
+  title: room.title,
+  description: room.description,
   rentPriceMxn: room.rentPriceMxn,
   includes: toListingIncludes(room.includes),
   capacity: room.capacity,
@@ -124,39 +143,45 @@ export const roomToListingFormValues = (
   images: room.images,
 });
 
-export const complexToFormValues = (
-  complex: ComplexForEdit,
-): ComplexFormValues => ({
-  title: complex.title,
-  description: complex.description,
-  addressLine1: complex.addressLine1,
-  city: complex.city,
-  neighborhood: complex.neighborhood,
-  latitude: complex.latitude ?? undefined,
-  longitude: complex.longitude ?? undefined,
-  petFriendly: complex.petFriendly,
-  amenities: complex.amenities,
-  images: complex.images,
+export const propertyToFormValues = (
+  property: PropertyForEdit,
+): PropertyFormValues => ({
+  propertyType: property.propertyType,
+  isSharedBuilding: property.isSharedBuilding,
+  title: property.title,
+  description: property.description,
+  addressLine1: property.addressLine1,
+  city: property.city,
+  neighborhood: property.neighborhood,
+  latitude: property.latitude ?? undefined,
+  longitude: property.longitude ?? undefined,
+  bedroomCount: property.bedroomCount ?? undefined,
+  bathroomCount: property.bathroomCount ?? undefined,
+  petFriendly: property.petFriendly,
+  amenities: property.amenities,
+  images: property.images,
 });
 
 export const toCreateListingInput = (
   values: ListingFormValues,
 ): CreateListingInput => {
   const attached =
-    values.isComplex &&
-    values.complexId !== NONE_COMPLEX_ID &&
-    values.complexId.length > 0;
+    values.propertyId !== NONE_PROPERTY_ID && values.propertyId.length > 0;
+  const isEntire = values.listingType === "entire_property";
 
   return {
-    isComplex: values.isComplex,
-    complexId: attached ? values.complexId : undefined,
+    listingType: values.listingType,
+    propertyType: values.propertyType,
+    propertyId: attached ? values.propertyId : undefined,
+    bedroomCount: isEntire ? values.bedroomCount : undefined,
+    bathroomCount: isEntire ? values.bathroomCount : undefined,
     addressLine1: values.addressLine1,
     city: values.city,
     neighborhood: values.neighborhood,
     latitude: values.latitude,
     longitude: values.longitude,
-    roomTitle: values.roomTitle,
-    roomDescription: values.roomDescription,
+    title: values.title,
+    description: values.description,
     rentPriceMxn: values.rentPriceMxn,
     includes: values.includes,
     capacity: values.capacity,

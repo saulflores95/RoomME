@@ -4,7 +4,7 @@ import type { JSX } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { FormProvider, useForm } from "react-hook-form";
+import { FormProvider, useForm, useWatch } from "react-hook-form";
 
 import type { RouterOutputs } from "@acme/api";
 import type { ListingFormValues } from "@acme/validators";
@@ -12,26 +12,32 @@ import { Button } from "@acme/ui/button";
 import { toast } from "@acme/ui/toast";
 import { ListingFormSchema } from "@acme/validators";
 
-import { BedroomFields } from "~/components/listing/bedroom-fields";
+import type { ListingStepKey } from "~/components/listing/use-listing-steps";
+import { DetailsFields } from "~/components/listing/details-fields";
 import {
   listingFormDefaults,
   toCreateListingInput,
 } from "~/components/listing/form-values";
 import { HouseholdFields } from "~/components/listing/household-fields";
+import { LayoutFields } from "~/components/listing/layout-fields";
+import { ListingTypeFields } from "~/components/listing/listing-type-fields";
 import { LocationFields } from "~/components/listing/location-fields";
 import { MoneyFields } from "~/components/listing/money-fields";
 import { RulesFields } from "~/components/listing/rules-fields";
+import { useListingSteps } from "~/components/listing/use-listing-steps";
 import { useRouter } from "~/i18n/navigation";
 import { useTRPC } from "~/trpc/react";
 
-const emptyComplexes: RouterOutputs["listing"]["complexes"] = [];
+const emptyProperties: RouterOutputs["listing"]["properties"] = [];
 
 export function ListingForm({
   roomId,
   defaultValues,
+  initialListingType = "room",
 }: {
   roomId?: string;
   defaultValues?: ListingFormValues;
+  initialListingType?: ListingFormValues["listingType"];
 }): JSX.Element {
   const t = useTranslations("list");
   const trpc = useTRPC();
@@ -41,18 +47,26 @@ export function ListingForm({
 
   const form = useForm<ListingFormValues>({
     resolver: zodResolver(ListingFormSchema),
-    defaultValues: defaultValues ?? listingFormDefaults(),
+    defaultValues: defaultValues ?? listingFormDefaults(initialListingType),
   });
+  const listingType = useWatch({ control: form.control, name: "listingType" });
+  const steps = useListingSteps(listingType);
 
-  const complexesQuery = useQuery(trpc.listing.complexes.queryOptions());
-  const complexes = complexesQuery.data ?? emptyComplexes;
+  const propertiesQuery = useQuery(trpc.listing.properties.queryOptions());
+  const properties = propertiesQuery.data ?? emptyProperties;
+
+  const invalidate = async (): Promise<void> => {
+    await queryClient.invalidateQueries(trpc.listing.list.queryFilter());
+    await queryClient.invalidateQueries(trpc.listing.mine.queryFilter());
+    await queryClient.invalidateQueries(trpc.listing.properties.queryFilter());
+  };
 
   const create = useMutation(
     trpc.listing.create.mutationOptions({
-      onSuccess: async () => {
+      onSuccess: async (result) => {
         toast.success(t("success"));
-        await queryClient.invalidateQueries(trpc.listing.list.queryFilter());
-        router.push("/rooms");
+        await invalidate();
+        router.push(`/rooms/${result.roomId}`);
       },
       onError: (error) => {
         toast.error(error.message);
@@ -64,8 +78,7 @@ export function ListingForm({
     trpc.listing.update.mutationOptions({
       onSuccess: async () => {
         toast.success(t("saved"));
-        await queryClient.invalidateQueries(trpc.listing.list.queryFilter());
-        await queryClient.invalidateQueries(trpc.listing.mine.queryFilter());
+        await invalidate();
         router.push("/host");
       },
       onError: (error) => {
@@ -83,6 +96,26 @@ export function ListingForm({
     create.mutate(input);
   };
 
+  const renderStep = (key: ListingStepKey): JSX.Element => {
+    const step = steps.stepOf(key);
+    switch (key) {
+      case "type":
+        return <ListingTypeFields key={key} step={step} locked={isEdit} />;
+      case "details":
+        return <DetailsFields key={key} step={step} />;
+      case "layout":
+        return <LayoutFields key={key} step={step} />;
+      case "money":
+        return <MoneyFields key={key} step={step} />;
+      case "household":
+        return <HouseholdFields key={key} step={step} />;
+      case "rules":
+        return <RulesFields key={key} step={step} />;
+      case "location":
+        return <LocationFields key={key} step={step} properties={properties} />;
+    }
+  };
+
   return (
     <FormProvider {...form}>
       <form
@@ -90,11 +123,7 @@ export function ListingForm({
         noValidate
         onSubmit={form.handleSubmit(onSubmit)}
       >
-        <BedroomFields />
-        <MoneyFields />
-        <HouseholdFields />
-        <RulesFields />
-        <LocationFields complexes={complexes} />
+        {steps.keys.map(renderStep)}
 
         <Button type="submit" disabled={create.isPending || update.isPending}>
           {isEdit ? t("save") : t("submit")}

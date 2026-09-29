@@ -2,16 +2,16 @@ import type { Metadata } from "next";
 import type { JSX } from "react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
-import { ComplexForm } from "~/components/complex-form";
-import { ListingInquiryCard } from "~/components/listing-inquiry-card";
+import { PropertyForm } from "~/components/property-form";
+import { Link } from "~/i18n/navigation";
 import { getListingAccess } from "~/lib/listing-access";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("list");
-  return { title: t("createComplexTitle") };
+  return { title: t("createPropertyTitle") };
 }
 
-export default async function ListAComplexPage({
+export default async function AddPropertyPage({
   params,
 }: {
   params: Promise<{ locale: string }>;
@@ -24,14 +24,21 @@ export default async function ListAComplexPage({
   return (
     <main className="mx-auto max-w-3xl px-4 py-12">
       <h1 className="mb-2 text-4xl font-bold tracking-tight">
-        {t("createComplexTitle")}
+        {t("createPropertyTitle")}
       </h1>
       <p className="text-muted-foreground mb-10">
-        {access.canCreateListing
-          ? t("createComplexSubtitle")
-          : t("inquirySubtitle")}
+        {t("createPropertySubtitle")}
       </p>
-      {access.canCreateListing ? <ComplexForm /> : <ListingInquiryCard />}
+      {access.isSignedIn ? (
+        <PropertyForm />
+      ) : (
+        <p className="text-muted-foreground">
+          {t("needAuthProperty")}{" "}
+          <Link href="/sign-in" className="underline">
+            {t("signIn")}
+          </Link>
+        </p>
+      )}
     </main>
   );
 }

@@ -36,7 +36,7 @@ export async function TrustSection() {
         </ol>
         <div className="mt-6 flex flex-wrap gap-3">
           <Link
-            href="/list-a-room"
+            href="/list"
             className="bg-foreground text-background rounded-md px-4 py-2 text-sm"
           >
             {cta("listRoom")}

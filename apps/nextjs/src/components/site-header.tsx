@@ -4,7 +4,7 @@ import type { JSX } from "react";
 import { useTranslations } from "next-intl";
 
 import type { Currency, Locale } from "@acme/i18n";
-import { canManageComplexes, hasRole } from "@acme/auth/roles";
+import { hasRole, isAgentOrAdmin } from "@acme/auth/roles";
 import { currencies, localeLabels } from "@acme/i18n";
 import { Button } from "@acme/ui/button";
 import {
@@ -47,6 +47,9 @@ function AccountMenuItems({
         <Link href="/host">{t("listings")}</Link>
       </DropdownMenuItem>
       <DropdownMenuItem asChild>
+        <Link href="/bookings">{t("myBookings")}</Link>
+      </DropdownMenuItem>
+      <DropdownMenuItem asChild>
         <Link href="/tours">{t("myTours")}</Link>
       </DropdownMenuItem>
       {isAgent ? (
@@ -72,7 +75,7 @@ export function SiteHeader(): JSX.Element {
   const pathname = usePathname();
   const router = useRouter();
   const { data: session } = authClient.useSession();
-  const isAgent = canManageComplexes(session?.user.role);
+  const isAgent = isAgentOrAdmin(session?.user.role);
   const isAdmin = hasRole(session?.user.role, "admin");
 
   const switchLocale = (locale: Locale): void => {
@@ -100,6 +103,14 @@ export function SiteHeader(): JSX.Element {
         </Link>
 
         <div className="flex items-center gap-1 sm:gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            asChild
+            className="hidden sm:inline-flex"
+          >
+            <Link href="/list">{t("listYourPlace")}</Link>
+          </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm">

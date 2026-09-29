@@ -14,13 +14,13 @@ import {
 } from "./form-controls";
 import { ListingSectionCard } from "./section-card";
 
-export function HouseholdFields(): JSX.Element {
+export function HouseholdFields({ step }: { step: number }): JSX.Element {
   const t = useTranslations("list");
   const { control } = useFormContext<ListingFormValues>();
 
   return (
     <ListingSectionCard
-      step={3}
+      step={step}
       title={t("household")}
       description={t("householdHint")}
     >

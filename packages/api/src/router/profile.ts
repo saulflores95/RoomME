@@ -2,7 +2,7 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod/v4";
 
-import { canCreateListing, hasRole } from "@acme/auth/roles";
+import { hasRole, isApprovedAgent } from "@acme/auth/roles";
 import { avg, count, desc, eq } from "@acme/db";
 import { RoommeRating, user } from "@acme/db/schema";
 import {
@@ -62,7 +62,7 @@ export interface MyProfile {
   role: string | null;
   isAgent: boolean;
   agentApproved: boolean;
-  canCreateListing: boolean;
+  isApprovedAgent: boolean;
 }
 
 export const profileRouter = {
@@ -182,7 +182,7 @@ export const profileRouter = {
       role,
       isAgent: hasRole(role, "agent") || hasRole(role, "admin"),
       agentApproved: profile.agentApproved,
-      canCreateListing: canCreateListing(role, profile.agentApproved),
+      isApprovedAgent: isApprovedAgent(role, profile.agentApproved),
     };
   }),
 

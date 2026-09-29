@@ -13,7 +13,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const paths = [
     "",
     "/rooms",
-    "/list-a-room",
+    "/list",
     "/list-a-complex",
     "/rooms-for-rent-queretaro",
   ];

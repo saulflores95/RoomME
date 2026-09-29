@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import type { RouterOutputs } from "@acme/api";
 import { cn } from "@acme/ui";
 
+import { ListingTypeBadge } from "~/components/listing-type-badge";
 import { Link, useRouter } from "~/i18n/navigation";
 import { formatMxn } from "~/lib/money";
 
@@ -46,8 +47,8 @@ export function RoomCard({
   const router = useRouter();
   const address =
     listing.addressLine1 && listing.addressLine1.length > 0
-      ? `${listing.addressLine1}, ${listing.complex.neighborhood}`
-      : listing.complex.neighborhood;
+      ? `${listing.addressLine1}, ${listing.property.neighborhood}`
+      : listing.property.neighborhood;
   const description =
     listing.description.length > 110
       ? `${listing.description.slice(0, 110).trimEnd()}…`
@@ -93,6 +94,11 @@ export function RoomCard({
               {pinNumber}
             </span>
           ) : null}
+          <ListingTypeBadge
+            listingType={listing.listingType}
+            propertyType={listing.property.propertyType}
+            className="absolute top-2 right-2"
+          />
           {listing.host?.image ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img

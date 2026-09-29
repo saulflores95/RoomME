@@ -8,7 +8,7 @@ export async function CtaCards() {
   return (
     <section className="mx-auto grid max-w-6xl gap-4 px-4 pb-16 md:grid-cols-2">
       <Link
-        href="/list-a-room"
+        href="/list"
         className="relative min-h-56 overflow-hidden rounded-3xl"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}

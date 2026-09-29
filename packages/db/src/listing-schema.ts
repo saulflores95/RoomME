@@ -12,16 +12,34 @@ export const roomStatusEnum = pgEnum("room_status", [
   "occupied",
   "unlisted",
 ]);
-export const complexImageKindEnum = pgEnum("complex_image_kind", [
+export const propertyImageKindEnum = pgEnum("property_image_kind", [
   "exterior",
   "common",
   "other",
+]);
+export const propertyTypeEnum = pgEnum("property_type", [
+  "house",
+  "apartment",
+  "condo",
+  "villa",
+  "building",
+  "hotel",
+  "other",
+]);
+export const listingTypeEnum = pgEnum("listing_type", [
+  "room",
+  "entire_property",
 ]);
 export const roomImageKindEnum = pgEnum("room_image_kind", [
   "room",
   "apartment",
 ]);
-export const stayStatusEnum = pgEnum("stay_status", ["current", "past"]);
+export const stayStatusEnum = pgEnum("stay_status", [
+  "current",
+  "past",
+  "upcoming",
+  "cancelled",
+]);
 export const applicationStatusEnum = pgEnum("application_status", [
   "pending",
   "accepted",
@@ -60,8 +78,13 @@ export const tourBookingStatusEnum = pgEnum("tour_booking_status", [
   "completed",
 ]);
 
-export const Complex = pgTable("complex", (t) => ({
+export const Property = pgTable("property", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
+  /** Null for legacy platform-managed shared buildings. */
+  ownerId: t.text().references(() => user.id, { onDelete: "cascade" }),
+  propertyType: propertyTypeEnum().notNull().default("building"),
+  bedroomCount: t.integer(),
+  bathroomCount: t.real(),
   title: t.varchar({ length: 256 }).notNull(),
   description: t.text().notNull(),
   addressLine1: t.varchar({ length: 256 }).notNull(),
@@ -83,22 +106,28 @@ export const Complex = pgTable("complex", (t) => ({
     .$onUpdateFn(() => sql`now()`),
 }));
 
-export const ComplexImage = pgTable("complex_image", (t) => ({
+export const PropertyImage = pgTable("property_image", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
-  complexId: t
+  propertyId: t
     .uuid()
     .notNull()
-    .references(() => Complex.id, { onDelete: "cascade" }),
+    .references(() => Property.id, { onDelete: "cascade" }),
   url: t.text().notNull(),
   alt: t.varchar({ length: 256 }),
   sortOrder: t.integer().notNull().default(0),
-  kind: complexImageKindEnum().notNull().default("other"),
+  kind: propertyImageKindEnum().notNull().default("other"),
 }));
 
+/**
+ * A bookable listing. Either a private room inside a property or the entire
+ * property (see `listingType`). Room-only columns are ignored for
+ * `entire_property` listings.
+ */
 export const Room = pgTable("room", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
   hostId: t.text().references(() => user.id, { onDelete: "cascade" }),
-  complexId: t.uuid().references(() => Complex.id, { onDelete: "cascade" }),
+  propertyId: t.uuid().references(() => Property.id, { onDelete: "cascade" }),
+  listingType: listingTypeEnum().notNull().default("room"),
   title: t.varchar({ length: 256 }).notNull(),
   description: t.text().notNull(),
   addressLine1: t.varchar({ length: 256 }),
@@ -161,7 +190,11 @@ export const Stay = pgTable("stay", (t) => ({
     .text()
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
+  applicationId: t
+    .uuid()
+    .references(() => Application.id, { onDelete: "set null" }),
   startedAt: t.timestamp({ mode: "date", withTimezone: true }).notNull(),
+  /** Exclusive end. Null means open-ended. */
   endedAt: t.timestamp({ mode: "date", withTimezone: true }),
   status: stayStatusEnum().notNull().default("current"),
 }));
@@ -207,6 +240,8 @@ export const Application = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
     message: t.text(),
+    moveInDate: t.date({ mode: "string" }),
+    leaseMonths: t.integer(),
     status: applicationStatusEnum().notNull().default("pending"),
     createdAt: t
       .timestamp({ mode: "date", withTimezone: true })
@@ -289,15 +324,20 @@ export const TourBooking = pgTable(
   ],
 );
 
-export const complexRelations = relations(Complex, ({ many }) => ({
-  images: many(ComplexImage),
+export const propertyRelations = relations(Property, ({ one, many }) => ({
+  owner: one(user, {
+    fields: [Property.ownerId],
+    references: [user.id],
+    relationName: "propertyOwner",
+  }),
+  images: many(PropertyImage),
   rooms: many(Room),
 }));
 
-export const complexImageRelations = relations(ComplexImage, ({ one }) => ({
-  complex: one(Complex, {
-    fields: [ComplexImage.complexId],
-    references: [Complex.id],
+export const propertyImageRelations = relations(PropertyImage, ({ one }) => ({
+  property: one(Property, {
+    fields: [PropertyImage.propertyId],
+    references: [Property.id],
   }),
 }));
 
@@ -307,9 +347,9 @@ export const roomRelations = relations(Room, ({ one, many }) => ({
     references: [user.id],
     relationName: "roomHost",
   }),
-  complex: one(Complex, {
-    fields: [Room.complexId],
-    references: [Complex.id],
+  property: one(Property, {
+    fields: [Room.propertyId],
+    references: [Property.id],
   }),
   images: many(RoomImage),
   stays: many(Stay),
@@ -333,11 +373,16 @@ export const stayRelations = relations(Stay, ({ one, many }) => ({
     fields: [Stay.userId],
     references: [user.id],
   }),
+  application: one(Application, {
+    fields: [Stay.applicationId],
+    references: [Application.id],
+  }),
   ratings: many(RoommeRating),
 }));
 
 export const userRelations = relations(user, ({ many }) => ({
   hostedRooms: many(Room, { relationName: "roomHost" }),
+  ownedProperties: many(Property, { relationName: "propertyOwner" }),
   stays: many(Stay),
   ratingsGiven: many(RoommeRating, { relationName: "ratingRater" }),
   ratingsReceived: many(RoommeRating, { relationName: "ratingRatee" }),
@@ -348,7 +393,7 @@ export const userRelations = relations(user, ({ many }) => ({
   seekerTours: many(TourBooking, { relationName: "tourSeeker" }),
 }));
 
-export const applicationRelations = relations(Application, ({ one }) => ({
+export const applicationRelations = relations(Application, ({ one, many }) => ({
   room: one(Room, {
     fields: [Application.roomId],
     references: [Room.id],
@@ -357,6 +402,7 @@ export const applicationRelations = relations(Application, ({ one }) => ({
     fields: [Application.applicantId],
     references: [user.id],
   }),
+  stays: many(Stay),
 }));
 
 export const agentWeeklyHoursRelations = relations(
@@ -413,7 +459,7 @@ export const roommeRatingRelations = relations(RoommeRating, ({ one }) => ({
   }),
 }));
 
-export const CreateComplexSchema = createInsertSchema(Complex, {
+export const CreatePropertySchema = createInsertSchema(Property, {
   title: z.string().min(1).max(256),
   description: z.string().min(1).max(4000),
   addressLine1: z.string().min(1).max(256),
@@ -421,6 +467,7 @@ export const CreateComplexSchema = createInsertSchema(Complex, {
   city: z.enum(["queretaro", "cdmx"]),
 }).omit({
   id: true,
+  ownerId: true,
   createdAt: true,
   updatedAt: true,
 });
@@ -433,7 +480,7 @@ export const CreateRoomSchema = createInsertSchema(Room, {
 }).omit({
   id: true,
   hostId: true,
-  complexId: true,
+  propertyId: true,
   createdAt: true,
   updatedAt: true,
 });

@@ -13,7 +13,7 @@ export async function GreenBanner() {
         <p className="text-white/80">{t("subtitle")}</p>
         <div className="flex flex-wrap gap-3">
           <Link
-            href="/list-a-room"
+            href="/list"
             className="rounded-md bg-neutral-900 px-4 py-2 text-sm text-white"
           >
             {cta("listRoom")}

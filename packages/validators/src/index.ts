@@ -34,7 +34,7 @@ export const LISTING_INCLUDES = [
 export const ListingIncludeSchema = z.enum(LISTING_INCLUDES);
 export type ListingInclude = z.infer<typeof ListingIncludeSchema>;
 
-export const COMPLEX_AMENITIES = [
+export const PROPERTY_AMENITIES = [
   "wifi",
   "rooftop",
   "laundry",
@@ -50,20 +50,20 @@ export const COMPLEX_AMENITIES = [
   "padel",
   "tennis",
 ] as const;
-export type PresetAmenity = (typeof COMPLEX_AMENITIES)[number];
+export type PresetAmenity = (typeof PROPERTY_AMENITIES)[number];
 
 export const MAX_AMENITY_LENGTH = 48;
 export const MAX_AMENITIES = 24;
 
-export const ComplexAmenitySchema = z
+export const PropertyAmenitySchema = z
   .string()
   .trim()
   .min(1)
   .max(MAX_AMENITY_LENGTH);
-export type ComplexAmenity = z.infer<typeof ComplexAmenitySchema>;
+export type PropertyAmenity = z.infer<typeof PropertyAmenitySchema>;
 
 export const isPresetAmenity = (value: string): value is PresetAmenity =>
-  COMPLEX_AMENITIES.some((item) => item === value);
+  PROPERTY_AMENITIES.some((item) => item === value);
 
 export const PROFILE_HOBBIES = [
   "cooking",
@@ -143,11 +143,33 @@ export const LeaseMonthsSchema = z.coerce
   );
 export type LeaseMonths = (typeof LEASE_MONTHS)[number];
 
-export const NONE_COMPLEX_ID = "none";
+export const LISTING_TYPES = ["room", "entire_property"] as const;
+export const ListingTypeSchema = z.enum(LISTING_TYPES);
+export type ListingType = z.infer<typeof ListingTypeSchema>;
+
+export const PROPERTY_TYPES = [
+  "house",
+  "apartment",
+  "condo",
+  "villa",
+  "building",
+  "hotel",
+  "other",
+] as const;
+export const PropertyTypeSchema = z.enum(PROPERTY_TYPES);
+export type PropertyType = z.infer<typeof PropertyTypeSchema>;
+
+export const isRoomListing = (value: { listingType: ListingType }): boolean =>
+  value.listingType === "room";
+
+/** Form sentinel for "no existing property selected; use a new address". */
+export const NONE_PROPERTY_ID = "none";
 
 const AgeSchema = z.number().int().min(18).max(99);
 
 export const MAX_LISTING_IMAGES = 12;
+export const MAX_BEDROOMS = 20;
+export const MAX_BATHROOMS = 20;
 
 export const ListingImageUrlSchema = z.url({
   message: "Enter a valid image URL",
@@ -156,6 +178,15 @@ export const ListingImageUrlSchema = z.url({
 export const ListingImagesSchema = z
   .array(ListingImageUrlSchema)
   .max(MAX_LISTING_IMAGES);
+
+const BedroomCountSchema = z.number().int().min(0).max(MAX_BEDROOMS);
+const BathroomCountSchema = z
+  .number()
+  .min(0)
+  .max(MAX_BATHROOMS)
+  .refine((value) => Number.isInteger(value * 2), {
+    message: "Use whole or half bathrooms",
+  });
 
 const requireMapPin = (
   data: { latitude?: number; longitude?: number },
@@ -170,17 +201,61 @@ const requireMapPin = (
   }
 };
 
+interface ListingTypeRefinementInput {
+  listingType: ListingType;
+  preferredAgeMin: number;
+  preferredAgeMax: number;
+  bedroomCount?: number;
+  bathroomCount?: number;
+}
+
+/** Room listings validate household fields; entire properties need layout. */
+const refineListingType = (
+  data: ListingTypeRefinementInput,
+  ctx: z.RefinementCtx,
+): void => {
+  if (data.listingType === "room") {
+    if (data.preferredAgeMin > data.preferredAgeMax) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["preferredAgeMax"],
+        message: "Minimum age must be less than or equal to maximum age",
+      });
+    }
+    return;
+  }
+
+  if (data.bedroomCount === undefined || data.bedroomCount < 1) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["bedroomCount"],
+      message: "Add at least one bedroom",
+    });
+  }
+  if (data.bathroomCount === undefined || data.bathroomCount < 0.5) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["bathroomCount"],
+      message: "Add at least one bathroom",
+    });
+  }
+};
+
 export const CreateListingSchema = z
   .object({
-    isComplex: z.boolean().default(false),
-    complexId: z.uuid().optional(),
+    listingType: ListingTypeSchema.default("room"),
+    propertyType: PropertyTypeSchema.default("house"),
+    /** Existing property to attach to. Omit to create a new owned property. */
+    propertyId: z.uuid().optional(),
+    bedroomCount: BedroomCountSchema.optional(),
+    bathroomCount: BathroomCountSchema.optional(),
     addressLine1: z.string().min(1).max(256),
     city: CitySchema,
     neighborhood: z.string().min(1).max(128),
     latitude: z.number().min(-90).max(90).optional(),
     longitude: z.number().min(-180).max(180).optional(),
-    roomTitle: z.string().min(1).max(256),
-    roomDescription: z.string().min(1).max(4000),
+    title: z.string().min(1).max(256),
+    description: z.string().min(1).max(4000),
     rentPriceMxn: z.number().positive(),
     includes: z.array(ListingIncludeSchema).default([]),
     capacity: z.number().int().min(1).max(12).default(1),
@@ -202,15 +277,11 @@ export const CreateListingSchema = z
     cleanliness: CleanlinessSchema.default("average"),
     images: ListingImagesSchema.default([]),
   })
-  .refine((value) => value.preferredAgeMin <= value.preferredAgeMax, {
-    message: "Minimum age must be less than or equal to maximum age",
-    path: ["preferredAgeMax"],
-  })
   .superRefine((data, ctx) => {
-    if (data.isComplex && data.complexId) {
+    refineListingType(data, ctx);
+    if (data.propertyId) {
       return;
     }
-
     requireMapPin(data, ctx);
   });
 
@@ -223,15 +294,18 @@ export type UpdateListingInput = z.infer<typeof UpdateListingSchema>;
 
 export const ListingFormSchema = z
   .object({
-    isComplex: z.boolean(),
-    complexId: z.string(),
+    listingType: ListingTypeSchema,
+    propertyType: PropertyTypeSchema,
+    propertyId: z.string(),
+    bedroomCount: BedroomCountSchema,
+    bathroomCount: BathroomCountSchema,
     addressLine1: z.string().max(256),
     city: CitySchema,
     neighborhood: z.string().max(128),
     latitude: z.number().min(-90).max(90).optional(),
     longitude: z.number().min(-180).max(180).optional(),
-    roomTitle: z.string().min(1).max(256),
-    roomDescription: z.string().min(1).max(4000),
+    title: z.string().min(1).max(256),
+    description: z.string().min(1).max(4000),
     rentPriceMxn: z.number().positive(),
     includes: z.array(ListingIncludeSchema),
     capacity: z.number().int().min(1).max(12),
@@ -262,15 +336,11 @@ export const ListingFormSchema = z
     cleanliness: CleanlinessSchema,
     images: ListingImagesSchema,
   })
-  .refine((value) => value.preferredAgeMin <= value.preferredAgeMax, {
-    message: "Minimum age must be less than or equal to maximum age",
-    path: ["preferredAgeMax"],
-  })
   .superRefine((data, ctx) => {
+    refineListingType(data, ctx);
+
     const attached =
-      data.isComplex &&
-      data.complexId !== NONE_COMPLEX_ID &&
-      data.complexId.length > 0;
+      data.propertyId !== NONE_PROPERTY_ID && data.propertyId.length > 0;
 
     if (attached) {
       return;
@@ -297,8 +367,11 @@ export const ListingFormSchema = z
 
 export type ListingFormValues = z.infer<typeof ListingFormSchema>;
 
-export const ComplexFormSchema = z
+export const PropertyFormSchema = z
   .object({
+    propertyType: PropertyTypeSchema,
+    /** Agents/admins only: an ownerless building anyone can list rooms in. */
+    isSharedBuilding: z.boolean(),
     title: z.string().min(1).max(256),
     description: z.string().min(1).max(4000),
     addressLine1: z.string().min(1).max(256),
@@ -306,23 +379,37 @@ export const ComplexFormSchema = z
     neighborhood: z.string().min(1).max(128),
     latitude: z.number().min(-90).max(90).optional(),
     longitude: z.number().min(-180).max(180).optional(),
+    bedroomCount: BedroomCountSchema.optional(),
+    bathroomCount: BathroomCountSchema.optional(),
     petFriendly: z.boolean(),
-    amenities: z.array(ComplexAmenitySchema).max(MAX_AMENITIES),
+    amenities: z.array(PropertyAmenitySchema).max(MAX_AMENITIES),
     images: ListingImagesSchema,
   })
   .superRefine((data, ctx) => {
     requireMapPin(data, ctx);
   });
 
-export type ComplexFormValues = z.infer<typeof ComplexFormSchema>;
+export type PropertyFormValues = z.infer<typeof PropertyFormSchema>;
 
-export const CreateComplexSchema = ComplexFormSchema;
-export type CreateComplexInput = z.infer<typeof CreateComplexSchema>;
+export const CreatePropertySchema = PropertyFormSchema;
+export type CreatePropertyInput = z.infer<typeof CreatePropertySchema>;
 
-export const UpdateComplexSchema = z
+export const UpdatePropertySchema = z
   .object({ id: z.uuid() })
-  .and(ComplexFormSchema);
-export type UpdateComplexInput = z.infer<typeof UpdateComplexSchema>;
+  .and(PropertyFormSchema);
+export type UpdatePropertyInput = z.infer<typeof UpdatePropertySchema>;
+
+const CalendarDateKeySchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, { message: "Expected YYYY-MM-DD" });
+
+export const ApplyToListingSchema = z.object({
+  roomId: z.uuid(),
+  message: z.string().max(2000).optional(),
+  moveInDate: CalendarDateKeySchema,
+  leaseMonths: LeaseMonthsSchema,
+});
+export type ApplyToListingInput = z.infer<typeof ApplyToListingSchema>;
 
 export const ListListingsSchema = z.object({
   city: CitySchema.optional(),
@@ -343,6 +430,8 @@ export const ListListingsSchema = z.object({
   cleanliness: CleanlinessSchema.optional(),
   includes: z.array(ListingIncludeSchema).optional(),
   availableBy: z.coerce.date().optional(),
+  listingType: ListingTypeSchema.optional(),
+  propertyType: PropertyTypeSchema.optional(),
 });
 
 export type ListListingsInput = z.infer<typeof ListListingsSchema>;

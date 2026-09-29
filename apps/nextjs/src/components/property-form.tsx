@@ -6,42 +6,52 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { Controller, FormProvider, useForm, useWatch } from "react-hook-form";
 
-import type { ComplexFormValues } from "@acme/validators";
+import type { PropertyFormValues } from "@acme/validators";
+import { isAgentOrAdmin } from "@acme/auth/roles";
 import { Button } from "@acme/ui/button";
 import { FieldError, FieldGroup } from "@acme/ui/field";
 import { toast } from "@acme/ui/toast";
-import { ComplexFormSchema } from "@acme/validators";
+import {
+  MAX_BATHROOMS,
+  MAX_BEDROOMS,
+  PROPERTY_TYPES,
+  PropertyFormSchema,
+} from "@acme/validators";
 
+import { authClient } from "~/auth/client";
 import { AddressPicker } from "~/components/address-picker";
 import { AmenityPills } from "~/components/listing/amenity-pills";
 import {
   FormCheckboxField,
+  FormNumberField,
   FormSelectField,
   FormTextareaField,
   FormTextField,
 } from "~/components/listing/form-controls";
-import { complexFormDefaults } from "~/components/listing/form-values";
+import { propertyFormDefaults } from "~/components/listing/form-values";
 import { ImageUploader } from "~/components/listing/image-uploader";
 import { ListingSectionCard } from "~/components/listing/section-card";
 import { useRouter } from "~/i18n/navigation";
 import { useTRPC } from "~/trpc/react";
 
-export function ComplexForm({
-  complexId,
+export function PropertyForm({
+  propertyId,
   defaultValues,
 }: {
-  complexId?: string;
-  defaultValues?: ComplexFormValues;
+  propertyId?: string;
+  defaultValues?: PropertyFormValues;
 }): JSX.Element {
   const t = useTranslations("list");
   const trpc = useTRPC();
   const router = useRouter();
   const queryClient = useQueryClient();
-  const isEdit = complexId !== undefined;
+  const isEdit = propertyId !== undefined;
+  const { data: session } = authClient.useSession();
+  const canCreateSharedBuilding = !isEdit && isAgentOrAdmin(session?.user.role);
 
-  const form = useForm<ComplexFormValues>({
-    resolver: zodResolver(ComplexFormSchema),
-    defaultValues: defaultValues ?? complexFormDefaults(),
+  const form = useForm<PropertyFormValues>({
+    resolver: zodResolver(PropertyFormSchema),
+    defaultValues: defaultValues ?? propertyFormDefaults(),
   });
 
   const city = useWatch({ control: form.control, name: "city" });
@@ -53,11 +63,11 @@ export function ComplexForm({
       : null;
 
   const create = useMutation(
-    trpc.listing.createComplex.mutationOptions({
+    trpc.listing.createProperty.mutationOptions({
       onSuccess: async () => {
-        toast.success(t("complexSuccess"));
+        toast.success(t("propertySuccess"));
         await queryClient.invalidateQueries(
-          trpc.listing.complexes.queryFilter(),
+          trpc.listing.properties.queryFilter(),
         );
         await queryClient.invalidateQueries(trpc.listing.mine.queryFilter());
         router.push("/host");
@@ -69,12 +79,13 @@ export function ComplexForm({
   );
 
   const update = useMutation(
-    trpc.listing.updateComplex.mutationOptions({
+    trpc.listing.updateProperty.mutationOptions({
       onSuccess: async () => {
         toast.success(t("saved"));
         await queryClient.invalidateQueries(
-          trpc.listing.complexes.queryFilter(),
+          trpc.listing.properties.queryFilter(),
         );
+        await queryClient.invalidateQueries(trpc.listing.list.queryFilter());
         await queryClient.invalidateQueries(trpc.listing.mine.queryFilter());
         router.push("/host");
       },
@@ -84,9 +95,9 @@ export function ComplexForm({
     }),
   );
 
-  const onSubmit = (values: ComplexFormValues): void => {
+  const onSubmit = (values: PropertyFormValues): void => {
     if (isEdit) {
-      update.mutate({ id: complexId, ...values });
+      update.mutate({ id: propertyId, ...values });
       return;
     }
     create.mutate(values);
@@ -101,26 +112,61 @@ export function ComplexForm({
       >
         <ListingSectionCard
           step={1}
-          title={t("complex")}
-          description={t("complexAboutHint")}
+          title={t("propertyAbout")}
+          description={t("propertyAboutHint")}
         >
           <FieldGroup>
+            <FormSelectField
+              control={form.control}
+              name="propertyType"
+              label={t("propertyType")}
+              options={PROPERTY_TYPES.map((type) => ({
+                value: type,
+                label: t(`propertyTypeOption.${type}`),
+              }))}
+            />
             <FormTextField
               control={form.control}
               name="title"
-              label={t("complexTitle")}
+              label={t("propertyTitle")}
             />
             <FormTextareaField
               control={form.control}
               name="description"
-              label={t("complexDescription")}
+              label={t("propertyDescription")}
             />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <FormNumberField
+                control={form.control}
+                name="bedroomCount"
+                label={t("bedroomCount")}
+                min={0}
+                max={MAX_BEDROOMS}
+                optional
+              />
+              <FormNumberField
+                control={form.control}
+                name="bathroomCount"
+                label={t("bathroomCount")}
+                min={0}
+                max={MAX_BATHROOMS}
+                stepValue={0.5}
+                optional
+              />
+            </div>
+            {canCreateSharedBuilding ? (
+              <FormCheckboxField
+                control={form.control}
+                name="isSharedBuilding"
+                label={t("isSharedBuilding")}
+              />
+            ) : null}
             <Controller
               control={form.control}
               name="images"
               render={({ field, fieldState }) => (
                 <ImageUploader
-                  label={t("complexImage")}
+                  label={t("propertyImage")}
                   hint={t("imagesHint")}
                   value={field.value}
                   onChange={field.onChange}
@@ -230,7 +276,7 @@ export function ComplexForm({
         </ListingSectionCard>
 
         <Button type="submit" disabled={create.isPending || update.isPending}>
-          {isEdit ? t("save") : t("complexSubmit")}
+          {isEdit ? t("save") : t("propertySubmit")}
         </Button>
       </form>
     </FormProvider>

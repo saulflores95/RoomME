@@ -4,16 +4,16 @@ import type { JSX } from "react";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 
-import type { ComplexAmenity, PresetAmenity } from "@acme/validators";
+import type { PresetAmenity, PropertyAmenity } from "@acme/validators";
 import { cn } from "@acme/ui";
 import { Button } from "@acme/ui/button";
 import { FieldError, FieldLegend, FieldSet } from "@acme/ui/field";
 import { Input } from "@acme/ui/input";
 import {
-  COMPLEX_AMENITIES,
   isPresetAmenity,
   MAX_AMENITIES,
   MAX_AMENITY_LENGTH,
+  PROPERTY_AMENITIES,
 } from "@acme/validators";
 
 const pillClassName = (selected: boolean): string =>
@@ -30,8 +30,8 @@ export function AmenityPills({
   invalid = false,
   error,
 }: {
-  value: ComplexAmenity[];
-  onChange: (next: ComplexAmenity[]) => void;
+  value: PropertyAmenity[];
+  onChange: (next: PropertyAmenity[]) => void;
   invalid?: boolean;
   error?: { message?: string };
 }): JSX.Element {
@@ -49,7 +49,7 @@ export function AmenityPills({
       return null;
     }
 
-    for (const preset of COMPLEX_AMENITIES) {
+    for (const preset of PROPERTY_AMENITIES) {
       if (preset === normalized) {
         return preset;
       }
@@ -61,7 +61,7 @@ export function AmenityPills({
     return null;
   };
 
-  const toggle = (item: ComplexAmenity): void => {
+  const toggle = (item: PropertyAmenity): void => {
     const exists = value.some(
       (current) => current.toLowerCase() === item.toLowerCase(),
     );
@@ -95,7 +95,7 @@ export function AmenityPills({
     <FieldSet>
       <FieldLegend variant="label">{t("amenities")}</FieldLegend>
       <div className="flex flex-wrap gap-2">
-        {COMPLEX_AMENITIES.map((item) => {
+        {PROPERTY_AMENITIES.map((item) => {
           const isSelected = selected.has(item);
           return (
             <button

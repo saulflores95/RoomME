@@ -101,9 +101,14 @@ export function FormNumberField<T extends FieldValues>({
   label,
   min,
   max,
+  stepValue,
+  optional = false,
 }: FormFieldBase<T> & {
   min?: number;
   max?: number;
+  stepValue?: number;
+  /** Clearing an optional field stores `undefined` instead of `NaN`. */
+  optional?: boolean;
 }): JSX.Element {
   return (
     <Controller
@@ -123,12 +128,17 @@ export function FormNumberField<T extends FieldValues>({
               type="number"
               min={min}
               max={max}
+              step={stepValue}
               onBlur={field.onBlur}
               value={Number.isFinite(numeric) ? numeric : ""}
               aria-invalid={fieldState.invalid}
               onChange={(event) => {
                 const next = event.target.value;
-                field.onChange(next.length === 0 ? Number.NaN : Number(next));
+                if (next.length === 0) {
+                  field.onChange(optional ? undefined : Number.NaN);
+                  return;
+                }
+                field.onChange(Number(next));
               }}
             />
             {fieldState.invalid ? (

@@ -1,133 +1,112 @@
 "use client";
 
 import type { JSX } from "react";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { useFormContext, useWatch } from "react-hook-form";
 
+import type { RouterOutputs } from "@acme/api";
 import type { ListingFormValues } from "@acme/validators";
-import { canManageComplexes } from "@acme/auth/roles";
 import { FieldError, FieldGroup } from "@acme/ui/field";
-import { NONE_COMPLEX_ID } from "@acme/validators";
+import { NONE_PROPERTY_ID } from "@acme/validators";
 
-import { authClient } from "~/auth/client";
 import { AddressPicker } from "~/components/address-picker";
 import { Link } from "~/i18n/navigation";
-import {
-  FormCheckboxField,
-  FormSelectField,
-  FormTextField,
-} from "./form-controls";
+import { FormSelectField, FormTextField } from "./form-controls";
 import { ListingSectionCard } from "./section-card";
 
-interface ComplexOption {
-  id: string;
-  title: string;
-  city: ListingFormValues["city"];
-  neighborhood: string;
-  addressLine1: string;
-  latitude: number | null;
-  longitude: number | null;
-}
+type PropertyOption = RouterOutputs["listing"]["properties"][number];
 
 export function LocationFields({
-  complexes,
+  step,
+  properties,
 }: {
-  complexes: ComplexOption[];
+  step: number;
+  properties: PropertyOption[];
 }): JSX.Element {
   const t = useTranslations("list");
-  const { data: session } = authClient.useSession();
-  const canCreateComplex = canManageComplexes(session?.user.role);
   const { control, setValue, formState } = useFormContext<ListingFormValues>();
-  const isComplex = useWatch({ control, name: "isComplex" });
-  const complexId = useWatch({ control, name: "complexId" });
+  const listingType = useWatch({ control, name: "listingType" });
+  const propertyId = useWatch({ control, name: "propertyId" });
   const city = useWatch({ control, name: "city" });
   const latitude = useWatch({ control, name: "latitude" });
   const longitude = useWatch({ control, name: "longitude" });
 
-  const selectedComplex =
-    isComplex && complexId !== NONE_COMPLEX_ID
-      ? (complexes.find((complex) => complex.id === complexId) ?? null)
-      : null;
-  const mapLocked = selectedComplex !== null;
+  // Entire-property listings must live in a property the host owns.
+  const available = useMemo(
+    () =>
+      listingType === "entire_property"
+        ? properties.filter((property) => property.isOwned)
+        : properties,
+    [listingType, properties],
+  );
+  const selected =
+    propertyId === NONE_PROPERTY_ID
+      ? null
+      : (available.find((property) => property.id === propertyId) ?? null);
   const pin =
     latitude !== undefined && longitude !== undefined
       ? { latitude, longitude }
       : null;
 
   useEffect(() => {
-    if (!isComplex) {
-      if (complexId !== NONE_COMPLEX_ID) {
-        setValue("complexId", NONE_COMPLEX_ID);
+    if (propertyId !== NONE_PROPERTY_ID && !selected) {
+      setValue("propertyId", NONE_PROPERTY_ID);
+      return;
+    }
+    if (!selected) {
+      return;
+    }
+
+    setValue("addressLine1", selected.addressLine1);
+    setValue("city", selected.city);
+    setValue("neighborhood", selected.neighborhood);
+    if (selected.latitude !== null && selected.longitude !== null) {
+      setValue("latitude", selected.latitude);
+      setValue("longitude", selected.longitude);
+    }
+    if (listingType === "entire_property") {
+      setValue("propertyType", selected.propertyType);
+      if (selected.bedroomCount !== null) {
+        setValue("bedroomCount", selected.bedroomCount);
       }
-      return;
+      if (selected.bathroomCount !== null) {
+        setValue("bathroomCount", selected.bathroomCount);
+      }
     }
+  }, [listingType, propertyId, selected, setValue]);
 
-    if (!selectedComplex) {
-      return;
-    }
-
-    setValue("addressLine1", selectedComplex.addressLine1);
-    setValue("city", selectedComplex.city);
-    setValue("neighborhood", selectedComplex.neighborhood);
-    if (
-      selectedComplex.latitude !== null &&
-      selectedComplex.longitude !== null
-    ) {
-      setValue("latitude", selectedComplex.latitude);
-      setValue("longitude", selectedComplex.longitude);
-    }
-  }, [complexId, isComplex, selectedComplex, setValue]);
+  const optionLabel = (property: PropertyOption): string =>
+    property.isSharedBuilding
+      ? `${property.title} · ${property.neighborhood} (${t("sharedBuilding")})`
+      : `${property.title} · ${property.neighborhood}`;
 
   return (
     <ListingSectionCard
-      step={5}
-      title={t("complex")}
-      description={t("complexHint")}
+      step={step}
+      title={t("propertyStep")}
+      description={t("propertyStepHint")}
     >
       <FieldGroup>
-        <FormCheckboxField
+        <FormSelectField
           control={control}
-          name="isComplex"
-          label={t("isComplex")}
+          name="propertyId"
+          label={t("selectProperty")}
+          options={[
+            { value: NONE_PROPERTY_ID, label: t("propertyNew") },
+            ...available.map((property) => ({
+              value: property.id,
+              label: optionLabel(property),
+            })),
+          ]}
         />
-        {isComplex ? (
-          <>
-            <FormSelectField
-              control={control}
-              name="complexId"
-              label={t("selectComplex")}
-              options={[
-                { value: NONE_COMPLEX_ID, label: t("complexNone") },
-                ...complexes.map((complex) => ({
-                  value: complex.id,
-                  label: `${complex.title} · ${complex.neighborhood}`,
-                })),
-              ]}
-            />
-            {complexes.length === 0 ? (
-              <p className="text-muted-foreground text-sm">
-                {t("noComplexes")}
-                {canCreateComplex ? (
-                  <>
-                    {" "}
-                    <Link href="/list-a-complex" className="underline">
-                      {t("createComplexLink")}
-                    </Link>
-                  </>
-                ) : null}
-              </p>
-            ) : canCreateComplex ? (
-              <p className="text-muted-foreground text-sm">
-                {t("addComplexHint")}{" "}
-                <Link href="/list-a-complex" className="underline">
-                  {t("createComplexLink")}
-                </Link>
-              </p>
-            ) : null}
-          </>
-        ) : null}
-        {selectedComplex ? null : (
+        <p className="text-muted-foreground text-sm">
+          {t("addPropertyHint")}{" "}
+          <Link href="/list-a-complex" className="underline">
+            {t("createPropertyLink")}
+          </Link>
+        </p>
+        {selected ? null : (
           <>
             <FormTextField
               control={control}
@@ -148,48 +127,36 @@ export function LocationFields({
           </>
         )}
         <AddressPicker
-          city={selectedComplex?.city ?? city}
+          city={selected?.city ?? city}
           pin={
-            selectedComplex?.latitude != null &&
-            selectedComplex.longitude != null
-              ? {
-                  latitude: selectedComplex.latitude,
-                  longitude: selectedComplex.longitude,
-                }
+            selected?.latitude != null && selected.longitude != null
+              ? { latitude: selected.latitude, longitude: selected.longitude }
               : pin
           }
-          locked={mapLocked}
+          locked={selected !== null}
           searchPlaceholder={t("searchAddress")}
           clickHint={t("mapHint")}
-          lockedHint={t("mapLocked")}
+          lockedHint={t("mapLockedProperty")}
           noResults={t("noAddressResults")}
           onLocationChange={(hit) => {
+            const options = { shouldDirty: true, shouldValidate: true };
             setValue(
               "addressLine1",
               hit.addressLine1.length > 0
                 ? hit.addressLine1
-                : (selectedComplex?.addressLine1 ?? ""),
-              { shouldDirty: true, shouldValidate: true },
+                : (selected?.addressLine1 ?? ""),
+              options,
             );
-            setValue("city", hit.city, {
-              shouldDirty: true,
-              shouldValidate: true,
-            });
+            setValue("city", hit.city, options);
             setValue(
               "neighborhood",
               hit.neighborhood.length > 0
                 ? hit.neighborhood
-                : (selectedComplex?.neighborhood ?? ""),
-              { shouldDirty: true, shouldValidate: true },
+                : (selected?.neighborhood ?? ""),
+              options,
             );
-            setValue("latitude", hit.latitude, {
-              shouldDirty: true,
-              shouldValidate: true,
-            });
-            setValue("longitude", hit.longitude, {
-              shouldDirty: true,
-              shouldValidate: true,
-            });
+            setValue("latitude", hit.latitude, options);
+            setValue("longitude", hit.longitude, options);
           }}
         />
         {formState.errors.latitude ? (

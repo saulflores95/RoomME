@@ -7,7 +7,7 @@ import { ListBulletIcon, ViewGridIcon } from "@radix-ui/react-icons";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 
-import type { City, ListListingsInput } from "@acme/validators";
+import type { City, ListingType, ListListingsInput } from "@acme/validators";
 import { cn } from "@acme/ui";
 import { Button } from "@acme/ui/button";
 
@@ -15,6 +15,7 @@ import type { RoomsMapCluster } from "~/components/rooms-map-utils";
 import { RoomCard } from "~/components/room-card";
 import { RoomListItem } from "~/components/room-list-item";
 import { RoomsFilters } from "~/components/rooms-filters";
+import { applyListingType } from "~/components/rooms-filters/filter-utils";
 import { clusterListings } from "~/components/rooms-map-utils";
 import { Link } from "~/i18n/navigation";
 import { useTRPC } from "~/trpc/react";
@@ -31,6 +32,15 @@ const RoomsMap = dynamic(
 );
 
 type ViewMode = "list" | "grid";
+
+const LISTING_TYPE_CHIPS: readonly {
+  value: ListingType | undefined;
+  labelKey: "listingTypeAny" | "listingTypeRoom" | "listingTypeEntire";
+}[] = [
+  { value: undefined, labelKey: "listingTypeAny" },
+  { value: "room", labelKey: "listingTypeRoom" },
+  { value: "entire_property", labelKey: "listingTypeEntire" },
+];
 
 export function RoomsBrowser({ city }: { city?: City }): JSX.Element {
   const t = useTranslations("rooms");
@@ -56,7 +66,7 @@ export function RoomsBrowser({ city }: { city?: City }): JSX.Element {
           id: listing.id,
           latitude: listing.latitude,
           longitude: listing.longitude,
-          complexId: listing.complex.id,
+          propertyId: listing.property.id,
         })),
       ),
     [data],
@@ -165,6 +175,19 @@ export function RoomsBrowser({ city }: { city?: City }): JSX.Element {
           </Link>
 
           <div className="ml-auto flex flex-wrap items-center gap-2">
+            {LISTING_TYPE_CHIPS.map(({ value, labelKey }) => (
+              <button
+                key={labelKey}
+                type="button"
+                aria-pressed={filters.listingType === value}
+                className={cityLinkClass(filters.listingType === value)}
+                onClick={() => {
+                  setFilters((current) => applyListingType(current, value));
+                }}
+              >
+                {t(labelKey)}
+              </button>
+            ))}
             <RoomsFilters value={filters} onChange={setFilters} />
           </div>
         </div>
@@ -174,7 +197,7 @@ export function RoomsBrowser({ city }: { city?: City }): JSX.Element {
             {t("resultsCount", { count: data.length })}
           </p>
           <Button asChild>
-            <Link href="/list-a-room">{t("addListing")}</Link>
+            <Link href="/list">{t("addListing")}</Link>
           </Button>
         </div>
       </div>

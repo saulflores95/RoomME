@@ -4,19 +4,19 @@ import type { JSX } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 
-import { ComplexForm } from "~/components/complex-form";
-import { complexToFormValues } from "~/components/listing/form-values";
+import { propertyToFormValues } from "~/components/listing/form-values";
+import { PropertyForm } from "~/components/property-form";
 import { useTRPC } from "~/trpc/react";
 
-export function EditComplexForm({
-  complexId,
+export function EditPropertyForm({
+  propertyId,
 }: {
-  complexId: string;
+  propertyId: string;
 }): JSX.Element {
   const t = useTranslations("list");
   const trpc = useTRPC();
   const query = useQuery(
-    trpc.listing.complexForEdit.queryOptions({ id: complexId }),
+    trpc.listing.propertyForEdit.queryOptions({ id: propertyId }),
   );
 
   if (query.isPending) {
@@ -28,9 +28,9 @@ export function EditComplexForm({
   }
 
   return (
-    <ComplexForm
-      complexId={complexId}
-      defaultValues={complexToFormValues(query.data)}
+    <PropertyForm
+      propertyId={propertyId}
+      defaultValues={propertyToFormValues(query.data)}
     />
   );
 }

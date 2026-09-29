@@ -23,13 +23,13 @@ import {
 } from "./form-controls";
 import { ListingSectionCard } from "./section-card";
 
-export function MoneyFields(): JSX.Element {
+export function MoneyFields({ step }: { step: number }): JSX.Element {
   const t = useTranslations("list");
   const { control } = useFormContext<ListingFormValues>();
 
   return (
     <ListingSectionCard
-      step={2}
+      step={step}
       title={t("money")}
       description={t("moneyHint")}
     >

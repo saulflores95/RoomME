@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import type { RouterOutputs } from "@acme/api";
 import { cn } from "@acme/ui";
 
+import { useListingTypeLabel } from "~/components/listing-type-badge";
 import { formatMxn } from "~/components/room-card";
 import { Link, useRouter } from "~/i18n/navigation";
 
@@ -24,10 +25,18 @@ export function RoomListItem({
 }): JSX.Element {
   const t = useTranslations("rooms");
   const router = useRouter();
+  const typeLabel = useListingTypeLabel();
+  const isEntire = listing.listingType === "entire_property";
+  const sizeLabel =
+    isEntire && listing.property.bedroomCount != null
+      ? t("bedroomsCount", { count: listing.property.bedroomCount })
+      : isEntire
+        ? null
+        : t("roomies", { count: listing.capacity });
   const address =
     listing.addressLine1 && listing.addressLine1.length > 0
-      ? `${listing.addressLine1}, ${listing.complex.neighborhood}`
-      : listing.complex.neighborhood;
+      ? `${listing.addressLine1}, ${listing.property.neighborhood}`
+      : listing.property.neighborhood;
 
   const openHostProfile = (event: MouseEvent | KeyboardEvent): void => {
     if (!listing.host) {
@@ -78,7 +87,8 @@ export function RoomListItem({
         <h3 className="truncate text-base font-semibold">{listing.title}</h3>
         <p className="text-muted-foreground truncate text-sm">{address}</p>
         <p className="text-muted-foreground text-xs">
-          {t("roomies", { count: listing.capacity })}
+          {typeLabel(listing.listingType, listing.property.propertyType)}
+          {sizeLabel ? ` · ${sizeLabel}` : null}
           {listing.host ? (
             <>
               {" · "}

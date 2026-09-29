@@ -364,13 +364,13 @@ export const tourRouter = {
     .mutation(async ({ ctx, input }): Promise<{ id: string }> => {
       const room = await ctx.db.query.Room.findFirst({
         where: and(eq(Room.id, input.roomId), eq(Room.status, "listed")),
-        with: { complex: true },
+        with: { property: true },
       });
       if (!room) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Room not found" });
       }
 
-      const city = room.city ?? room.complex?.city ?? null;
+      const city = room.city ?? room.property?.city ?? null;
       if (!city) {
         throw new TRPCError({
           code: "BAD_REQUEST",

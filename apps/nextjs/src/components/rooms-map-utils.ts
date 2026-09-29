@@ -2,7 +2,7 @@ export interface RoomsMapListing {
   id: string;
   latitude: number | null;
   longitude: number | null;
-  complexId: string | null;
+  propertyId: string | null;
 }
 
 export interface RoomsMapCluster {
@@ -29,7 +29,7 @@ export const clusterListings = (
     }
 
     const key =
-      listing.complexId ??
+      listing.propertyId ??
       `${roundCoord(listing.latitude)}:${roundCoord(listing.longitude)}`;
     const existing = groups.get(key);
     if (existing) {

@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 
-import { canCreateListing, hasRole } from "@acme/auth/roles";
+import { hasRole, isApprovedAgent } from "@acme/auth/roles";
 import { Button } from "@acme/ui/button";
 import { toast } from "@acme/ui/toast";
 
@@ -54,7 +54,7 @@ export function AdminAgents(): JSX.Element {
       ) : (
         <ul className="divide-border divide-y">
           {users.map((row) => {
-            const approved = canCreateListing(row.role, row.agentApproved);
+            const approved = isApprovedAgent(row.role, row.agentApproved);
             const isAgent = hasRole(row.role, "agent") || row.agentApproved;
             const isAdmin = hasRole(row.role, "admin");
             return (

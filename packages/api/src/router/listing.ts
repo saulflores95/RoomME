@@ -3,24 +3,13 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod/v4";
 
 import type { SQL } from "@acme/db";
-import type { db } from "@acme/db/client";
 import type {
-  BathroomType,
   City,
-  Cleanliness,
   CreateListingInput,
-  Furnished,
-  HouseholdGender,
-  ListingInclude,
-  OvernightGuests,
-  SmokingPolicy,
+  ListingType,
+  PropertyType,
 } from "@acme/validators";
-import {
-  canCreateListing,
-  canManageComplexes,
-  hasRole,
-  withRole,
-} from "@acme/auth/roles";
+import { isAgentOrAdmin, withRole } from "@acme/auth/roles";
 import {
   and,
   arrayContains,
@@ -32,124 +21,75 @@ import {
   inArray,
   isNull,
   lte,
+  ne,
   or,
+  sql,
 } from "@acme/db";
 import {
-  Complex,
-  ComplexImage,
+  Property,
+  PropertyImage,
   Room,
   RoomImage,
   TourBooking,
   user,
 } from "@acme/db/schema";
 import {
-  CreateComplexSchema,
   CreateListingSchema,
-  LISTING_INCLUDES,
+  CreatePropertySchema,
   ListListingsSchema,
-  MAX_AMENITY_LENGTH,
-  UpdateComplexSchema,
   UpdateListingSchema,
+  UpdatePropertySchema,
 } from "@acme/validators";
 
 import type { GeocodeHit } from "../geocode";
+import type {
+  ListingDetail,
+  ListingRoomAttributes,
+  ListingSummary,
+} from "../lib/listing-mappers";
+import type { DbExecutor, PropertyLocation } from "../lib/listing-write";
 import { deleteBlobUrls } from "../blob";
 import { reverseGeocode, searchAddresses } from "../geocode";
-import { agentProcedure, protectedProcedure, publicProcedure } from "../trpc";
+import {
+  toListingDetail,
+  toListingIncludes,
+  toListingSummary,
+  toPropertyAmenities,
+  toRoomAttributes,
+} from "../lib/listing-mappers";
+import {
+  insertPropertyImages,
+  insertRoomImages,
+  propertyLayoutFromListing,
+  propertyValuesFromForm,
+  propertyValuesFromListing,
+  roomWriteValues,
+} from "../lib/listing-write";
+import {
+  canAttachListing,
+  canManageListing,
+  canManageProperty,
+  isSharedBuilding,
+} from "../lib/property-access";
+import { protectedProcedure, publicProcedure } from "../trpc";
 
 export type { GeocodeHit };
+export type {
+  ListingDetail,
+  ListingHost,
+  ListingImage,
+  ListingPropertySummary,
+  ListingSummary,
+} from "../lib/listing-mappers";
 
-export interface ListingHost {
-  id: string;
-  name: string;
-  image: string | null;
-}
-
-export interface ListingComplexSummary {
-  id: string | null;
-  title: string | null;
-  city: City;
-  neighborhood: string;
-  petFriendly: boolean;
-  amenities: string[];
-}
-
-export interface ListingRoomAttributes {
-  includes: string[];
-  capacity: number;
-  householdGender: HouseholdGender;
-  preferredAgeMin: number;
-  preferredAgeMax: number;
-  hasPets: boolean;
-  acceptsPets: boolean;
-  bathroomType: BathroomType;
-  furnished: Furnished;
-  depositMonths: number;
-  leaseMonths: number;
-  couplesAllowed: boolean;
-  smokingPolicy: SmokingPolicy;
-  overnightGuests: OvernightGuests;
-  wfhFriendly: boolean;
-  quietHome: boolean;
-  cleanliness: Cleanliness;
-  availableFrom: Date | null;
-}
-
-export interface ListingSummary extends ListingRoomAttributes {
+export interface PropertyOption {
   id: string;
   title: string;
-  description: string;
-  rentPriceCents: number;
-  currency: string;
-  coverUrl: string | null;
-  addressLine1: string | null;
-  latitude: number | null;
-  longitude: number | null;
-  tourBookingCount: number;
-  complex: ListingComplexSummary;
-  host: ListingHost | null;
-}
-
-export interface ListingImage {
-  id: string;
-  url: string;
-  alt: string | null;
-}
-
-export interface ListingDetailComplex {
-  id: string;
-  title: string;
-  description: string;
-  addressLine1: string;
-  city: City;
-  neighborhood: string;
-  latitude: number | null;
-  longitude: number | null;
-  petFriendly: boolean;
-  amenities: string[];
-  images: ListingImage[];
-}
-
-export interface ListingDetail extends ListingRoomAttributes {
-  id: string;
-  title: string;
-  description: string;
-  rentPriceCents: number;
-  currency: string;
-  addressLine1: string | null;
-  city: City | null;
-  neighborhood: string | null;
-  latitude: number | null;
-  longitude: number | null;
-  coverUrl: string | null;
-  images: ListingImage[];
-  complex: ListingDetailComplex | null;
-  host: ListingHost | null;
-}
-
-export interface ComplexOption {
-  id: string;
-  title: string;
+  propertyType: PropertyType;
+  isSharedBuilding: boolean;
+  isOwned: boolean;
+  bedroomCount: number | null;
+  bathroomCount: number | null;
   city: City;
   neighborhood: string;
   addressLine1: string;
@@ -160,16 +100,18 @@ export interface ComplexOption {
 }
 
 export interface CreateListingResult {
-  complexId: string | null;
+  propertyId: string;
   roomId: string;
 }
 
-export interface CreateComplexResult {
-  complexId: string;
+export interface CreatePropertyResult {
+  propertyId: string;
 }
 
 export interface HostRoomSummary {
   id: string;
+  listingType: ListingType;
+  propertyId: string | null;
   title: string;
   neighborhood: string;
   city: City | null;
@@ -177,17 +119,25 @@ export interface HostRoomSummary {
   status: string;
 }
 
-export interface HostComplexSummary {
+export interface HostPropertySummary {
   id: string;
   title: string;
+  propertyType: PropertyType;
+  isSharedBuilding: boolean;
   neighborhood: string;
   city: City;
   coverUrl: string | null;
+  listingCount: number;
 }
 
 export interface RoomForEdit extends ListingRoomAttributes {
   id: string;
-  complexId: string | null;
+  listingType: ListingType;
+  propertyId: string | null;
+  propertyType: PropertyType;
+  propertyIsShared: boolean;
+  bedroomCount: number | null;
+  bathroomCount: number | null;
   title: string;
   description: string;
   addressLine1: string;
@@ -199,8 +149,10 @@ export interface RoomForEdit extends ListingRoomAttributes {
   images: string[];
 }
 
-export interface ComplexForEdit {
+export interface PropertyForEdit {
   id: string;
+  propertyType: PropertyType;
+  isSharedBuilding: boolean;
   title: string;
   description: string;
   addressLine1: string;
@@ -208,302 +160,137 @@ export interface ComplexForEdit {
   neighborhood: string;
   latitude: number | null;
   longitude: number | null;
+  bedroomCount: number | null;
+  bathroomCount: number | null;
   petFriendly: boolean;
   amenities: string[];
   images: string[];
 }
 
-interface ListingRoomRow extends ListingRoomAttributes {
+interface Actor {
   id: string;
-  title: string;
-  description: string;
-  rentPriceCents: number;
-  currency: string;
-  addressLine1: string | null;
-  city: City | null;
-  neighborhood: string | null;
-  latitude: number | null;
-  longitude: number | null;
-  images: ListingImage[];
-  host: ListingHost | null | undefined;
-  complex: {
-    id: string;
-    title: string;
-    description: string;
-    city: City;
-    neighborhood: string;
-    petFriendly: boolean;
-    amenities: string[];
-    addressLine1: string;
-    latitude: number | null;
-    longitude: number | null;
-    images: { id: string; url: string; alt: string | null }[];
-  } | null;
+  role?: string | null;
 }
-
-const toListingHost = (
-  host: { id: string; name: string; image: string | null } | null | undefined,
-): ListingHost | null => {
-  if (!host) {
-    return null;
-  }
-
-  return {
-    id: host.id,
-    name: host.name,
-    image: host.image,
-  };
-};
-
-const toRoomAttributes = (
-  room: ListingRoomAttributes,
-): ListingRoomAttributes => ({
-  includes: room.includes,
-  capacity: room.capacity,
-  householdGender: room.householdGender,
-  preferredAgeMin: room.preferredAgeMin,
-  preferredAgeMax: room.preferredAgeMax,
-  hasPets: room.hasPets,
-  acceptsPets: room.acceptsPets,
-  bathroomType: room.bathroomType,
-  furnished: room.furnished,
-  depositMonths: room.depositMonths,
-  leaseMonths: room.leaseMonths,
-  couplesAllowed: room.couplesAllowed,
-  smokingPolicy: room.smokingPolicy,
-  overnightGuests: room.overnightGuests,
-  wfhFriendly: room.wfhFriendly,
-  quietHome: room.quietHome,
-  cleanliness: room.cleanliness,
-  availableFrom: room.availableFrom,
-});
-
-const toListingIncludes = (values: string[]): ListingInclude[] =>
-  values.filter((item): item is ListingInclude =>
-    (LISTING_INCLUDES as readonly string[]).includes(item),
-  );
-
-const toComplexAmenities = (values: string[]): string[] => {
-  const seen = new Set<string>();
-  const amenities: string[] = [];
-
-  for (const value of values) {
-    const trimmed = value.trim();
-    if (trimmed.length === 0 || trimmed.length > MAX_AMENITY_LENGTH) {
-      continue;
-    }
-
-    const key = trimmed.toLowerCase();
-    if (seen.has(key)) {
-      continue;
-    }
-
-    seen.add(key);
-    amenities.push(trimmed);
-  }
-
-  return amenities;
-};
-
-const assertCanCreateListing = async (
-  database: typeof db,
-  actor: { id: string; role?: string | null },
-): Promise<void> => {
-  if (hasRole(actor.role, "admin")) {
-    return;
-  }
-
-  const row = await database.query.user.findFirst({
-    where: eq(user.id, actor.id),
-    columns: { role: true, agentApproved: true },
-  });
-
-  if (!canCreateListing(row?.role, row?.agentApproved)) {
-    throw new TRPCError({
-      code: "FORBIDDEN",
-      message: "Only approved agents can create listings.",
-    });
-  }
-};
-
-const assertCanManage = (
-  actor: { id: string; role?: string | null },
-  hostId: string | null,
-): void => {
-  if (hasRole(actor.role, "admin")) {
-    return;
-  }
-
-  if (hostId !== null && hostId === actor.id) {
-    return;
-  }
-
-  throw new TRPCError({ code: "FORBIDDEN" });
-};
-
-const insertRoomImages = async (
-  database: typeof db,
-  roomId: string,
-  urls: readonly string[],
-  alt: string,
-): Promise<void> => {
-  if (urls.length === 0) {
-    return;
-  }
-
-  await database.insert(RoomImage).values(
-    urls.map((url, index) => ({
-      roomId,
-      url,
-      alt,
-      kind: "room" as const,
-      sortOrder: index,
-    })),
-  );
-};
-
-const insertComplexImages = async (
-  database: typeof db,
-  complexId: string,
-  urls: readonly string[],
-  alt: string,
-): Promise<void> => {
-  if (urls.length === 0) {
-    return;
-  }
-
-  await database.insert(ComplexImage).values(
-    urls.map((url, index) => ({
-      complexId,
-      url,
-      alt,
-      kind: "exterior" as const,
-      sortOrder: index,
-    })),
-  );
-};
-
-interface RoomWriteValues {
-  hostId: string;
-  complexId: string | null;
-  title: string;
-  description: string;
-  addressLine1: string;
-  city: City;
-  neighborhood: string;
-  latitude: number | null;
-  longitude: number | null;
-  country: "MX";
-  rentPriceCents: number;
-  currency: "MXN";
-  includes: CreateListingInput["includes"];
-  capacity: number;
-  householdGender: HouseholdGender;
-  preferredAgeMin: number;
-  preferredAgeMax: number;
-  hasPets: boolean;
-  acceptsPets: boolean;
-  bathroomType: BathroomType;
-  furnished: Furnished;
-  depositMonths: number;
-  leaseMonths: number;
-  couplesAllowed: boolean;
-  smokingPolicy: SmokingPolicy;
-  overnightGuests: OvernightGuests;
-  wfhFriendly: boolean;
-  quietHome: boolean;
-  cleanliness: Cleanliness;
-  availableFrom: Date;
-}
-
-const roomWriteValues = (
-  input: CreateListingInput,
-  hostId: string,
-  selectedComplex: {
-    id: string;
-    addressLine1: string;
-    city: City;
-    neighborhood: string;
-    latitude: number | null;
-    longitude: number | null;
-  } | null,
-): RoomWriteValues => ({
-  hostId,
-  complexId: selectedComplex?.id ?? null,
-  title: input.roomTitle,
-  description: input.roomDescription,
-  addressLine1: selectedComplex?.addressLine1 ?? input.addressLine1,
-  city: selectedComplex?.city ?? input.city,
-  neighborhood: selectedComplex?.neighborhood ?? input.neighborhood,
-  latitude: selectedComplex?.latitude ?? input.latitude ?? null,
-  longitude: selectedComplex?.longitude ?? input.longitude ?? null,
-  country: "MX" as const,
-  rentPriceCents: Math.round(input.rentPriceMxn * 100),
-  currency: "MXN" as const,
-  includes: input.includes,
-  capacity: input.capacity,
-  householdGender: input.householdGender,
-  preferredAgeMin: input.preferredAgeMin,
-  preferredAgeMax: input.preferredAgeMax,
-  hasPets: input.hasPets,
-  acceptsPets: input.acceptsPets,
-  bathroomType: input.bathroomType,
-  furnished: input.furnished,
-  depositMonths: input.depositMonths,
-  leaseMonths: input.leaseMonths,
-  couplesAllowed: input.couplesAllowed,
-  smokingPolicy: input.smokingPolicy,
-  overnightGuests: input.overnightGuests,
-  wfhFriendly: input.wfhFriendly,
-  quietHome: input.quietHome,
-  cleanliness: input.cleanliness,
-  availableFrom: input.availableFrom,
-});
-
-const toListingSummary = (
-  room: ListingRoomRow,
-  tourBookingCount = 0,
-): ListingSummary | null => {
-  const city = room.city ?? room.complex?.city;
-  const neighborhood = room.neighborhood ?? room.complex?.neighborhood ?? "";
-
-  if (!city) {
-    return null;
-  }
-
-  return {
-    id: room.id,
-    title: room.title,
-    description: room.description,
-    rentPriceCents: room.rentPriceCents,
-    currency: room.currency,
-    coverUrl: room.images[0]?.url ?? room.complex?.images[0]?.url ?? null,
-    addressLine1: room.addressLine1 ?? room.complex?.addressLine1 ?? null,
-    latitude: room.latitude ?? room.complex?.latitude ?? null,
-    longitude: room.longitude ?? room.complex?.longitude ?? null,
-    tourBookingCount,
-    complex: {
-      id: room.complex?.id ?? null,
-      title: room.complex?.title ?? null,
-      city,
-      neighborhood,
-      petFriendly: room.complex?.petFriendly ?? room.acceptsPets,
-      amenities: room.complex?.amenities ?? [],
-    },
-    host: toListingHost(room.host),
-    ...toRoomAttributes(room),
-  };
-};
 
 const listingRelations = {
   images: true,
   host: true,
-  complex: {
+  property: {
     with: {
       images: true,
     },
   },
 } as const;
+
+const toPropertyLocation = (property: {
+  id: string;
+  addressLine1: string;
+  city: City;
+  neighborhood: string;
+  latitude: number | null;
+  longitude: number | null;
+}): PropertyLocation => ({
+  id: property.id,
+  addressLine1: property.addressLine1,
+  city: property.city,
+  neighborhood: property.neighborhood,
+  latitude: property.latitude,
+  longitude: property.longitude,
+});
+
+/** Room-only filters never exclude entire-property listings. */
+const roomOnly = (condition: SQL | undefined): SQL | undefined =>
+  or(ne(Room.listingType, "room"), condition);
+
+/**
+ * Mirrors `conflictScope` in lib/availability: a listing is unavailable on
+ * `date` if any active stay in its scope covers that date.
+ */
+const noStayCovering = (date: Date): SQL => {
+  const at = sql`${date.toISOString()}::timestamptz`;
+  return sql`not exists (
+  select 1 from stay s
+  join room r2 on r2.id = s.room_id
+  where s.status <> 'cancelled'
+    and s.started_at <= ${at}
+    and (s.ended_at is null or s.ended_at > ${at})
+    and (
+      r2.id = ${Room.id}
+      or (
+        ${Room.propertyId} is not null
+        and r2.property_id = ${Room.propertyId}
+        and (${Room.listingType} = 'entire_property' or r2.listing_type = 'entire_property')
+      )
+    )
+)`;
+};
+
+/** Attaches to an existing property, or creates/updates the actor's own. */
+const resolveListingProperty = async (
+  tx: DbExecutor,
+  actor: Actor,
+  input: CreateListingInput,
+  currentPropertyId: string | null,
+): Promise<PropertyLocation> => {
+  if (input.propertyId) {
+    const property = await tx.query.Property.findFirst({
+      where: eq(Property.id, input.propertyId),
+    });
+    if (!property) {
+      throw new TRPCError({ code: "NOT_FOUND", message: "Property not found" });
+    }
+    if (!canAttachListing(actor, property)) {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: "You can only list in your own properties.",
+      });
+    }
+    if (input.listingType === "entire_property" && isSharedBuilding(property)) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: "An entire-property listing needs a property you own.",
+      });
+    }
+    if (
+      input.listingType === "entire_property" &&
+      canManageProperty(actor, property)
+    ) {
+      await tx
+        .update(Property)
+        .set(propertyLayoutFromListing(input))
+        .where(eq(Property.id, property.id));
+    }
+    return toPropertyLocation(property);
+  }
+
+  if (currentPropertyId) {
+    const current = await tx.query.Property.findFirst({
+      where: eq(Property.id, currentPropertyId),
+    });
+    if (current && current.ownerId === actor.id) {
+      const [updated] = await tx
+        .update(Property)
+        .set(propertyValuesFromListing(input))
+        .where(eq(Property.id, current.id))
+        .returning();
+      if (updated) {
+        return toPropertyLocation(updated);
+      }
+    }
+  }
+
+  const [created] = await tx
+    .insert(Property)
+    .values({ ...propertyValuesFromListing(input), ownerId: actor.id })
+    .returning();
+  if (!created) {
+    throw new TRPCError({
+      code: "INTERNAL_SERVER_ERROR",
+      message: "Failed to create property",
+    });
+  }
+  return toPropertyLocation(created);
+};
 
 export const listingRouter = {
   list: publicProcedure
@@ -513,20 +300,34 @@ export const listingRouter = {
       const conditions: (SQL | undefined)[] = [eq(Room.status, "listed")];
 
       if (input?.city) {
-        // Effective city matches listing cards: room.city ?? complex.city
+        // Effective city matches listing cards: room.city ?? property.city
         conditions.push(
           or(
             eq(Room.city, input.city),
             and(
               isNull(Room.city),
               inArray(
-                Room.complexId,
+                Room.propertyId,
                 ctx.db
-                  .select({ id: Complex.id })
-                  .from(Complex)
-                  .where(eq(Complex.city, input.city)),
+                  .select({ id: Property.id })
+                  .from(Property)
+                  .where(eq(Property.city, input.city)),
               ),
             ),
+          ),
+        );
+      }
+      if (input?.listingType) {
+        conditions.push(eq(Room.listingType, input.listingType));
+      }
+      if (input?.propertyType) {
+        conditions.push(
+          inArray(
+            Room.propertyId,
+            ctx.db
+              .select({ id: Property.id })
+              .from(Property)
+              .where(eq(Property.propertyType, input.propertyType)),
           ),
         );
       }
@@ -541,20 +342,28 @@ export const listingRouter = {
         );
       }
       if (input?.householdGender) {
-        conditions.push(eq(Room.householdGender, input.householdGender));
+        conditions.push(
+          roomOnly(eq(Room.householdGender, input.householdGender)),
+        );
       }
       if (input?.seekerAge !== undefined) {
-        conditions.push(lte(Room.preferredAgeMin, input.seekerAge));
-        conditions.push(gte(Room.preferredAgeMax, input.seekerAge));
+        conditions.push(
+          roomOnly(
+            and(
+              lte(Room.preferredAgeMin, input.seekerAge),
+              gte(Room.preferredAgeMax, input.seekerAge),
+            ),
+          ),
+        );
       }
       if (input?.hasPets !== undefined) {
-        conditions.push(eq(Room.hasPets, input.hasPets));
+        conditions.push(roomOnly(eq(Room.hasPets, input.hasPets)));
       }
       if (input?.acceptsPets !== undefined) {
         conditions.push(eq(Room.acceptsPets, input.acceptsPets));
       }
       if (input?.bathroomType) {
-        conditions.push(eq(Room.bathroomType, input.bathroomType));
+        conditions.push(roomOnly(eq(Room.bathroomType, input.bathroomType)));
       }
       if (input?.furnished) {
         conditions.push(eq(Room.furnished, input.furnished));
@@ -566,16 +375,18 @@ export const listingRouter = {
         conditions.push(eq(Room.smokingPolicy, input.smokingPolicy));
       }
       if (input?.overnightGuests) {
-        conditions.push(eq(Room.overnightGuests, input.overnightGuests));
+        conditions.push(
+          roomOnly(eq(Room.overnightGuests, input.overnightGuests)),
+        );
       }
       if (input?.wfhFriendly !== undefined) {
-        conditions.push(eq(Room.wfhFriendly, input.wfhFriendly));
+        conditions.push(roomOnly(eq(Room.wfhFriendly, input.wfhFriendly)));
       }
       if (input?.quietHome !== undefined) {
-        conditions.push(eq(Room.quietHome, input.quietHome));
+        conditions.push(roomOnly(eq(Room.quietHome, input.quietHome)));
       }
       if (input?.cleanliness) {
-        conditions.push(eq(Room.cleanliness, input.cleanliness));
+        conditions.push(roomOnly(eq(Room.cleanliness, input.cleanliness)));
       }
       if (input?.includes && input.includes.length > 0) {
         conditions.push(arrayContains(Room.includes, [...input.includes]));
@@ -587,6 +398,7 @@ export const listingRouter = {
             lte(Room.availableFrom, input.availableBy),
           ),
         );
+        conditions.push(noStayCovering(input.availableBy));
       }
 
       const rooms = await ctx.db.query.Room.findMany({
@@ -635,79 +447,34 @@ export const listingRouter = {
         with: listingRelations,
       });
 
-      if (!room) {
-        return null;
-      }
-
-      const city = room.city ?? room.complex?.city ?? null;
-      const neighborhood =
-        room.neighborhood ?? room.complex?.neighborhood ?? null;
-      const roomImages = [...room.images]
-        .sort((a, b) => a.sortOrder - b.sortOrder)
-        .map((image) => ({
-          id: image.id,
-          url: image.url,
-          alt: image.alt,
-        }));
-      const complexImages = [...(room.complex?.images ?? [])]
-        .sort((a, b) => a.sortOrder - b.sortOrder)
-        .map((image) => ({
-          id: image.id,
-          url: image.url,
-          alt: image.alt,
-        }));
-      const images = roomImages.length > 0 ? roomImages : complexImages;
-      const cover = images[0]?.url ?? null;
-
-      return {
-        id: room.id,
-        title: room.title,
-        description: room.description,
-        rentPriceCents: room.rentPriceCents,
-        currency: room.currency,
-        addressLine1: room.addressLine1 ?? room.complex?.addressLine1 ?? null,
-        city,
-        neighborhood,
-        latitude: room.latitude ?? room.complex?.latitude ?? null,
-        longitude: room.longitude ?? room.complex?.longitude ?? null,
-        coverUrl: cover,
-        images,
-        complex: room.complex
-          ? {
-              id: room.complex.id,
-              title: room.complex.title,
-              description: room.complex.description,
-              addressLine1: room.complex.addressLine1,
-              city: room.complex.city,
-              neighborhood: room.complex.neighborhood,
-              latitude: room.complex.latitude,
-              longitude: room.complex.longitude,
-              petFriendly: room.complex.petFriendly,
-              amenities: room.complex.amenities,
-              images: complexImages,
-            }
-          : null,
-        host: toListingHost(room.host),
-        ...toRoomAttributes(room),
-      };
+      return room ? toListingDetail(room) : null;
     }),
 
-  complexes: protectedProcedure.query(
-    async ({ ctx }): Promise<ComplexOption[]> => {
-      return ctx.db
-        .select({
-          id: Complex.id,
-          title: Complex.title,
-          city: Complex.city,
-          neighborhood: Complex.neighborhood,
-          addressLine1: Complex.addressLine1,
-          latitude: Complex.latitude,
-          longitude: Complex.longitude,
-          petFriendly: Complex.petFriendly,
-          amenities: Complex.amenities,
-        })
-        .from(Complex)
-        .orderBy(asc(Complex.title));
+  /** Properties the actor can attach a listing to. */
+  properties: protectedProcedure.query(
+    async ({ ctx }): Promise<PropertyOption[]> => {
+      const actorId = ctx.session.user.id;
+      const rows = await ctx.db.query.Property.findMany({
+        where: or(eq(Property.ownerId, actorId), isNull(Property.ownerId)),
+        orderBy: [asc(Property.title)],
+      });
+
+      return rows.map((row) => ({
+        id: row.id,
+        title: row.title,
+        propertyType: row.propertyType,
+        isSharedBuilding: row.ownerId === null,
+        isOwned: row.ownerId === actorId,
+        bedroomCount: row.bedroomCount,
+        bathroomCount: row.bathroomCount,
+        city: row.city,
+        neighborhood: row.neighborhood,
+        addressLine1: row.addressLine1,
+        latitude: row.latitude,
+        longitude: row.longitude,
+        petFriendly: row.petFriendly,
+        amenities: row.amenities,
+      }));
     },
   ),
 
@@ -716,59 +483,60 @@ export const listingRouter = {
       ctx,
     }): Promise<{
       rooms: HostRoomSummary[];
-      complexes: HostComplexSummary[];
-      canManageComplexes: boolean;
-      canCreateListing: boolean;
+      properties: HostPropertySummary[];
+      canManageSharedBuildings: boolean;
     }> => {
-      const hostId = ctx.session.user.id;
+      const actorId = ctx.session.user.id;
       const actor = await ctx.db.query.user.findFirst({
-        where: eq(user.id, hostId),
-        columns: { role: true, agentApproved: true },
+        where: eq(user.id, actorId),
+        columns: { role: true },
       });
-      const canManage = canManageComplexes(
+      const canManageShared = isAgentOrAdmin(
         actor?.role ?? ctx.session.user.role,
-      );
-      const canCreate = canCreateListing(
-        actor?.role ?? ctx.session.user.role,
-        actor?.agentApproved,
       );
 
       const rooms = await ctx.db.query.Room.findMany({
-        where: eq(Room.hostId, hostId),
+        where: eq(Room.hostId, actorId),
         with: {
           images: true,
-          complex: {
+          property: {
             with: { images: true },
           },
         },
         orderBy: [desc(Room.createdAt)],
       });
 
-      const complexes = canManage
-        ? await ctx.db.query.Complex.findMany({
-            with: { images: true },
-            orderBy: [desc(Complex.createdAt)],
-          })
-        : [];
+      const properties = await ctx.db.query.Property.findMany({
+        where: canManageShared
+          ? or(eq(Property.ownerId, actorId), isNull(Property.ownerId))
+          : eq(Property.ownerId, actorId),
+        with: { images: true, rooms: { columns: { id: true } } },
+        orderBy: [desc(Property.createdAt)],
+      });
 
       return {
         rooms: rooms.map((room) => ({
           id: room.id,
+          listingType: room.listingType,
+          propertyId: room.propertyId,
           title: room.title,
-          neighborhood: room.neighborhood ?? room.complex?.neighborhood ?? "",
-          city: room.city ?? room.complex?.city ?? null,
-          coverUrl: room.images[0]?.url ?? room.complex?.images[0]?.url ?? null,
+          neighborhood: room.neighborhood ?? room.property?.neighborhood ?? "",
+          city: room.city ?? room.property?.city ?? null,
+          coverUrl:
+            room.images[0]?.url ?? room.property?.images[0]?.url ?? null,
           status: room.status,
         })),
-        complexes: complexes.map((complex) => ({
-          id: complex.id,
-          title: complex.title,
-          neighborhood: complex.neighborhood,
-          city: complex.city,
-          coverUrl: complex.images[0]?.url ?? null,
+        properties: properties.map((property) => ({
+          id: property.id,
+          title: property.title,
+          propertyType: property.propertyType,
+          isSharedBuilding: property.ownerId === null,
+          neighborhood: property.neighborhood,
+          city: property.city,
+          coverUrl: property.images[0]?.url ?? null,
+          listingCount: property.rooms.length,
         })),
-        canManageComplexes: canManage,
-        canCreateListing: canCreate,
+        canManageSharedBuildings: canManageShared,
       };
     },
   ),
@@ -780,7 +548,7 @@ export const listingRouter = {
         where: eq(Room.id, input.id),
         with: {
           images: true,
-          complex: true,
+          property: true,
         },
       });
 
@@ -788,31 +556,40 @@ export const listingRouter = {
         throw new TRPCError({ code: "NOT_FOUND" });
       }
 
-      assertCanManage(ctx.session.user, room.hostId);
+      if (!canManageListing(ctx.session.user, room)) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
 
-      const city = room.city ?? room.complex?.city;
+      const city = room.city ?? room.property?.city;
       const neighborhood =
-        room.neighborhood ?? room.complex?.neighborhood ?? "";
+        room.neighborhood ?? room.property?.neighborhood ?? "";
       const addressLine1 =
-        room.addressLine1 ?? room.complex?.addressLine1 ?? "";
+        room.addressLine1 ?? room.property?.addressLine1 ?? "";
 
       if (!city || neighborhood.length === 0 || addressLine1.length === 0) {
         throw new TRPCError({
           code: "PRECONDITION_FAILED",
-          message: "Room is missing location details",
+          message: "Listing is missing location details",
         });
       }
 
       return {
         id: room.id,
-        complexId: room.complexId,
+        listingType: room.listingType,
+        propertyId: room.propertyId,
+        propertyType: room.property?.propertyType ?? "house",
+        propertyIsShared: room.property
+          ? room.property.ownerId === null
+          : false,
+        bedroomCount: room.property?.bedroomCount ?? null,
+        bathroomCount: room.property?.bathroomCount ?? null,
         title: room.title,
         description: room.description,
         addressLine1,
         city,
         neighborhood,
-        latitude: room.latitude ?? room.complex?.latitude ?? null,
-        longitude: room.longitude ?? room.complex?.longitude ?? null,
+        latitude: room.latitude ?? room.property?.latitude ?? null,
+        longitude: room.longitude ?? room.property?.longitude ?? null,
         rentPriceMxn: room.rentPriceCents / 100,
         images: [...room.images]
           .sort((a, b) => a.sortOrder - b.sortOrder)
@@ -824,30 +601,37 @@ export const listingRouter = {
       };
     }),
 
-  complexForEdit: agentProcedure
+  propertyForEdit: protectedProcedure
     .input(z.object({ id: z.uuid() }))
-    .query(async ({ ctx, input }): Promise<ComplexForEdit> => {
-      const complex = await ctx.db.query.Complex.findFirst({
-        where: eq(Complex.id, input.id),
+    .query(async ({ ctx, input }): Promise<PropertyForEdit> => {
+      const property = await ctx.db.query.Property.findFirst({
+        where: eq(Property.id, input.id),
         with: { images: true },
       });
 
-      if (!complex) {
+      if (!property) {
         throw new TRPCError({ code: "NOT_FOUND" });
+      }
+      if (!canManageProperty(ctx.session.user, property)) {
+        throw new TRPCError({ code: "FORBIDDEN" });
       }
 
       return {
-        id: complex.id,
-        title: complex.title,
-        description: complex.description,
-        addressLine1: complex.addressLine1,
-        city: complex.city,
-        neighborhood: complex.neighborhood,
-        latitude: complex.latitude,
-        longitude: complex.longitude,
-        petFriendly: complex.petFriendly,
-        amenities: toComplexAmenities(complex.amenities),
-        images: [...complex.images]
+        id: property.id,
+        propertyType: property.propertyType,
+        isSharedBuilding: property.ownerId === null,
+        title: property.title,
+        description: property.description,
+        addressLine1: property.addressLine1,
+        city: property.city,
+        neighborhood: property.neighborhood,
+        latitude: property.latitude,
+        longitude: property.longitude,
+        bedroomCount: property.bedroomCount,
+        bathroomCount: property.bathroomCount,
+        petFriendly: property.petFriendly,
+        amenities: toPropertyAmenities(property.amenities),
+        images: [...property.images]
           .sort((a, b) => a.sortOrder - b.sortOrder)
           .map((image) => image.url),
       };
@@ -856,45 +640,41 @@ export const listingRouter = {
   create: protectedProcedure
     .input(CreateListingSchema)
     .mutation(async ({ ctx, input }): Promise<CreateListingResult> => {
-      await assertCanCreateListing(ctx.db, ctx.session.user);
-      const hostId = ctx.session.user.id;
-      const selectedComplex =
-        input.isComplex && input.complexId
-          ? await ctx.db.query.Complex.findFirst({
-              where: eq(Complex.id, input.complexId),
-            })
-          : null;
+      const actor = ctx.session.user;
 
-      const [room] = await ctx.db
-        .insert(Room)
-        .values({
-          ...roomWriteValues(input, hostId, selectedComplex ?? null),
-          status: "listed",
-        })
-        .returning();
+      const room = await ctx.db.transaction(async (tx) => {
+        const property = await resolveListingProperty(tx, actor, input, null);
+        const [created] = await tx
+          .insert(Room)
+          .values({
+            ...roomWriteValues(input, actor.id, property),
+            status: "listed",
+          })
+          .returning();
 
-      if (!room) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to create room",
-        });
-      }
+        if (!created) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to create listing",
+          });
+        }
 
-      await insertRoomImages(ctx.db, room.id, input.images, input.roomTitle);
+        await insertRoomImages(tx, created.id, input.images, input.title);
+        await tx
+          .update(user)
+          .set({ role: withRole(actor.role, "host") })
+          .where(eq(user.id, actor.id));
 
-      await ctx.db
-        .update(user)
-        .set({
-          role: withRole(ctx.session.user.role, "host"),
-        })
-        .where(eq(user.id, hostId));
+        return { ...created, propertyId: property.id };
+      });
 
-      return { complexId: room.complexId, roomId: room.id };
+      return { propertyId: room.propertyId, roomId: room.id };
     }),
 
   update: protectedProcedure
     .input(UpdateListingSchema)
     .mutation(async ({ ctx, input }): Promise<CreateListingResult> => {
+      const actor = ctx.session.user;
       const existing = await ctx.db.query.Room.findFirst({
         where: eq(Room.id, input.id),
         with: { images: true },
@@ -903,124 +683,123 @@ export const listingRouter = {
       if (!existing) {
         throw new TRPCError({ code: "NOT_FOUND" });
       }
-
-      assertCanManage(ctx.session.user, existing.hostId);
-
-      const selectedComplex =
-        input.isComplex && input.complexId
-          ? await ctx.db.query.Complex.findFirst({
-              where: eq(Complex.id, input.complexId),
-            })
-          : null;
-
-      const [room] = await ctx.db
-        .update(Room)
-        .set(
-          roomWriteValues(
-            input,
-            existing.hostId ?? ctx.session.user.id,
-            selectedComplex ?? null,
-          ),
-        )
-        .where(eq(Room.id, input.id))
-        .returning();
-
-      if (!room) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to update room",
-        });
+      if (!canManageListing(actor, existing)) {
+        throw new TRPCError({ code: "FORBIDDEN" });
       }
 
-      const previousUrls = existing.images.map((image) => image.url);
+      const hostId = existing.hostId ?? actor.id;
+      const result = await ctx.db.transaction(async (tx) => {
+        const property = await resolveListingProperty(
+          tx,
+          { id: hostId, role: actor.role },
+          input,
+          existing.propertyId,
+        );
+        const [room] = await tx
+          .update(Room)
+          .set(roomWriteValues(input, hostId, property))
+          .where(eq(Room.id, input.id))
+          .returning();
+
+        if (!room) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to update listing",
+          });
+        }
+
+        await tx.delete(RoomImage).where(eq(RoomImage.roomId, room.id));
+        await insertRoomImages(tx, room.id, input.images, input.title);
+
+        return { propertyId: property.id, roomId: room.id };
+      });
+
       const nextUrls = new Set(input.images);
-      const removedUrls = previousUrls.filter((url) => !nextUrls.has(url));
+      await deleteBlobUrls(
+        existing.images
+          .map((image) => image.url)
+          .filter((url) => !nextUrls.has(url)),
+      );
 
-      await ctx.db.delete(RoomImage).where(eq(RoomImage.roomId, room.id));
-      await insertRoomImages(ctx.db, room.id, input.images, input.roomTitle);
-      await deleteBlobUrls(removedUrls);
-
-      return { complexId: room.complexId, roomId: room.id };
+      return result;
     }),
 
-  createComplex: agentProcedure
-    .input(CreateComplexSchema)
-    .mutation(async ({ ctx, input }): Promise<CreateComplexResult> => {
-      await assertCanCreateListing(ctx.db, ctx.session.user);
-      const [complex] = await ctx.db
-        .insert(Complex)
-        .values({
-          title: input.title,
-          description: input.description,
-          addressLine1: input.addressLine1,
-          city: input.city,
-          neighborhood: input.neighborhood,
-          country: "MX",
-          latitude: input.latitude ?? null,
-          longitude: input.longitude ?? null,
-          amenities: toComplexAmenities(input.amenities),
-          petFriendly: input.petFriendly,
-        })
-        .returning();
-
-      if (!complex) {
+  createProperty: protectedProcedure
+    .input(CreatePropertySchema)
+    .mutation(async ({ ctx, input }): Promise<CreatePropertyResult> => {
+      const actor = ctx.session.user;
+      if (input.isSharedBuilding && !isAgentOrAdmin(actor.role)) {
         throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to create complex",
+          code: "FORBIDDEN",
+          message: "Only agents can create shared buildings.",
         });
       }
 
-      await insertComplexImages(ctx.db, complex.id, input.images, input.title);
+      const property = await ctx.db.transaction(async (tx) => {
+        const [created] = await tx
+          .insert(Property)
+          .values({
+            ...propertyValuesFromForm(input),
+            ownerId: input.isSharedBuilding ? null : actor.id,
+          })
+          .returning();
 
-      return { complexId: complex.id };
+        if (!created) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to create property",
+          });
+        }
+
+        await insertPropertyImages(tx, created.id, input.images, input.title);
+        return created;
+      });
+
+      return { propertyId: property.id };
     }),
 
-  updateComplex: agentProcedure
-    .input(UpdateComplexSchema)
-    .mutation(async ({ ctx, input }): Promise<CreateComplexResult> => {
-      const existing = await ctx.db.query.Complex.findFirst({
-        where: eq(Complex.id, input.id),
+  updateProperty: protectedProcedure
+    .input(UpdatePropertySchema)
+    .mutation(async ({ ctx, input }): Promise<CreatePropertyResult> => {
+      const existing = await ctx.db.query.Property.findFirst({
+        where: eq(Property.id, input.id),
         with: { images: true },
       });
 
       if (!existing) {
         throw new TRPCError({ code: "NOT_FOUND" });
       }
-
-      const [complex] = await ctx.db
-        .update(Complex)
-        .set({
-          title: input.title,
-          description: input.description,
-          addressLine1: input.addressLine1,
-          city: input.city,
-          neighborhood: input.neighborhood,
-          latitude: input.latitude ?? null,
-          longitude: input.longitude ?? null,
-          amenities: toComplexAmenities(input.amenities),
-          petFriendly: input.petFriendly,
-        })
-        .where(eq(Complex.id, input.id))
-        .returning();
-
-      if (!complex) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to update complex",
-        });
+      if (!canManageProperty(ctx.session.user, existing)) {
+        throw new TRPCError({ code: "FORBIDDEN" });
       }
 
-      const previousUrls = existing.images.map((image) => image.url);
+      await ctx.db.transaction(async (tx) => {
+        const values = propertyValuesFromForm(input);
+        await tx.update(Property).set(values).where(eq(Property.id, input.id));
+        await tx
+          .update(Room)
+          .set({
+            addressLine1: values.addressLine1,
+            city: values.city,
+            neighborhood: values.neighborhood,
+            latitude: values.latitude,
+            longitude: values.longitude,
+          })
+          .where(eq(Room.propertyId, input.id));
+        await tx
+          .delete(PropertyImage)
+          .where(eq(PropertyImage.propertyId, input.id));
+        await insertPropertyImages(tx, input.id, input.images, input.title);
+      });
+
       const nextUrls = new Set(input.images);
-      const removedUrls = previousUrls.filter((url) => !nextUrls.has(url));
+      await deleteBlobUrls(
+        existing.images
+          .map((image) => image.url)
+          .filter((url) => !nextUrls.has(url)),
+      );
 
-      await ctx.db
-        .delete(ComplexImage)
-        .where(eq(ComplexImage.complexId, complex.id));
-      await insertComplexImages(ctx.db, complex.id, input.images, input.title);
-      await deleteBlobUrls(removedUrls);
-
-      return { complexId: complex.id };
+      return { propertyId: input.id };
     }),
 
   searchAddress: protectedProcedure

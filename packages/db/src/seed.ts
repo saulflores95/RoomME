@@ -4,8 +4,8 @@ import { db } from "./client";
 import {
   AgentWeeklyHours,
   Application,
-  Complex,
-  ComplexImage,
+  Property,
+  PropertyImage,
   Room,
   RoomImage,
   RoommeRating,
@@ -73,7 +73,7 @@ const roomies = [
 
 async function removeCdmxListings(): Promise<void> {
   await db.execute(sql`
-    DELETE FROM complex WHERE city::text = 'cdmx'
+    DELETE FROM property WHERE city::text = 'cdmx'
   `);
   await db.execute(sql`
     DELETE FROM room WHERE city::text = 'cdmx'
@@ -462,21 +462,101 @@ async function seedAgents(): Promise<void> {
   console.log(`Seeded ${agents.length} agents with weekly hours.`);
 }
 
+const ENTIRE_PROPERTY_TITLE = "Departamento completo en Milenio III";
+
+async function seedEntireProperty(): Promise<void> {
+  const existing = await db.query.Room.findFirst({
+    where: eq(Room.title, ENTIRE_PROPERTY_TITLE),
+    columns: { id: true },
+  });
+  if (existing) {
+    return;
+  }
+
+  const [apartment] = await db
+    .insert(Property)
+    .values({
+      ownerId: "seed-host-maria",
+      propertyType: "apartment",
+      bedroomCount: 2,
+      bathroomCount: 1.5,
+      title: "Departamento Milenio III",
+      description:
+        "Departamento de dos recámaras en Milenio III, con balcón y estacionamiento techado.",
+      addressLine1: "Av. Paseo Constituyentes 1500",
+      city: "queretaro",
+      neighborhood: "Milenio III",
+      postalCode: "76060",
+      country: "MX",
+      latitude: 20.5885,
+      longitude: -100.358,
+      amenities: ["parking", "security", "kitchen"],
+      petFriendly: true,
+    })
+    .returning();
+
+  if (!apartment) {
+    throw new Error("Failed to insert seed apartment");
+  }
+
+  const [listing] = await db
+    .insert(Room)
+    .values({
+      hostId: "seed-host-maria",
+      propertyId: apartment.id,
+      listingType: "entire_property",
+      addressLine1: apartment.addressLine1,
+      city: apartment.city,
+      neighborhood: apartment.neighborhood,
+      latitude: apartment.latitude,
+      longitude: apartment.longitude,
+      title: ENTIRE_PROPERTY_TITLE,
+      description:
+        "Renta el departamento completo: dos recámaras, sala, cocina equipada y balcón. Ideal para parejas o familias pequeñas.",
+      rentPriceCents: 1_650_000,
+      currency: "MXN",
+      includes: ["water", "gas"],
+      capacity: 4,
+      acceptsPets: true,
+      furnished: "semi",
+      depositMonths: 1,
+      leaseMonths: 12,
+      couplesAllowed: true,
+      smokingPolicy: "no",
+      availableFrom: now,
+      status: "listed",
+    })
+    .returning();
+
+  if (!listing) {
+    throw new Error("Failed to insert seed entire-property listing");
+  }
+
+  await db.insert(RoomImage).values({
+    roomId: listing.id,
+    url: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80",
+    alt: listing.title,
+    kind: "apartment",
+    sortOrder: 0,
+  });
+}
+
 async function seed(): Promise<void> {
   await removeCdmxListings();
   await upsertUsers();
   await seedAgents();
 
-  const existingComplexes = await db.query.Complex.findMany({ limit: 1 });
-  if (existingComplexes.length > 0) {
+  const existingProperties = await db.query.Property.findMany({ limit: 1 });
+  if (existingProperties.length > 0) {
     await backfillRoomFilters();
     await seedApplicationsAndRatings();
+    await seedEntireProperty();
     console.log("Seed listings already exist, updated Querétaro profiles.");
     return;
   }
 
   const [centroSur] = await db
-    .insert(Complex)
+    .insert(Property)
     .values({
       title: "Casa Centro Sur",
       description:
@@ -494,7 +574,7 @@ async function seed(): Promise<void> {
     .returning();
 
   const [juriquilla] = await db
-    .insert(Complex)
+    .insert(Property)
     .values({
       title: "Residencial Juriquilla",
       description:
@@ -512,7 +592,7 @@ async function seed(): Promise<void> {
     .returning();
 
   const [alamos] = await db
-    .insert(Complex)
+    .insert(Property)
     .values({
       title: "Casa Los Álamos",
       description:
@@ -530,7 +610,7 @@ async function seed(): Promise<void> {
     .returning();
 
   const [elRefugio] = await db
-    .insert(Complex)
+    .insert(Property)
     .values({
       title: "Loft El Refugio",
       description:
@@ -548,33 +628,33 @@ async function seed(): Promise<void> {
     .returning();
 
   if (!centroSur || !juriquilla || !alamos || !elRefugio) {
-    throw new Error("Failed to insert seed complexes");
+    throw new Error("Failed to insert seed properties");
   }
 
-  await db.insert(ComplexImage).values([
+  await db.insert(PropertyImage).values([
     {
-      complexId: centroSur.id,
+      propertyId: centroSur.id,
       url: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1200&q=80",
       alt: "Casa en Centro Sur",
       kind: "exterior",
       sortOrder: 0,
     },
     {
-      complexId: juriquilla.id,
+      propertyId: juriquilla.id,
       url: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80",
       alt: "Residencial Juriquilla",
       kind: "exterior",
       sortOrder: 0,
     },
     {
-      complexId: alamos.id,
+      propertyId: alamos.id,
       url: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=80",
       alt: "Sala en Los Álamos",
       kind: "common",
       sortOrder: 0,
     },
     {
-      complexId: elRefugio.id,
+      propertyId: elRefugio.id,
       url: "https://images.unsplash.com/photo-1493809842364-78817add7ffb?auto=format&fit=crop&w=1200&q=80",
       alt: "Loft El Refugio",
       kind: "common",
@@ -587,7 +667,7 @@ async function seed(): Promise<void> {
     .values([
       {
         hostId: "seed-host-qro",
-        complexId: centroSur.id,
+        propertyId: centroSur.id,
         addressLine1: "Blvd. Bernardo Quintana 202",
         city: "queretaro",
         neighborhood: "Centro Sur",
@@ -620,7 +700,7 @@ async function seed(): Promise<void> {
       },
       {
         hostId: "seed-host-qro",
-        complexId: juriquilla.id,
+        propertyId: juriquilla.id,
         addressLine1: "Paseo de la República 800",
         city: "queretaro",
         neighborhood: "Juriquilla",
@@ -653,7 +733,7 @@ async function seed(): Promise<void> {
       },
       {
         hostId: "seed-host-maria",
-        complexId: alamos.id,
+        propertyId: alamos.id,
         addressLine1: "Calle Los Álamos 45",
         city: "queretaro",
         neighborhood: "Los Álamos",
@@ -686,7 +766,7 @@ async function seed(): Promise<void> {
       },
       {
         hostId: "seed-host-maria",
-        complexId: elRefugio.id,
+        propertyId: elRefugio.id,
         addressLine1: "Av. El Refugio 120",
         city: "queretaro",
         neighborhood: "El Refugio",
@@ -745,6 +825,7 @@ async function seed(): Promise<void> {
   );
 
   await seedApplicationsAndRatings();
+  await seedEntireProperty();
   console.log(`Seeded ${rooms.length} rooms in Querétaro.`);
 }
 
