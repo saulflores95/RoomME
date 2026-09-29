@@ -1,7 +1,7 @@
 {
   "meta": {
-    "title": "RooMe | Rooms for rent in Querétaro",
-    "description": "Find and rent your perfect room in Querétaro. Connect with verified roomies, hosts, and agents on RooMe.",
+    "title": "RooMe | List and rent houses, apartments, and rooms in Querétaro",
+    "description": "List your property, house, apartment, or room, or find a place to live in Querétaro. Connect with verified renters, roomies, and hosts on RooMe.",
     "queretaroTitle": "Rooms for rent in Querétaro | RooMe",
     "queretaroDescription": "Rooms for rent in Querétaro: Centro Sur, Juriquilla, and more. Find your roomie on RooMe."
   },
@@ -23,19 +23,19 @@
     "myBookings": "My bookings"
   },
   "hero": {
-    "title": "Rooms for rent",
-    "subtitle": "Find and rent your perfect room in Querétaro",
+    "title": "List your property, house, or room",
+    "subtitle": "Rent out or find houses, apartments, and rooms in Querétaro. Not just for roomies anymore.",
     "searchPlaceholder": "Search locations"
   },
   "cta": {
-    "listRoom": "+ List a room",
-    "findRoom": "+ Find a room"
+    "listRoom": "+ List your property",
+    "findRoom": "+ Find a place"
   },
   "value": {
     "title": "RooMe brings places and people together",
     "local": {
       "title": "Built for Querétaro",
-      "body": "Search rooms and roommates across Querétaro — Centro Sur, Juriquilla, and more."
+      "body": "Search houses, apartments, and rooms across Querétaro — Centro Sur, Juriquilla, and more."
     },
     "people": {
       "title": "Discover amazing people",
@@ -47,12 +47,12 @@
     },
     "pets": {
       "title": "Bring your pet",
-      "body": "Filter pet-friendly complexes and find roomies who want a home that welcomes animals."
+      "body": "Filter pet-friendly properties and find a home that welcomes animals."
     }
   },
   "trust": {
     "title": "Real ID checks by real people. Meet safer, faster.",
-    "subtitle": "We combine smart checks with human review so renters and listers connect with confidence.",
+    "subtitle": "We combine smart checks with human review so renters and owners connect with confidence.",
     "manual": "Real people review profiles to catch fakes.",
     "badges": "Validated badges and RooMe Rating help trusted profiles stand out.",
     "messaging": "Safer first contact inside the platform.",
@@ -93,16 +93,16 @@
       "label": "Host reviews",
       "name": "Claudia R.",
       "city": "Centro Sur, Querétaro",
-      "quoteTitle": "Easy to list a room",
-      "quote": "As the head roomie I listed the apartment and assigned the bedroom in minutes."
+      "quoteTitle": "Easy to list my property",
+      "quote": "I listed my whole apartment and a room at the same address in minutes."
     }
   },
   "banner": {
-    "title": "Ready to find the perfect roommate?",
-    "subtitle": "Join RooMe for free and start searching today in Querétaro."
+    "title": "Ready to list or find your next home?",
+    "subtitle": "Join RooMe for free: list your house, apartment, or room, or start searching today in Querétaro."
   },
   "featured": {
-    "title": "Rooms in Querétaro"
+    "title": "Places in Querétaro"
   },
   "rooms": {
     "title": "Find a room",

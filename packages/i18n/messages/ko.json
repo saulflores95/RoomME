@@ -1,7 +1,7 @@
 {
   "meta": {
-    "title": "RooMe | 케레타로 방 임대",
-    "description": "케레타로에서 완벽한 방을 찾고 임대하세요. RooMe에서 룸메이트, 호스트, 에이전트와 연결됩니다.",
+    "title": "RooMe | 케레타로의 주택, 아파트, 방 등록 및 임대",
+    "description": "숙소, 주택, 아파트, 방을 등록하거나 케레타로에서 살 곳을 찾으세요. RooMe에서 인증된 세입자, 룸메이트, 호스트와 연결하세요.",
     "queretaroTitle": "케레타로 방 임대 | RooMe",
     "queretaroDescription": "케레타로의 Centro Sur, Juriquilla 등에서 방을 찾으세요."
   },
@@ -23,19 +23,19 @@
     "myBookings": "내 예약"
   },
   "hero": {
-    "title": "방 임대",
-    "subtitle": "케레타로에서 완벽한 방 찾기",
+    "title": "숙소, 집 또는 방을 등록하세요",
+    "subtitle": "케레타로에서 주택, 아파트, 방을 임대하거나 찾으세요. 이제 룸메이트만을 위한 곳이 아닙니다.",
     "searchPlaceholder": "지역 검색"
   },
   "cta": {
-    "listRoom": "+ 방 등록하기",
-    "findRoom": "+ 방 찾기"
+    "listRoom": "+ 숙소 등록하기",
+    "findRoom": "+ 살 곳 찾기"
   },
   "value": {
     "title": "RooMe는 장소와 사람을 연결합니다",
     "local": {
       "title": "케레타로에 특화",
-      "body": "케레타로 전역에서 방과 룸메이트를 검색하세요 — Centro Sur, Juriquilla 등."
+      "body": "Centro Sur, Juriquilla 등 케레타로 전역에서 주택, 아파트, 방을 찾아보세요."
     },
     "people": {
       "title": "멋진 사람들을 만나세요",
@@ -47,7 +47,7 @@
     },
     "pets": {
       "title": "반려동물과 함께",
-      "body": "펫프렌들리 단지를 필터링하고 동물을 환영하는 룸메이트를 찾으세요."
+      "body": "반려동물 친화적인 숙소를 필터링하고 동물을 환영하는 집을 찾으세요."
     }
   },
   "trust": {
@@ -93,16 +93,16 @@
       "label": "호스트 후기",
       "name": "Claudia R.",
       "city": "센트로 수르, 케레타로",
-      "quoteTitle": "방 등록이 쉬워요",
-      "quote": "헤드 룸메로서 아파트와 방을 몇 분 만에 등록했습니다."
+      "quoteTitle": "숙소 등록이 쉬워요",
+      "quote": "아파트 전체와 같은 주소의 방을 몇 분 만에 등록했어요."
     }
   },
   "banner": {
-    "title": "완벽한 룸메이트를 찾을 준비가 되셨나요?",
-    "subtitle": "RooMe에 무료로 가입하고 오늘 케레타로에서 검색을 시작하세요."
+    "title": "다음 집을 등록하거나 찾을 준비가 되셨나요?",
+    "subtitle": "RooMe에 무료로 가입해 주택, 아파트, 방을 등록하거나 오늘 케레타로에서 검색을 시작하세요."
   },
   "featured": {
-    "title": "케레타로의 방"
+    "title": "케레타로의 숙소"
   },
   "rooms": {
     "title": "방 찾기",

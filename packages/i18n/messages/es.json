@@ -1,7 +1,7 @@
 {
   "meta": {
-    "title": "RooMe | Cuartos en renta en Querétaro",
-    "description": "Encuentra y renta tu cuarto ideal en Querétaro. Conecta con roomies verificados, hosts y agentes en RooMe.",
+    "title": "RooMe | Publica y renta casas, departamentos y cuartos en Querétaro",
+    "description": "Publica tu propiedad, casa, departamento o cuarto, o encuentra dónde vivir en Querétaro. Conecta con inquilinos, roomies y anfitriones verificados en RooMe.",
     "queretaroTitle": "Cuartos en renta en Querétaro | RooMe",
     "queretaroDescription": "Habitaciones en renta en Querétaro: Centro Sur, Juriquilla y más. Encuentra tu roomie en RooMe."
   },
@@ -23,19 +23,19 @@
     "myBookings": "Mis reservas"
   },
   "hero": {
-    "title": "Cuartos en renta",
-    "subtitle": "Encuentra y renta tu cuarto perfecto en Querétaro",
+    "title": "Publica tu propiedad, casa o cuarto",
+    "subtitle": "Renta o encuentra casas, departamentos y cuartos en Querétaro. Ya no es solo para roomies.",
     "searchPlaceholder": "Buscar ubicaciones"
   },
   "cta": {
-    "listRoom": "+ Publicar un cuarto",
-    "findRoom": "+ Buscar un cuarto"
+    "listRoom": "+ Publica tu propiedad",
+    "findRoom": "+ Buscar dónde vivir"
   },
   "value": {
     "title": "RooMe une lugares y personas",
     "local": {
       "title": "Hecho para Querétaro",
-      "body": "Busca habitaciones y roomies en Querétaro, con barrios como Centro Sur y Juriquilla."
+      "body": "Busca casas, departamentos y cuartos en Querétaro, en zonas como Centro Sur y Juriquilla."
     },
     "people": {
       "title": "Conoce roomies increíbles",
@@ -47,12 +47,12 @@
     },
     "pets": {
       "title": "Llega con tu mascota",
-      "body": "Filtra complejos pet-friendly y encuentra roomies que también aman a sus compañeros de cuatro patas."
+      "body": "Filtra propiedades pet-friendly y encuentra un hogar que también reciba a tus compañeros de cuatro patas."
     }
   },
   "trust": {
     "title": "Revisión de identidad. Conoce más seguro y más rápido.",
-    "subtitle": "Combinamos verificaciones automáticas con revisión humana para que roomies y hosts se conecten con confianza.",
+    "subtitle": "Combinamos verificaciones automáticas con revisión humana para que inquilinos y propietarios se conecten con confianza.",
     "manual": "Personas reales revisan perfiles para detectar fraudes.",
     "badges": "Insignias validadas y RooMe Rating para destacar perfiles de confianza.",
     "messaging": "Primer contacto más seguro dentro de la plataforma.",
@@ -93,16 +93,16 @@
       "label": "Reseñas de hosts",
       "name": "Claudia R.",
       "city": "Centro Sur, Querétaro",
-      "quoteTitle": "Fácil publicar el cuarto",
-      "quote": "Como head roomie pude listar el depa y asignar la habitación en minutos."
+      "quoteTitle": "Fácil publicar mi propiedad",
+      "quote": "Publiqué mi departamento completo y un cuarto en la misma dirección en minutos."
     }
   },
   "banner": {
-    "title": "¿Listo para encontrar al roomie perfecto?",
-    "subtitle": "Únete a RooMe gratis y empieza a buscar hoy en Querétaro."
+    "title": "¿Listo para publicar o encontrar tu próximo hogar?",
+    "subtitle": "Únete a RooMe gratis: publica tu casa, departamento o cuarto, o empieza a buscar hoy en Querétaro."
   },
   "featured": {
-    "title": "Habitaciones en Querétaro"
+    "title": "Propiedades en Querétaro"
   },
   "rooms": {
     "title": "Buscar un cuarto",
