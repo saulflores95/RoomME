@@ -21,6 +21,10 @@ const config = {
     "leaflet",
     "react-leaflet",
   ],
+  serverExternalPackages: ["@react-pdf/renderer", "sharp"],
+  outputFileTracingIncludes: {
+    "/api/listings/[id]/technical-sheet": ["./src/assets/fonts/**"],
+  },
   images: {
     remotePatterns: [
       {

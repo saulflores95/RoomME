@@ -3,6 +3,10 @@ import { Suspense } from "react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { RoomsBrowser } from "~/components/rooms-browser";
+import {
+  INITIAL_ROOMS_FILTERS,
+  ROOMS_PAGE_LIMIT,
+} from "~/components/rooms-filters/filter-utils";
 import { HydrateClient, prefetch, trpc } from "~/trpc/server";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -18,7 +22,12 @@ export default async function RoomsPage({
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("rooms");
-  prefetch(trpc.listing.list.queryOptions({ limit: 48 }));
+  prefetch(
+    trpc.listing.list.queryOptions({
+      ...INITIAL_ROOMS_FILTERS,
+      limit: ROOMS_PAGE_LIMIT,
+    }),
+  );
 
   return (
     <HydrateClient>

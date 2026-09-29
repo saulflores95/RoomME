@@ -101,6 +101,11 @@ export interface PropertyOption {
   amenities: string[];
 }
 
+export interface TechnicalSheetListing extends ListingDetail {
+  status: string;
+  hostEmail: string | null;
+}
+
 export interface CreateListingResult {
   propertyId: string;
   roomId: string;
@@ -455,6 +460,30 @@ export const listingRouter = {
       });
 
       return room ? toListingDetail(room) : null;
+    }),
+
+  /** Full listing data for the owner's downloadable technical sheet, regardless of status. */
+  technicalSheet: protectedProcedure
+    .input(z.object({ id: z.uuid() }))
+    .query(async ({ ctx, input }): Promise<TechnicalSheetListing> => {
+      const room = await ctx.db.query.Room.findFirst({
+        where: eq(Room.id, input.id),
+        with: listingRelations,
+      });
+
+      if (!room) {
+        throw new TRPCError({ code: "NOT_FOUND" });
+      }
+
+      if (!canManageListing(ctx.session.user, room)) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+
+      return {
+        ...toListingDetail(room),
+        status: room.status,
+        hostEmail: room.host?.email ?? null,
+      };
     }),
 
   /** Properties the actor can attach a listing to. */

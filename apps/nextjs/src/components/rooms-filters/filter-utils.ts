@@ -6,6 +6,13 @@ import type {
 
 import { propertyTypesFor } from "~/lib/property-types";
 
+/** Must match the server prefetch, or the suspense query refetches during prerender. */
+export const INITIAL_ROOMS_FILTERS = {
+  operationType: "rent",
+} as const satisfies ListListingsInput;
+
+export const ROOMS_PAGE_LIMIT = 48;
+
 /** Filters that only describe a shared room, cleared when searching whole places. */
 export const ROOM_ONLY_FILTERS = [
   "householdGender",

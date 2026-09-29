@@ -13,6 +13,7 @@ import {
   CardTitle,
 } from "@acme/ui/card";
 
+import { DownloadTechnicalSheetButton } from "~/components/technical-sheet/download-technical-sheet-button";
 import { Link } from "~/i18n/navigation";
 
 type HostRoom = RouterOutputs["listing"]["mine"]["rooms"][number];
@@ -59,6 +60,11 @@ export const HostRoomsSection = ({
                       {t("edit")}
                     </Link>
                   </Button>
+                  <DownloadTechnicalSheetButton
+                    listingId={room.id}
+                    variant="outline"
+                    size="sm"
+                  />
                   <Button variant="ghost" size="sm" asChild>
                     <Link href={`/rooms/${room.id}`}>
                       {t("viewApplicants")}

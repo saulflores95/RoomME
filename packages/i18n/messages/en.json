@@ -812,5 +812,28 @@
       "declined": "Declined",
       "withdrawn": "Withdrawn"
     }
+  },
+  "technicalSheet": {
+    "download": "Download technical sheet",
+    "generating": "Generating PDF…",
+    "downloadFailed": "We couldn't generate the technical sheet. Try again.",
+    "downloadForbidden": "Only the listing owner can download its technical sheet.",
+    "badgeSale": "For sale",
+    "badgeRent": "For rent",
+    "badgeRoomRent": "Room for rent",
+    "reference": "Ref. {code}",
+    "gallery": "Gallery",
+    "description": "Description",
+    "features": "Features",
+    "amenities": "Amenities",
+    "includes": "Includes",
+    "location": "Location",
+    "availableFrom": "Available from",
+    "availableNow": "Immediately",
+    "scanToView": "Scan to view the listing online",
+    "generatedOn": "Generated on {date}",
+    "disclaimer": "Price subject to change without notice",
+    "poweredBy": "Powered by",
+    "page": "Page"
   }
 }

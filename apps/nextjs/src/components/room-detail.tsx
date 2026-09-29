@@ -29,6 +29,7 @@ import { useGalleryImages } from "~/components/listing-detail/use-gallery-images
 import { useListingLabels } from "~/components/listing-detail/use-listing-labels";
 import { RoomShareButton } from "~/components/room-share-button";
 import { ScheduleTourButton } from "~/components/schedule-tour-button";
+import { DownloadTechnicalSheetButton } from "~/components/technical-sheet/download-technical-sheet-button";
 import { Link } from "~/i18n/navigation";
 import { useTRPC } from "~/trpc/react";
 
@@ -130,11 +131,14 @@ const ListingDetailView = ({
               </ActionTooltip>
             ) : null}
             {isHost ? (
-              <Button asChild variant="outline">
-                <Link href={`/host/rooms/${listing.id}/edit`}>
-                  {t("editListing")}
-                </Link>
-              </Button>
+              <>
+                <DownloadTechnicalSheetButton listingId={listing.id} />
+                <Button asChild variant="outline">
+                  <Link href={`/host/rooms/${listing.id}/edit`}>
+                    {t("editListing")}
+                  </Link>
+                </Button>
+              </>
             ) : null}
           </div>
         </TooltipProvider>

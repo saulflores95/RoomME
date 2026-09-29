@@ -3,6 +3,10 @@ import { Suspense } from "react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { RoomsBrowser } from "~/components/rooms-browser";
+import {
+  INITIAL_ROOMS_FILTERS,
+  ROOMS_PAGE_LIMIT,
+} from "~/components/rooms-filters/filter-utils";
 import { routing } from "~/i18n/routing";
 import { HydrateClient, prefetch, trpc } from "~/trpc/server";
 
@@ -38,7 +42,13 @@ export default async function QueretaroRoomsPage({
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("meta");
-  prefetch(trpc.listing.list.queryOptions({ city: "queretaro", limit: 48 }));
+  prefetch(
+    trpc.listing.list.queryOptions({
+      ...INITIAL_ROOMS_FILTERS,
+      city: "queretaro",
+      limit: ROOMS_PAGE_LIMIT,
+    }),
+  );
 
   const jsonLd = {
     "@context": "https://schema.org",

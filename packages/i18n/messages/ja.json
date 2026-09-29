@@ -812,5 +812,28 @@
       "declined": "不承認",
       "withdrawn": "取り下げ済み"
     }
+  },
+  "technicalSheet": {
+    "download": "物件資料をダウンロード",
+    "generating": "PDFを生成中…",
+    "downloadFailed": "物件資料を生成できませんでした。もう一度お試しください。",
+    "downloadForbidden": "物件資料をダウンロードできるのは掲載者のみです。",
+    "badgeSale": "売買",
+    "badgeRent": "賃貸",
+    "badgeRoomRent": "部屋貸し",
+    "reference": "物件番号 {code}",
+    "gallery": "ギャラリー",
+    "description": "物件説明",
+    "features": "特徴",
+    "amenities": "設備",
+    "includes": "含まれるもの",
+    "location": "所在地",
+    "availableFrom": "入居可能日",
+    "availableNow": "即入居可",
+    "scanToView": "スキャンしてオンラインで物件を見る",
+    "generatedOn": "{date} 作成",
+    "disclaimer": "価格は予告なく変更される場合があります",
+    "poweredBy": "Powered by",
+    "page": "ページ"
   }
 }

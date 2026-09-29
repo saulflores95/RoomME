@@ -23,6 +23,8 @@ import { RoomsFilters } from "~/components/rooms-filters";
 import {
   applyListingType,
   applyOperationType,
+  INITIAL_ROOMS_FILTERS,
+  ROOMS_PAGE_LIMIT,
 } from "~/components/rooms-filters/filter-utils";
 import { clusterListings } from "~/components/rooms-map-utils";
 import { Link } from "~/i18n/navigation";
@@ -62,9 +64,9 @@ export function RoomsBrowser({ city }: { city?: City }): JSX.Element {
   const t = useTranslations("rooms");
   const trpc = useTRPC();
   const listRef = useRef<HTMLDivElement>(null);
-  const [filters, setFilters] = useState<ListListingsInput>({
-    operationType: "rent",
-  });
+  const [filters, setFilters] = useState<ListListingsInput>(
+    INITIAL_ROOMS_FILTERS,
+  );
   const isSale = filters.operationType === "sale";
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [hoveredListingId, setHoveredListingId] = useState<string | null>(null);
@@ -74,7 +76,7 @@ export function RoomsBrowser({ city }: { city?: City }): JSX.Element {
     trpc.listing.list.queryOptions({
       ...filters,
       city,
-      limit: 48,
+      limit: ROOMS_PAGE_LIMIT,
     }),
   );
 

@@ -812,5 +812,28 @@
       "declined": "Rechazada",
       "withdrawn": "Retirada"
     }
+  },
+  "technicalSheet": {
+    "download": "Descargar ficha técnica",
+    "generating": "Generando PDF…",
+    "downloadFailed": "No pudimos generar la ficha técnica. Inténtalo de nuevo.",
+    "downloadForbidden": "Solo quien publicó el anuncio puede descargar su ficha técnica.",
+    "badgeSale": "En venta",
+    "badgeRent": "En renta",
+    "badgeRoomRent": "Habitación en renta",
+    "reference": "Clave {code}",
+    "gallery": "Galería",
+    "description": "Descripción",
+    "features": "Características",
+    "amenities": "Amenidades",
+    "includes": "Incluye",
+    "location": "Ubicación",
+    "availableFrom": "Disponible desde",
+    "availableNow": "Inmediata",
+    "scanToView": "Escanea para ver la propiedad en línea",
+    "generatedOn": "Generada el {date}",
+    "disclaimer": "Precio sujeto a cambios sin previo aviso",
+    "poweredBy": "Powered by",
+    "page": "Página"
   }
 }
