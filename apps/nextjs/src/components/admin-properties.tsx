@@ -9,11 +9,13 @@ import { Button } from "@acme/ui/button";
 import { toast } from "@acme/ui/toast";
 
 import { AdminConfirmDialog } from "~/components/admin-confirm-dialog";
+import { Link } from "~/i18n/navigation";
 import { useTRPC } from "~/trpc/react";
 
 export function AdminProperties(): JSX.Element {
   const t = useTranslations("admin");
   const tList = useTranslations("list");
+  const tHost = useTranslations("host");
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const propertiesQuery = useQuery(trpc.admin.properties.queryOptions());
@@ -66,15 +68,22 @@ export function AdminProperties(): JSX.Element {
                   ].join(" · ")}
                 </p>
               </div>
-              <Button
-                type="button"
-                variant="destructive"
-                size="sm"
-                disabled={deleteMutation.isPending}
-                onClick={() => setRemoveId(row.id)}
-              >
-                {t("remove")}
-              </Button>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button variant="outline" size="sm" asChild>
+                  <Link href={`/host/properties/${row.id}/edit`}>
+                    {tHost("edit")}
+                  </Link>
+                </Button>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  disabled={deleteMutation.isPending}
+                  onClick={() => setRemoveId(row.id)}
+                >
+                  {t("remove")}
+                </Button>
+              </div>
             </li>
           ))}
         </ul>

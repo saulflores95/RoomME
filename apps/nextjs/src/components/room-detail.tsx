@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 
+import { hasRole } from "@acme/auth/roles";
 import { Button } from "@acme/ui/button";
 import { TooltipProvider } from "@acme/ui/tooltip";
 
@@ -70,6 +71,7 @@ const ListingDetailView = ({
 
   const isSignedIn = session?.user != null;
   const isHost = isSignedIn && listing.host?.id === session.user.id;
+  const canManage = isHost || hasRole(session?.user.role, "admin");
   const canTour = listing.city === "queretaro" && listing.host !== null;
   const hostPhone = isHost ? null : (listing.host?.phone ?? null);
   const isEntire = listing.listingType === "entire_property";
@@ -130,7 +132,7 @@ const ListingDetailView = ({
                 />
               </ActionTooltip>
             ) : null}
-            {isHost ? (
+            {canManage ? (
               <>
                 <DownloadTechnicalSheetButton listingId={listing.id} />
                 <Button asChild variant="outline">
@@ -173,7 +175,7 @@ const ListingDetailView = ({
         </p>
       </section>
 
-      {isHost ? <HostApplicants listingId={listing.id} /> : null}
+      {canManage ? <HostApplicants listingId={listing.id} /> : null}
 
       {isEntire && property && property.amenities.length > 0 ? (
         <section className="space-y-3">

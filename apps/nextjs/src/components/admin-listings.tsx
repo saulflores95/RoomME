@@ -9,6 +9,7 @@ import { Button } from "@acme/ui/button";
 import { toast } from "@acme/ui/toast";
 
 import { AdminConfirmDialog } from "~/components/admin-confirm-dialog";
+import { DownloadTechnicalSheetButton } from "~/components/technical-sheet/download-technical-sheet-button";
 import { Link } from "~/i18n/navigation";
 import { useTRPC } from "~/trpc/react";
 
@@ -23,6 +24,7 @@ const statusKey = (
 
 export function AdminListings(): JSX.Element {
   const t = useTranslations("admin");
+  const tHost = useTranslations("host");
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const roomsQuery = useQuery(trpc.admin.rooms.queryOptions());
@@ -75,15 +77,27 @@ export function AdminListings(): JSX.Element {
                   {t(statusKey(row.status))}
                 </p>
               </div>
-              <Button
-                type="button"
-                variant="destructive"
-                size="sm"
-                disabled={deleteMutation.isPending}
-                onClick={() => setRemoveId(row.id)}
-              >
-                {t("remove")}
-              </Button>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button variant="outline" size="sm" asChild>
+                  <Link href={`/host/rooms/${row.id}/edit`}>
+                    {tHost("edit")}
+                  </Link>
+                </Button>
+                <DownloadTechnicalSheetButton
+                  listingId={row.id}
+                  variant="outline"
+                  size="sm"
+                />
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  disabled={deleteMutation.isPending}
+                  onClick={() => setRemoveId(row.id)}
+                >
+                  {t("remove")}
+                </Button>
+              </div>
             </li>
           ))}
         </ul>
