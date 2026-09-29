@@ -116,6 +116,20 @@
     "availableDate": "Available: {date}",
     "availableNow": "Immediately",
     "perMonth": "/month",
+    "forSale": "For sale",
+    "operationRent": "For rent",
+    "operationSale": "For sale",
+    "salePrice": "Sale price",
+    "salePriceRange": "{min} – {max} MXN",
+    "resultsCountSale": "{count, plural, one {# property for sale} other {# properties for sale}}",
+    "inquiryTitle": "Interested in buying?",
+    "inquiryHint": "Send the owner a message. They will get back to you to arrange a visit or share details.",
+    "inquiryMessage": "Message to the owner (optional)",
+    "inquirySubmit": "I am interested",
+    "inquirySent": "Your inquiry was sent to the owner.",
+    "inquiryAccepted": "The owner accepted your inquiry and will contact you.",
+    "saleInquiry": "Purchase inquiry",
+    "saleInquiries": "Purchase inquiries",
     "tourCount": "{count, plural, one {# tour} other {# tours}}",
     "roomies": "{count} roomies",
     "scheduleTour": "Schedule a tour",
@@ -255,7 +269,10 @@
     "applicationDeclined": "The host declined your last request. You can send a new one.",
     "applicationDates": "Move in {date} · {count, plural, one {# month} other {# months}}",
     "withdraw": "Withdraw request",
-    "viewBookings": "View my bookings"
+    "viewBookings": "View my bookings",
+    "contactWhatsApp": "Contact via WhatsApp",
+    "contactWhatsAppTooltip": "Message the host directly on WhatsApp.",
+    "whatsAppMessage": "Hi! I'm interested in your listing \"{title}\" on RooMe: {url}"
   },
   "list": {
     "title": "List your place",
@@ -279,6 +296,19 @@
     "rules": "House rules and lifestyle",
     "roomHint": "Describe the room, bathroom, furniture, and when it is free.",
     "moneyHint": "Set rent, deposit, minimum stay, and what bills are included.",
+    "operationStep": "Rent or sell?",
+    "operationHint": "Choose whether you are renting the property out or selling it. You can change this later.",
+    "operationOption": {
+      "rent": "For rent",
+      "sale": "For sale"
+    },
+    "operationOptionHint": {
+      "rent": "Tenants pay monthly with a lease.",
+      "sale": "Buyers pay a one-time asking price."
+    },
+    "saleMoney": "Asking price",
+    "saleMoneyHint": "Set the total sale price for the property.",
+    "salePrice": "Sale price (MXN)",
     "householdHint": "Tell seekers who already lives here and who you are looking for.",
     "rulesHint": "Share the house rules so people can see if they would fit in.",
     "complexHint": "Attach this room to a shared complex, or pin a standalone address.",
@@ -443,7 +473,14 @@
     "propertyImage": "Property photos",
     "isSharedBuilding": "Shared building (anyone can attach room listings)",
     "propertySubmit": "Save property",
-    "propertySuccess": "Property saved."
+    "propertySuccess": "Property saved.",
+    "contactTitle": "Contact",
+    "contactHint": "How interested renters will reach you.",
+    "contactPhone": "WhatsApp phone number",
+    "contactPhoneHint": "Include your country code. Shown as a WhatsApp button on your listing.",
+    "contactPhoneInvalid": "Enter a phone number with country code, e.g. +52 442 123 4567.",
+    "contactPhoneSaveFailed": "Could not save your phone number. Try again.",
+    "contactPhoneRequired": "Add a WhatsApp phone number before publishing your listing."
   },
   "host": {
     "title": "My listings",
@@ -562,7 +599,10 @@
     "hoursSaved": "Availability saved",
     "saveFailed": "Could not save. Try again.",
     "uploadFailed": "Upload failed.",
-    "hoursEmptyHint": "Seekers will not see you until you save at least one day of weekly hours."
+    "hoursEmptyHint": "Seekers will not see you until you save at least one day of weekly hours.",
+    "phone": "WhatsApp phone number",
+    "phoneHint": "Include your country code. Seekers use it to contact you about your listings.",
+    "phoneInvalid": "Enter a phone number with country code, e.g. +52 442 123 4567."
   },
   "tags": {
     "hobby": {
@@ -613,10 +653,6 @@
     "schedule": "Schedule a tour",
     "scheduleTitle": "Schedule a tour",
     "scheduleHint": "Choose an agent, then pick a date and time.",
-    "whoIsAgent": "Who is your agent?",
-    "noAgents": "No agents are available in this city yet.",
-    "loadingAgents": "Loading agents…",
-    "agentsFailed": "Could not load agents. Try again.",
     "noBio": "No bio yet.",
     "viewProfile": "View profile",
     "agentLabel": "Agent",
@@ -671,7 +707,11 @@
     "addAllIcal": "Download all (.ics)",
     "calendarEventTitle": "Tour: {title}",
     "calendarEventDescription": "Apartment tour with {name}",
-    "back": "Back"
+    "back": "Back",
+    "hostLabel": "Your tour host",
+    "loadingHost": "Loading host…",
+    "hostFailed": "Could not load the host. Try again.",
+    "hostNoAvailability": "The host hasn't set tour availability yet. Contact them on WhatsApp to arrange a visit."
   },
   "auth": {
     "signInTitle": "Log in",

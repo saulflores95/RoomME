@@ -7,7 +7,12 @@ import { ListBulletIcon, ViewGridIcon } from "@radix-ui/react-icons";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 
-import type { City, ListingType, ListListingsInput } from "@acme/validators";
+import type {
+  City,
+  ListingType,
+  ListListingsInput,
+  OperationType,
+} from "@acme/validators";
 import { cn } from "@acme/ui";
 import { Button } from "@acme/ui/button";
 
@@ -15,7 +20,10 @@ import type { RoomsMapCluster } from "~/components/rooms-map-utils";
 import { RoomCard } from "~/components/room-card";
 import { RoomListItem } from "~/components/room-list-item";
 import { RoomsFilters } from "~/components/rooms-filters";
-import { applyListingType } from "~/components/rooms-filters/filter-utils";
+import {
+  applyListingType,
+  applyOperationType,
+} from "~/components/rooms-filters/filter-utils";
 import { clusterListings } from "~/components/rooms-map-utils";
 import { Link } from "~/i18n/navigation";
 import { useTRPC } from "~/trpc/react";
@@ -42,11 +50,22 @@ const LISTING_TYPE_CHIPS: readonly {
   { value: "entire_property", labelKey: "listingTypeEntire" },
 ];
 
+const OPERATION_CHIPS: readonly {
+  value: OperationType;
+  labelKey: "operationRent" | "operationSale";
+}[] = [
+  { value: "rent", labelKey: "operationRent" },
+  { value: "sale", labelKey: "operationSale" },
+];
+
 export function RoomsBrowser({ city }: { city?: City }): JSX.Element {
   const t = useTranslations("rooms");
   const trpc = useTRPC();
   const listRef = useRef<HTMLDivElement>(null);
-  const [filters, setFilters] = useState<ListListingsInput>({});
+  const [filters, setFilters] = useState<ListListingsInput>({
+    operationType: "rent",
+  });
+  const isSale = filters.operationType === "sale";
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [hoveredListingId, setHoveredListingId] = useState<string | null>(null);
   const [activeClusterKey, setActiveClusterKey] = useState<string | null>(null);
@@ -175,7 +194,23 @@ export function RoomsBrowser({ city }: { city?: City }): JSX.Element {
           </Link>
 
           <div className="ml-auto flex flex-wrap items-center gap-2">
-            {LISTING_TYPE_CHIPS.map(({ value, labelKey }) => (
+            {OPERATION_CHIPS.map(({ value, labelKey }) => (
+              <button
+                key={labelKey}
+                type="button"
+                aria-pressed={filters.operationType === value}
+                className={cityLinkClass(filters.operationType === value)}
+                onClick={() => {
+                  setFilters((current) => applyOperationType(current, value));
+                }}
+              >
+                {t(labelKey)}
+              </button>
+            ))}
+            {isSale ? null : (
+              <div className="bg-border mx-1 hidden h-6 w-px sm:block" />
+            )}
+            {(isSale ? [] : LISTING_TYPE_CHIPS).map(({ value, labelKey }) => (
               <button
                 key={labelKey}
                 type="button"
@@ -194,7 +229,9 @@ export function RoomsBrowser({ city }: { city?: City }): JSX.Element {
 
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm font-semibold">
-            {t("resultsCount", { count: data.length })}
+            {isSale
+              ? t("resultsCountSale", { count: data.length })
+              : t("resultsCount", { count: data.length })}
           </p>
           <Button asChild>
             <Link href="/list">{t("addListing")}</Link>

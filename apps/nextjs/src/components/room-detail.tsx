@@ -13,6 +13,7 @@ import type { ListingDetailData } from "~/components/listing-detail/detail-types
 import type { MapPin } from "~/components/listing-detail/property-section";
 import { authClient } from "~/auth/client";
 import { ApplyPanel } from "~/components/listing-detail/apply-panel";
+import { ContactWhatsAppButton } from "~/components/listing-detail/contact-whatsapp-button";
 import { DetailMap } from "~/components/listing-detail/detail-map";
 import {
   ActionTooltip,
@@ -68,6 +69,8 @@ const ListingDetailView = ({
 
   const isSignedIn = session?.user != null;
   const isHost = isSignedIn && listing.host?.id === session.user.id;
+  const canTour = listing.city === "queretaro" && listing.host !== null;
+  const hostPhone = isHost ? null : (listing.host?.phone ?? null);
   const isEntire = listing.listingType === "entire_property";
   const { property } = listing;
   const mapPin = listingMapPin(listing);
@@ -104,10 +107,10 @@ const ListingDetailView = ({
                 description={listing.description}
               />
             </ActionTooltip>
-            {listing.city === "queretaro" ? (
+            {canTour && !isHost ? (
               isSignedIn ? (
                 <ActionTooltip label={t("scheduleTourTooltip")}>
-                  <ScheduleTourButton roomId={listing.id} city={listing.city} />
+                  <ScheduleTourButton roomId={listing.id} />
                 </ActionTooltip>
               ) : (
                 <ActionTooltip label={t("scheduleTourSignInTooltip")}>
@@ -116,6 +119,15 @@ const ListingDetailView = ({
                   </Button>
                 </ActionTooltip>
               )
+            ) : null}
+            {hostPhone ? (
+              <ActionTooltip label={t("contactWhatsAppTooltip")}>
+                <ContactWhatsAppButton
+                  listingId={listing.id}
+                  title={listing.title}
+                  phone={hostPhone}
+                />
+              </ActionTooltip>
             ) : null}
             {isHost ? (
               <Button asChild variant="outline">

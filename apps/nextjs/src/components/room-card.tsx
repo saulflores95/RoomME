@@ -6,7 +6,10 @@ import { useTranslations } from "next-intl";
 import type { RouterOutputs } from "@acme/api";
 import { cn } from "@acme/ui";
 
-import { ListingTypeBadge } from "~/components/listing-type-badge";
+import {
+  ListingTypeBadge,
+  usePriceSuffix,
+} from "~/components/listing-type-badge";
 import { Link, useRouter } from "~/i18n/navigation";
 import { formatMxn } from "~/lib/money";
 
@@ -45,6 +48,7 @@ export function RoomCard({
 }): JSX.Element {
   const t = useTranslations("rooms");
   const router = useRouter();
+  const priceSuffix = usePriceSuffix();
   const address =
     listing.addressLine1 && listing.addressLine1.length > 0
       ? `${listing.addressLine1}, ${listing.property.neighborhood}`
@@ -97,6 +101,7 @@ export function RoomCard({
           <ListingTypeBadge
             listingType={listing.listingType}
             propertyType={listing.property.propertyType}
+            operationType={listing.operationType}
             className="absolute top-2 right-2"
           />
           {listing.host?.image ? (
@@ -142,9 +147,9 @@ export function RoomCard({
             {t("tourCount", { count: listing.tourBookingCount })}
           </p>
           <p className="text-brand text-lg font-bold tabular-nums">
-            {formatMxn(listing.rentPriceCents)}
+            {formatMxn(listing.priceCents)}
             <span className="text-muted-foreground text-sm font-medium">
-              {t("perMonth")}
+              {priceSuffix(listing.operationType)}
             </span>
           </p>
         </div>

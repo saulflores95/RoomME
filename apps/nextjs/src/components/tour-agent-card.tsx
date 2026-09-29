@@ -14,7 +14,8 @@ export interface TourAgentCardProps {
   image: string | null;
   bio?: string | null;
   age?: number | null;
-  onChange: () => void;
+  label?: string;
+  onChange?: () => void;
   className?: string;
 }
 
@@ -56,6 +57,7 @@ export function TourAgentCard({
   image,
   bio,
   age,
+  label,
   onChange,
   className,
 }: TourAgentCardProps): JSX.Element {
@@ -71,7 +73,7 @@ export function TourAgentCard({
       <AgentAvatar name={name} image={image} className="size-14" />
       <div className="min-w-0 flex-1">
         <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-          {t("agentLabel")}
+          {label ?? t("agentLabel")}
         </p>
         <p className="truncate font-semibold">
           {name}
@@ -89,9 +91,11 @@ export function TourAgentCard({
           {t("viewProfile")}
         </Link>
       </div>
-      <Button type="button" variant="outline" size="sm" onClick={onChange}>
-        {t("changeAgent")}
-      </Button>
+      {onChange ? (
+        <Button type="button" variant="outline" size="sm" onClick={onChange}>
+          {t("changeAgent")}
+        </Button>
+      ) : null}
     </div>
   );
 }

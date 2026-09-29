@@ -49,6 +49,7 @@ export const listingFormDefaults = (
   listingType: ListingFormValues["listingType"] = "room",
 ): ListingFormValues => ({
   listingType,
+  operationType: "rent",
   propertyType: listingType === "room" ? "house" : "apartment",
   propertyId: NONE_PROPERTY_ID,
   bedroomCount: listingType === "room" ? 0 : 1,
@@ -60,7 +61,7 @@ export const listingFormDefaults = (
   longitude: undefined,
   title: "",
   description: "",
-  rentPriceMxn: Number.NaN,
+  priceMxn: Number.NaN,
   includes: [],
   capacity: listingType === "room" ? 1 : 2,
   householdGender: "mixed",
@@ -107,6 +108,7 @@ export const roomToListingFormValues = (
   room: RoomForEdit,
 ): ListingFormValues => ({
   listingType: room.listingType,
+  operationType: room.operationType,
   propertyType: room.propertyType,
   propertyId:
     room.propertyIsShared && room.propertyId
@@ -121,7 +123,7 @@ export const roomToListingFormValues = (
   longitude: room.longitude ?? undefined,
   title: room.title,
   description: room.description,
-  rentPriceMxn: room.rentPriceMxn,
+  priceMxn: room.priceMxn,
   includes: toListingIncludes(room.includes),
   capacity: room.capacity,
   householdGender: room.householdGender,
@@ -168,9 +170,11 @@ export const toCreateListingInput = (
   const attached =
     values.propertyId !== NONE_PROPERTY_ID && values.propertyId.length > 0;
   const isEntire = values.listingType === "entire_property";
+  const isRent = values.operationType === "rent";
 
   return {
     listingType: values.listingType,
+    operationType: values.operationType,
     propertyType: values.propertyType,
     propertyId: attached ? values.propertyId : undefined,
     bedroomCount: isEntire ? values.bedroomCount : undefined,
@@ -182,8 +186,8 @@ export const toCreateListingInput = (
     longitude: values.longitude,
     title: values.title,
     description: values.description,
-    rentPriceMxn: values.rentPriceMxn,
-    includes: values.includes,
+    priceMxn: values.priceMxn,
+    includes: isRent ? values.includes : [],
     capacity: values.capacity,
     householdGender: values.householdGender,
     preferredAgeMin: values.preferredAgeMin,
@@ -193,7 +197,7 @@ export const toCreateListingInput = (
     bathroomType: values.bathroomType,
     furnished: values.furnished,
     availableFrom: parseDateInput(values.availableFrom),
-    depositMonths: values.depositMonths,
+    depositMonths: isRent ? values.depositMonths : 0,
     leaseMonths: values.leaseMonths,
     couplesAllowed: values.couplesAllowed,
     smokingPolicy: values.smokingPolicy,

@@ -8,6 +8,7 @@ import type {
   Furnished,
   HouseholdGender,
   ListingType,
+  OperationType,
   OvernightGuests,
   PropertyType,
   SmokingPolicy,
@@ -33,6 +34,7 @@ export interface RoomWriteValues {
   hostId: string;
   propertyId: string;
   listingType: ListingType;
+  operationType: OperationType;
   title: string;
   description: string;
   addressLine1: string;
@@ -41,7 +43,7 @@ export interface RoomWriteValues {
   latitude: number | null;
   longitude: number | null;
   country: "MX";
-  rentPriceCents: number;
+  priceCents: number;
   currency: "MXN";
   includes: CreateListingInput["includes"];
   capacity: number;
@@ -104,6 +106,27 @@ const roomOnlyValues = (input: CreateListingInput): RoomOnlyValues =>
       }
     : ENTIRE_PROPERTY_ROOM_VALUES;
 
+type RentOnlyValues = Pick<
+  RoomWriteValues,
+  "includes" | "depositMonths" | "leaseMonths"
+>;
+
+/** Neutral values stored for lease fields that do not apply to sales. */
+const SALE_RENT_VALUES: RentOnlyValues = {
+  includes: [],
+  depositMonths: 0,
+  leaseMonths: 12,
+};
+
+const rentOnlyValues = (input: CreateListingInput): RentOnlyValues =>
+  input.operationType === "rent"
+    ? {
+        includes: input.includes,
+        depositMonths: input.depositMonths,
+        leaseMonths: input.leaseMonths,
+      }
+    : SALE_RENT_VALUES;
+
 export const roomWriteValues = (
   input: CreateListingInput,
   hostId: string,
@@ -112,6 +135,7 @@ export const roomWriteValues = (
   hostId,
   propertyId: property.id,
   listingType: input.listingType,
+  operationType: input.operationType,
   title: input.title,
   description: input.description,
   addressLine1: property.addressLine1,
@@ -120,18 +144,16 @@ export const roomWriteValues = (
   latitude: property.latitude,
   longitude: property.longitude,
   country: "MX",
-  rentPriceCents: Math.round(input.rentPriceMxn * 100),
+  priceCents: Math.round(input.priceMxn * 100),
   currency: "MXN",
-  includes: input.includes,
   capacity: input.capacity,
   acceptsPets: input.acceptsPets,
   furnished: input.furnished,
-  depositMonths: input.depositMonths,
-  leaseMonths: input.leaseMonths,
   couplesAllowed: input.couplesAllowed,
   smokingPolicy: input.smokingPolicy,
   availableFrom: input.availableFrom,
   ...roomOnlyValues(input),
+  ...rentOnlyValues(input),
 });
 
 export interface PropertyWriteValues {

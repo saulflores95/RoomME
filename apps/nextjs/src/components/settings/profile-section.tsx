@@ -30,6 +30,7 @@ import { pillClassName, TagPills } from "./tag-pills";
 
 export function SettingsProfileSection({
   name,
+  phone,
   bio,
   birthDate,
   image,
@@ -41,6 +42,7 @@ export function SettingsProfileSection({
   petSize,
   saving,
   onNameChange,
+  onPhoneChange,
   onBioChange,
   onBirthDateChange,
   onHobbiesChange,
@@ -52,6 +54,7 @@ export function SettingsProfileSection({
   onSave,
 }: {
   name: string;
+  phone: string;
   bio: string;
   birthDate: string;
   image: string | null;
@@ -63,6 +66,7 @@ export function SettingsProfileSection({
   petSize: PetSize | null;
   saving: boolean;
   onNameChange: (value: string) => void;
+  onPhoneChange: (value: string) => void;
   onBioChange: (value: string) => void;
   onBirthDateChange: (value: string) => void;
   onHobbiesChange: (value: string[]) => void;
@@ -192,6 +196,20 @@ export function SettingsProfileSection({
             id="settings-name"
             value={name}
             onChange={(event) => onNameChange(event.target.value)}
+          />
+        </Field>
+
+        <Field>
+          <FieldLabel htmlFor="settings-phone">{t("phone")}</FieldLabel>
+          <FieldDescription>{t("phoneHint")}</FieldDescription>
+          <Input
+            id="settings-phone"
+            type="tel"
+            inputMode="tel"
+            autoComplete="tel"
+            placeholder="+52 442 123 4567"
+            value={phone}
+            onChange={(event) => onPhoneChange(event.target.value)}
           />
         </Field>
 

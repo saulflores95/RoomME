@@ -2,13 +2,14 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod/v4";
 
-import { hasRole, isApprovedAgent } from "@acme/auth/roles";
+import { hasAnyRole, hasRole, isApprovedAgent } from "@acme/auth/roles";
 import { avg, count, desc, eq } from "@acme/db";
 import { RoommeRating, user } from "@acme/db/schema";
 import {
   CitySchema,
   PetSizeSchema,
   PetTypeSchema,
+  PhoneSchema,
   ProfileTagSchema,
 } from "@acme/validators";
 
@@ -49,6 +50,7 @@ export interface MyProfile {
   id: string;
   name: string;
   email: string;
+  phone: string | null;
   image: string | null;
   bio: string | null;
   birthDate: Date | null;
@@ -61,6 +63,8 @@ export interface MyProfile {
   operatingCities: string[];
   role: string | null;
   isAgent: boolean;
+  /** Listing creators, agents, and admins can publish tour availability. */
+  canHostTours: boolean;
   agentApproved: boolean;
   isApprovedAgent: boolean;
 }
@@ -169,6 +173,7 @@ export const profileRouter = {
       id: profile.id,
       name: profile.name,
       email: profile.email,
+      phone: profile.phone ?? null,
       image: profile.image ?? null,
       bio: profile.bio ?? null,
       birthDate: profile.birthDate ?? null,
@@ -181,6 +186,7 @@ export const profileRouter = {
       operatingCities: profile.operatingCities,
       role,
       isAgent: hasRole(role, "agent") || hasRole(role, "admin"),
+      canHostTours: hasAnyRole(role, ["host", "agent", "admin"]),
       agentApproved: profile.agentApproved,
       isApprovedAgent: isApprovedAgent(role, profile.agentApproved),
     };
@@ -191,6 +197,7 @@ export const profileRouter = {
       z
         .object({
           name: z.string().min(1).max(120).optional(),
+          phone: PhoneSchema.nullable().optional(),
           bio: z.string().max(2000).nullable().optional(),
           birthDate: z.coerce.date().nullable().optional(),
           image: z.string().url().nullable().optional(),
@@ -228,6 +235,7 @@ export const profileRouter = {
         .update(user)
         .set({
           ...(input.name !== undefined ? { name: input.name } : {}),
+          ...(input.phone !== undefined ? { phone: input.phone } : {}),
           ...(input.bio !== undefined ? { bio: input.bio } : {}),
           ...(input.birthDate !== undefined
             ? { birthDate: input.birthDate }

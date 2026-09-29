@@ -67,7 +67,10 @@ export async function generateMetadata({
   const location = [listing.neighborhood, cityLabel(listing.city, t)]
     .filter((part): part is string => Boolean(part && part.length > 0))
     .join(", ");
-  const priceLabel = formatMxn(listing.rentPriceCents);
+  const priceLabel =
+    listing.operationType === "sale"
+      ? `${t("forSale")} ${formatMxn(listing.priceCents)}`
+      : `${formatMxn(listing.priceCents)}${t("perMonth")}`;
   const fallbackDescription = [priceLabel, location]
     .filter((part) => part.length > 0)
     .join(" · ");
@@ -126,7 +129,11 @@ export default async function RoomDetailPage({
           image: listing.coverUrl ? [listing.coverUrl] : undefined,
           offers: {
             "@type": "Offer",
-            price: listing.rentPriceCents / 100,
+            price: listing.priceCents / 100,
+            businessFunction:
+              listing.operationType === "sale"
+                ? "http://purl.org/goodrelations/v1#Sell"
+                : "http://purl.org/goodrelations/v1#LeaseOut",
             priceCurrency: listing.currency,
             availability: "https://schema.org/InStock",
             url: pageUrl,

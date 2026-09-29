@@ -17,6 +17,7 @@ export const HostApplicationsSection = ({
   groups: ApplicationGroup[];
 }): JSX.Element | null => {
   const t = useTranslations("host");
+  const tRooms = useTranslations("rooms");
   const actions = useApplicationActions();
 
   if (groups.length === 0) {
@@ -31,7 +32,14 @@ export const HostApplicationsSection = ({
       </div>
       {groups.map((group) => (
         <div key={group.roomId} className="space-y-3">
-          <h3 className="font-medium">{group.roomTitle}</h3>
+          <h3 className="font-medium">
+            {group.roomTitle}
+            {group.operationType === "sale" ? (
+              <span className="text-muted-foreground font-normal">
+                {` · ${tRooms("saleInquiries")}`}
+              </span>
+            ) : null}
+          </h3>
           <div className="grid gap-3 sm:grid-cols-2">
             {group.applications.map((application) => (
               <div key={application.id} className="space-y-2">

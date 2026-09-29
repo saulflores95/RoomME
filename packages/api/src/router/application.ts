@@ -3,7 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod/v4";
 
 import type { db } from "@acme/db/client";
-import type { ListingType } from "@acme/validators";
+import type { ListingType, OperationType } from "@acme/validators";
 import { and, avg, count, desc, eq, inArray } from "@acme/db";
 import { Application, Room, RoommeRating, Stay } from "@acme/db/schema";
 import { ApplyToListingSchema } from "@acme/validators";
@@ -47,6 +47,7 @@ export interface MyApplication {
   roomId: string;
   roomTitle: string;
   listingType: ListingType;
+  operationType: OperationType;
   status: ApplicationStatus;
   moveInDate: string | null;
   leaseMonths: number | null;
@@ -173,6 +174,7 @@ export const applicationRouter = {
           status: true,
           propertyId: true,
           listingType: true,
+          operationType: true,
         },
       });
 
@@ -190,20 +192,31 @@ export const applicationRouter = {
         });
       }
 
-      if (input.moveInDate < dateKeyInTimeZone(new Date())) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Move-in date must be today or later",
-        });
-      }
+      const isRent = room.operationType === "rent";
 
-      const conflicts = await findScopedConflicts(
-        ctx.db,
-        room,
-        leaseRange(input.moveInDate, input.leaseMonths),
-      );
-      if (conflicts.length > 0) {
-        throw new BookingConflictError();
+      if (isRent) {
+        if (!input.moveInDate || input.leaseMonths === undefined) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Choose a move-in date and lease length",
+          });
+        }
+
+        if (input.moveInDate < dateKeyInTimeZone(new Date())) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Move-in date must be today or later",
+          });
+        }
+
+        const conflicts = await findScopedConflicts(
+          ctx.db,
+          room,
+          leaseRange(input.moveInDate, input.leaseMonths),
+        );
+        if (conflicts.length > 0) {
+          throw new BookingConflictError();
+        }
       }
 
       const existing = await ctx.db.query.Application.findFirst({
@@ -222,8 +235,8 @@ export const applicationRouter = {
 
       const values = {
         message: input.message?.trim() ?? null,
-        moveInDate: input.moveInDate,
-        leaseMonths: input.leaseMonths,
+        moveInDate: isRent ? (input.moveInDate ?? null) : null,
+        leaseMonths: isRent ? (input.leaseMonths ?? null) : null,
         status: "pending" as const,
       };
 
@@ -287,7 +300,11 @@ export const applicationRouter = {
   mine: protectedProcedure.query(async ({ ctx }): Promise<MyApplication[]> => {
     const rows = await ctx.db.query.Application.findMany({
       where: eq(Application.applicantId, ctx.session.user.id),
-      with: { room: { columns: { title: true, listingType: true } } },
+      with: {
+        room: {
+          columns: { title: true, listingType: true, operationType: true },
+        },
+      },
       orderBy: [desc(Application.createdAt)],
     });
 
@@ -296,6 +313,7 @@ export const applicationRouter = {
       roomId: row.roomId,
       roomTitle: row.room.title,
       listingType: row.room.listingType,
+      operationType: row.room.operationType,
       status: row.status,
       moveInDate: row.moveInDate,
       leaseMonths: row.leaseMonths,
@@ -344,12 +362,18 @@ export const applicationRouter = {
         roomId: string;
         roomTitle: string;
         listingType: ListingType;
+        operationType: OperationType;
         applications: RoomApplication[];
       }[]
     > => {
       const rooms = await ctx.db.query.Room.findMany({
         where: eq(Room.hostId, ctx.session.user.id),
-        columns: { id: true, title: true, listingType: true },
+        columns: {
+          id: true,
+          title: true,
+          listingType: true,
+          operationType: true,
+        },
         orderBy: [desc(Room.createdAt)],
       });
 
@@ -379,6 +403,7 @@ export const applicationRouter = {
           roomId: room.id,
           roomTitle: room.title,
           listingType: room.listingType,
+          operationType: room.operationType,
           applications: byRoom.get(room.id) ?? [],
         }))
         .filter((entry) => entry.applications.length > 0);
@@ -388,10 +413,11 @@ export const applicationRouter = {
   /**
    * Host accepts an application, creating a booked stay. Runs under a lock on
    * the listing's conflict scope so two overlapping accepts cannot both win.
+   * Sale inquiries are marked accepted without a stay.
    */
   accept: protectedProcedure
     .input(z.object({ id: z.uuid() }))
-    .mutation(async ({ ctx, input }): Promise<{ stayId: string }> => {
+    .mutation(async ({ ctx, input }): Promise<{ stayId: string | null }> => {
       const { application, room } = await loadForHost(
         ctx.db,
         ctx.session.user,
@@ -403,6 +429,14 @@ export const applicationRouter = {
           code: "BAD_REQUEST",
           message: "Only pending applications can be accepted",
         });
+      }
+
+      if (room.operationType === "sale") {
+        await ctx.db
+          .update(Application)
+          .set({ status: "accepted", updatedAt: new Date() })
+          .where(eq(Application.id, application.id));
+        return { stayId: null };
       }
 
       const moveInDate =

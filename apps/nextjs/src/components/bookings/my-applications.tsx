@@ -42,6 +42,11 @@ export const MyApplications = ({
             >
               {application.roomTitle}
             </Link>
+            {application.operationType === "sale" ? (
+              <p className="text-muted-foreground text-sm">
+                {tRooms("saleInquiry")}
+              </p>
+            ) : null}
             {application.moveInDate && application.leaseMonths ? (
               <p className="text-muted-foreground text-sm">
                 {tRooms("applicationDates", {

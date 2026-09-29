@@ -116,6 +116,20 @@
     "availableDate": "Disponible: {date}",
     "availableNow": "Inmediatamente",
     "perMonth": "/mes",
+    "forSale": "En venta",
+    "operationRent": "En renta",
+    "operationSale": "En venta",
+    "salePrice": "Precio de venta",
+    "salePriceRange": "{min} – {max} MXN",
+    "resultsCountSale": "{count, plural, one {# propiedad en venta} other {# propiedades en venta}}",
+    "inquiryTitle": "¿Te interesa comprar?",
+    "inquiryHint": "Envía un mensaje al propietario. Te contactará para agendar una visita o darte más detalles.",
+    "inquiryMessage": "Mensaje para el propietario (opcional)",
+    "inquirySubmit": "Me interesa",
+    "inquirySent": "Tu solicitud de información fue enviada al propietario.",
+    "inquiryAccepted": "El propietario aceptó tu solicitud y te contactará.",
+    "saleInquiry": "Interés de compra",
+    "saleInquiries": "Interesados en comprar",
     "tourCount": "{count, plural, one {# tour} other {# tours}}",
     "roomies": "{count} roomies",
     "scheduleTour": "Agendar un tour",
@@ -255,7 +269,10 @@
     "applicationDeclined": "El anfitrión rechazó tu última solicitud. Puedes enviar una nueva.",
     "applicationDates": "Entrada {date} · {count, plural, one {# mes} other {# meses}}",
     "withdraw": "Retirar solicitud",
-    "viewBookings": "Ver mis reservas"
+    "viewBookings": "Ver mis reservas",
+    "contactWhatsApp": "Contactar por WhatsApp",
+    "contactWhatsAppTooltip": "Escríbele al anfitrión directamente por WhatsApp.",
+    "whatsAppMessage": "¡Hola! Me interesa tu anuncio \"{title}\" en RooMe: {url}"
   },
   "list": {
     "title": "Publica tu espacio",
@@ -279,6 +296,19 @@
     "rules": "Reglas y estilo de vida",
     "roomHint": "Describe el cuarto, el baño, los muebles y desde cuándo está libre.",
     "moneyHint": "Define renta, depósito, estancia mínima y qué servicios incluye.",
+    "operationStep": "¿Rentar o vender?",
+    "operationHint": "Elige si vas a rentar o vender la propiedad. Puedes cambiarlo después.",
+    "operationOption": {
+      "rent": "En renta",
+      "sale": "En venta"
+    },
+    "operationOptionHint": {
+      "rent": "Los inquilinos pagan mensualmente con contrato.",
+      "sale": "Los compradores pagan un precio de venta único."
+    },
+    "saleMoney": "Precio de venta",
+    "saleMoneyHint": "Define el precio total de venta de la propiedad.",
+    "salePrice": "Precio de venta (MXN)",
     "householdHint": "Cuéntanos quién ya vive ahí y a quién buscan.",
     "rulesHint": "Comparte las reglas de la casa para que vean si encajan.",
     "complexHint": "Asigna este cuarto a un complejo compartido, o coloca un pin en una dirección propia.",
@@ -443,7 +473,14 @@
     "propertyImage": "Fotos de la propiedad",
     "isSharedBuilding": "Edificio compartido (cualquiera puede vincular habitaciones)",
     "propertySubmit": "Guardar propiedad",
-    "propertySuccess": "Propiedad guardada."
+    "propertySuccess": "Propiedad guardada.",
+    "contactTitle": "Contacto",
+    "contactHint": "Cómo te contactarán los interesados.",
+    "contactPhone": "Número de WhatsApp",
+    "contactPhoneHint": "Incluye la clave de país. Se mostrará como botón de WhatsApp en tu anuncio.",
+    "contactPhoneInvalid": "Ingresa un número con clave de país, p. ej. +52 442 123 4567.",
+    "contactPhoneSaveFailed": "No se pudo guardar tu número. Inténtalo de nuevo.",
+    "contactPhoneRequired": "Agrega un número de WhatsApp antes de publicar tu anuncio."
   },
   "host": {
     "title": "Mis listados",
@@ -562,7 +599,10 @@
     "hoursSaved": "Disponibilidad guardada",
     "saveFailed": "No se pudo guardar. Intenta de nuevo.",
     "uploadFailed": "Error al subir.",
-    "hoursEmptyHint": "Los seekers no te verán hasta que guardes al menos un día de horarios semanales."
+    "hoursEmptyHint": "Los seekers no te verán hasta que guardes al menos un día de horarios semanales.",
+    "phone": "Número de WhatsApp",
+    "phoneHint": "Incluye la clave de país. Los interesados lo usarán para contactarte sobre tus anuncios.",
+    "phoneInvalid": "Ingresa un número con clave de país, p. ej. +52 442 123 4567."
   },
   "tags": {
     "hobby": {
@@ -613,10 +653,6 @@
     "schedule": "Agendar un tour",
     "scheduleTitle": "Agendar un tour",
     "scheduleHint": "Elige un agente, luego una fecha y hora.",
-    "whoIsAgent": "¿Quién es tu agente?",
-    "noAgents": "Aún no hay agentes disponibles en esta ciudad.",
-    "loadingAgents": "Cargando agentes…",
-    "agentsFailed": "No se pudieron cargar los agentes. Intenta de nuevo.",
     "noBio": "Sin bio todavía.",
     "viewProfile": "Ver perfil",
     "agentLabel": "Agente",
@@ -671,7 +707,11 @@
     "addAllIcal": "Descargar todos (.ics)",
     "calendarEventTitle": "Tour: {title}",
     "calendarEventDescription": "Tour del departamento con {name}",
-    "back": "Volver"
+    "back": "Volver",
+    "hostLabel": "Tu anfitrión",
+    "loadingHost": "Cargando anfitrión…",
+    "hostFailed": "No se pudo cargar el anfitrión. Inténtalo de nuevo.",
+    "hostNoAvailability": "El anfitrión aún no ha configurado su disponibilidad para visitas. Contáctalo por WhatsApp para agendar una."
   },
   "auth": {
     "signInTitle": "Iniciar sesión",

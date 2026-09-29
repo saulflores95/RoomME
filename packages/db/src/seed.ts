@@ -24,6 +24,7 @@ const hosts = [
       "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80",
     bio: "Diseñadora en Centro Sur. Me encanta cocinar los domingos y mantener la casa limpia pero relajada. Busco roomies responsables y con buena vibra.",
     birthDate: new Date("1996-04-12"),
+    phone: "+524421000001",
     role: "roomie,host",
   },
   {
@@ -34,6 +35,7 @@ const hosts = [
       "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80",
     bio: "Ingeniero en Querétaro. Trabajo híbrido, me gusta el gym y las tardes tranquilas. La casa es pet-friendly y WFH friendly.",
     birthDate: new Date("1993-09-03"),
+    phone: "+524421000002",
     role: "roomie,host",
   },
 ] as const;
@@ -90,6 +92,7 @@ async function removeCdmxListings(): Promise<void> {
 
 async function upsertUsers(): Promise<void> {
   for (const person of [...hosts, ...roomies]) {
+    const phone = "phone" in person ? person.phone : null;
     const existing = await db.query.user.findFirst({
       where: eq(user.id, person.id),
     });
@@ -102,6 +105,7 @@ async function upsertUsers(): Promise<void> {
           image: person.image,
           bio: person.bio,
           birthDate: person.birthDate,
+          phone,
           role: person.role,
           updatedAt: now,
         })
@@ -117,12 +121,33 @@ async function upsertUsers(): Promise<void> {
       image: person.image,
       bio: person.bio,
       birthDate: person.birthDate,
+      phone,
       createdAt: now,
       updatedAt: now,
       role: person.role,
       banned: false,
     });
   }
+}
+
+/** Listing creators host their own tours. */
+async function seedHostTourHours(): Promise<void> {
+  for (const host of hosts) {
+    await db
+      .delete(AgentWeeklyHours)
+      .where(eq(AgentWeeklyHours.agentId, host.id));
+
+    await db.insert(AgentWeeklyHours).values(
+      [1, 2, 3, 4, 5, 6].map((dayOfWeek) => ({
+        agentId: host.id,
+        dayOfWeek,
+        startMinute: 11 * 60,
+        endMinute: 19 * 60,
+      })),
+    );
+  }
+
+  console.log(`Seeded ${hosts.length} hosts with tour hours.`);
 }
 
 async function backfillRoomFilters(): Promise<void> {
@@ -513,7 +538,7 @@ async function seedEntireProperty(): Promise<void> {
       title: ENTIRE_PROPERTY_TITLE,
       description:
         "Renta el departamento completo: dos recámaras, sala, cocina equipada y balcón. Ideal para parejas o familias pequeñas.",
-      rentPriceCents: 1_650_000,
+      priceCents: 1_650_000,
       currency: "MXN",
       includes: ["water", "gas"],
       capacity: 4,
@@ -541,9 +566,85 @@ async function seedEntireProperty(): Promise<void> {
   });
 }
 
+const SALE_PROPERTY_TITLE = "Casa en venta en Juriquilla";
+
+async function seedSaleProperty(): Promise<void> {
+  const existing = await db.query.Room.findFirst({
+    where: eq(Room.title, SALE_PROPERTY_TITLE),
+    columns: { id: true },
+  });
+  if (existing) {
+    return;
+  }
+
+  const [house] = await db
+    .insert(Property)
+    .values({
+      ownerId: "seed-host-maria",
+      propertyType: "house",
+      bedroomCount: 3,
+      bathroomCount: 2.5,
+      title: "Casa Juriquilla",
+      description:
+        "Casa de tres recámaras en fraccionamiento privado de Juriquilla, con jardín y cochera para dos autos.",
+      addressLine1: "Blvd. Juriquilla 3100",
+      city: "queretaro",
+      neighborhood: "Juriquilla",
+      postalCode: "76230",
+      country: "MX",
+      latitude: 20.7099,
+      longitude: -100.4461,
+      amenities: ["parking", "security", "garden", "kitchen"],
+      petFriendly: true,
+    })
+    .returning();
+
+  if (!house) {
+    throw new Error("Failed to insert seed sale house");
+  }
+
+  const [listing] = await db
+    .insert(Room)
+    .values({
+      hostId: "seed-host-maria",
+      propertyId: house.id,
+      listingType: "entire_property",
+      operationType: "sale",
+      addressLine1: house.addressLine1,
+      city: house.city,
+      neighborhood: house.neighborhood,
+      latitude: house.latitude,
+      longitude: house.longitude,
+      title: SALE_PROPERTY_TITLE,
+      description:
+        "Casa en venta lista para habitar: tres recámaras, estudio, jardín y cochera techada en privada con vigilancia.",
+      priceCents: 485_000_000,
+      currency: "MXN",
+      capacity: 6,
+      acceptsPets: true,
+      furnished: "unfurnished",
+      availableFrom: now,
+      status: "listed",
+    })
+    .returning();
+
+  if (!listing) {
+    throw new Error("Failed to insert seed sale listing");
+  }
+
+  await db.insert(RoomImage).values({
+    roomId: listing.id,
+    url: "https://images.unsplash.com/photo-1568605114967-8130f3a36994?auto=format&fit=crop&w=1200&q=80",
+    alt: listing.title,
+    kind: "apartment",
+    sortOrder: 0,
+  });
+}
+
 async function seed(): Promise<void> {
   await removeCdmxListings();
   await upsertUsers();
+  await seedHostTourHours();
   await seedAgents();
 
   const existingProperties = await db.query.Property.findMany({ limit: 1 });
@@ -551,6 +652,7 @@ async function seed(): Promise<void> {
     await backfillRoomFilters();
     await seedApplicationsAndRatings();
     await seedEntireProperty();
+    await seedSaleProperty();
     console.log("Seed listings already exist, updated Querétaro profiles.");
     return;
   }
@@ -676,7 +778,7 @@ async function seed(): Promise<void> {
         title: "Habitación en planta baja",
         description:
           "Cuarto con baño propio, patio y estacionamiento. Ambiente tranquilo para estudiantes y young professionals.",
-        rentPriceCents: 800_000,
+        priceCents: 800_000,
         currency: "MXN",
         includes: ["wifi", "water", "electricity", "gas"],
         capacity: 2,
@@ -709,7 +811,7 @@ async function seed(): Promise<void> {
         title: "Suite con vista al jardín",
         description:
           "Habitación amplia con vista a áreas verdes. Acceso a alberca y gym del residencial.",
-        rentPriceCents: 950_000,
+        priceCents: 950_000,
         currency: "MXN",
         includes: ["wifi", "water", "electricity", "gas", "cleaning"],
         capacity: 2,
@@ -742,7 +844,7 @@ async function seed(): Promise<void> {
         title: "Cuarto luminoso en Centro Sur",
         description:
           "Recámara amueblada con closet, escritorio y buena luz. Incluye Wi-Fi, agua, gas y limpieza de áreas comunes.",
-        rentPriceCents: 850_000,
+        priceCents: 850_000,
         currency: "MXN",
         includes: ["wifi", "water", "electricity", "gas", "cleaning"],
         capacity: 2,
@@ -775,7 +877,7 @@ async function seed(): Promise<void> {
         title: "Habitación cerca del campus",
         description:
           "Espacio privado con cama queen y baño compartido. A pasos de plazas y transporte.",
-        rentPriceCents: 780_000,
+        priceCents: 780_000,
         currency: "MXN",
         includes: ["wifi", "water", "electricity"],
         capacity: 3,
@@ -826,6 +928,7 @@ async function seed(): Promise<void> {
 
   await seedApplicationsAndRatings();
   await seedEntireProperty();
+  await seedSaleProperty();
   console.log(`Seeded ${rooms.length} rooms in Querétaro.`);
 }
 

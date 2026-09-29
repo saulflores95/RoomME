@@ -24,16 +24,18 @@ import {
   SharedSections,
 } from "~/components/rooms-filters/choice-sections";
 import {
+  applyOperationType,
+  countableFilters,
+} from "~/components/rooms-filters/filter-utils";
+import {
   AgeSection,
-  RentSection,
+  PriceSection,
 } from "~/components/rooms-filters/range-sections";
 import {
   ListingTypeSection,
   PropertyTypeSection,
 } from "~/components/rooms-filters/type-sections";
 import { useFilterDraft } from "~/components/rooms-filters/use-filter-draft";
-
-const emptyFilters: ListListingsInput = {};
 
 export function RoomsFilters({
   value,
@@ -46,7 +48,11 @@ export function RoomsFilters({
   const [open, setOpen] = useState(false);
   const filters = useFilterDraft(value);
   const { draft, setDraft } = filters;
-  const activeCount = useMemo(() => countActiveFilters(value), [value]);
+  const activeCount = useMemo(
+    () => countActiveFilters(countableFilters(value)),
+    [value],
+  );
+  const isSale = draft.operationType === "sale";
   const showRoomFilters = draft.listingType !== "entire_property";
 
   const handleOpenChange = (nextOpen: boolean): void => {
@@ -78,11 +84,15 @@ export function RoomsFilters({
         </DialogHeader>
 
         <div className="overflow-y-auto px-5">
-          <ListingTypeSection filters={filters} />
-          <FilterDivider />
+          {isSale ? null : (
+            <>
+              <ListingTypeSection filters={filters} />
+              <FilterDivider />
+            </>
+          )}
           <PropertyTypeSection filters={filters} />
           <FilterDivider />
-          <RentSection filters={filters} />
+          <PriceSection filters={filters} />
           <FilterDivider />
           {showRoomFilters ? (
             <>
@@ -92,7 +102,7 @@ export function RoomsFilters({
               <FilterDivider />
             </>
           ) : null}
-          <SharedSections filters={filters} />
+          <SharedSections filters={filters} showRentFilters={!isSale} />
         </div>
 
         <DialogFooter>
@@ -100,7 +110,7 @@ export function RoomsFilters({
             type="button"
             variant="ghost"
             onClick={() => {
-              setDraft(emptyFilters);
+              setDraft(applyOperationType({}, draft.operationType ?? "rent"));
             }}
           >
             {t("clear")}

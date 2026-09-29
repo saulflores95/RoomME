@@ -116,6 +116,20 @@
     "availableDate": "入居可能: {date}",
     "availableNow": "即入居可",
     "perMonth": "/月",
+    "forSale": "売り物件",
+    "operationRent": "賃貸",
+    "operationSale": "売買",
+    "salePrice": "販売価格",
+    "salePriceRange": "{min} – {max} MXN",
+    "resultsCountSale": "{count, plural, other {売り物件 # 件}}",
+    "inquiryTitle": "購入をご検討ですか？",
+    "inquiryHint": "オーナーにメッセージを送ってください。内見の調整や詳細についてご連絡します。",
+    "inquiryMessage": "オーナーへのメッセージ（任意）",
+    "inquirySubmit": "興味があります",
+    "inquirySent": "お問い合わせをオーナーに送信しました。",
+    "inquiryAccepted": "オーナーがお問い合わせを承認しました。連絡をお待ちください。",
+    "saleInquiry": "購入の問い合わせ",
+    "saleInquiries": "購入の問い合わせ",
     "tourCount": "{count}件のツアー",
     "roomies": "ルームシェア {count}人",
     "scheduleTour": "ツアーを予約",
@@ -255,7 +269,10 @@
     "applicationDeclined": "前回の申し込みは承認されませんでした。新しく申し込めます。",
     "applicationDates": "入居 {date}・{count}か月",
     "withdraw": "申し込みを取り下げる",
-    "viewBookings": "予約一覧を見る"
+    "viewBookings": "予約一覧を見る",
+    "contactWhatsApp": "WhatsAppで問い合わせる",
+    "contactWhatsAppTooltip": "WhatsAppでホストに直接メッセージを送ります。",
+    "whatsAppMessage": "こんにちは！RooMeの物件「{title}」に興味があります：{url}"
   },
   "list": {
     "title": "物件を掲載",
@@ -279,6 +296,19 @@
     "rules": "ハウスルールとライフスタイル",
     "roomHint": "部屋、バスルーム、家具、入居可能日を記入してください。",
     "moneyHint": "家賃、デポジット、最低契約期間、込みの費用を設定します。",
+    "operationStep": "賃貸にしますか、売却しますか？",
+    "operationHint": "物件を貸し出すか売却するかを選んでください。後から変更できます。",
+    "operationOption": {
+      "rent": "賃貸",
+      "sale": "売却"
+    },
+    "operationOptionHint": {
+      "rent": "入居者が契約に基づき毎月支払います。",
+      "sale": "購入者が一括で販売価格を支払います。"
+    },
+    "saleMoney": "販売価格",
+    "saleMoneyHint": "物件の販売総額を設定します。",
+    "salePrice": "販売価格（MXN）",
     "householdHint": "すでに住んでいる人と、求めている同居人について教えてください。",
     "rulesHint": "ハウスルールを共有して、合う人に見つけてもらいましょう。",
     "complexHint": "部屋を共有コンプレックスに紐づけるか、単独の住所にピンを置いてください。",
@@ -443,7 +473,14 @@
     "propertyImage": "物件写真",
     "isSharedBuilding": "共有の建物（誰でも個室の掲載を紐づけ可能）",
     "propertySubmit": "物件を保存",
-    "propertySuccess": "物件を保存しました。"
+    "propertySuccess": "物件を保存しました。",
+    "contactTitle": "連絡先",
+    "contactHint": "入居希望者があなたに連絡する方法です。",
+    "contactPhone": "WhatsApp電話番号",
+    "contactPhoneHint": "国番号を含めてください。物件ページにWhatsAppボタンとして表示されます。",
+    "contactPhoneInvalid": "国番号付きで入力してください（例：+52 442 123 4567）。",
+    "contactPhoneSaveFailed": "電話番号を保存できませんでした。もう一度お試しください。",
+    "contactPhoneRequired": "掲載する前にWhatsApp電話番号を追加してください。"
   },
   "host": {
     "title": "掲載一覧",
@@ -562,7 +599,10 @@
     "hoursSaved": "空き状況を保存しました",
     "saveFailed": "保存に失敗しました。",
     "uploadFailed": "アップロードに失敗しました。",
-    "hoursEmptyHint": "週の空き時間を1日以上保存するまで、シーカーには表示されません。"
+    "hoursEmptyHint": "週の空き時間を1日以上保存するまで、シーカーには表示されません。",
+    "phone": "WhatsApp電話番号",
+    "phoneHint": "国番号を含めてください。物件についての問い合わせに使われます。",
+    "phoneInvalid": "国番号付きで入力してください（例：+52 442 123 4567）。"
   },
   "tags": {
     "hobby": {
@@ -613,10 +653,6 @@
     "schedule": "ツアーを予約",
     "scheduleTitle": "ツアーを予約",
     "scheduleHint": "エージェントを選び、日付と時間を選択します。",
-    "whoIsAgent": "担当エージェントは？",
-    "noAgents": "この都市にはまだエージェントがいません。",
-    "loadingAgents": "エージェントを読み込み中…",
-    "agentsFailed": "エージェントを読み込めませんでした。",
     "noBio": "自己紹介はまだありません。",
     "viewProfile": "プロフィールを見る",
     "agentLabel": "エージェント",
@@ -671,7 +707,11 @@
     "addAllIcal": "すべてダウンロード（.ics）",
     "calendarEventTitle": "ツアー: {title}",
     "calendarEventDescription": "{name} さんとのアパート見学",
-    "back": "戻る"
+    "back": "戻る",
+    "hostLabel": "内見のホスト",
+    "loadingHost": "ホストを読み込み中…",
+    "hostFailed": "ホストを読み込めませんでした。もう一度お試しください。",
+    "hostNoAvailability": "ホストはまだ内見可能な時間を設定していません。WhatsAppで連絡して日程を調整してください。"
   },
   "auth": {
     "signInTitle": "ログイン",

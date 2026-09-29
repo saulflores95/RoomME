@@ -159,8 +159,10 @@ export const RoomOnlySections = ({
 /** Filters that apply to every listing type. */
 export const SharedSections = ({
   filters,
+  showRentFilters = true,
 }: {
   filters: FilterDraft;
+  showRentFilters?: boolean;
 }): JSX.Element => {
   const t = useTranslations("rooms");
   const { draft, setField } = filters;
@@ -199,41 +201,45 @@ export const SharedSections = ({
           ["yes", t("smokingYes")],
         ]}
       />
-      <FilterDivider />
-      <FilterSection title={t("includes")}>
-        <FilterPillGrid>
-          {LISTING_INCLUDES.map((item) => (
-            <FilterPill
-              key={item}
-              selected={selectedIncludes.includes(item)}
-              onClick={() => {
-                filters.toggleInclude(item);
+      {showRentFilters ? (
+        <>
+          <FilterDivider />
+          <FilterSection title={t("includes")}>
+            <FilterPillGrid>
+              {LISTING_INCLUDES.map((item) => (
+                <FilterPill
+                  key={item}
+                  selected={selectedIncludes.includes(item)}
+                  onClick={() => {
+                    filters.toggleInclude(item);
+                  }}
+                >
+                  {t(`include.${item}`)}
+                </FilterPill>
+              ))}
+            </FilterPillGrid>
+          </FilterSection>
+          <FilterDivider />
+          <FilterSection title={t("availableBy")}>
+            <Input
+              type="date"
+              value={
+                draft.availableBy
+                  ? draft.availableBy.toISOString().slice(0, 10)
+                  : ""
+              }
+              onChange={(event) => {
+                setField(
+                  "availableBy",
+                  event.target.value.length > 0
+                    ? new Date(event.target.value)
+                    : undefined,
+                );
               }}
-            >
-              {t(`include.${item}`)}
-            </FilterPill>
-          ))}
-        </FilterPillGrid>
-      </FilterSection>
-      <FilterDivider />
-      <FilterSection title={t("availableBy")}>
-        <Input
-          type="date"
-          value={
-            draft.availableBy
-              ? draft.availableBy.toISOString().slice(0, 10)
-              : ""
-          }
-          onChange={(event) => {
-            setField(
-              "availableBy",
-              event.target.value.length > 0
-                ? new Date(event.target.value)
-                : undefined,
-            );
-          }}
-        />
-      </FilterSection>
+            />
+          </FilterSection>
+        </>
+      ) : null}
     </>
   );
 };

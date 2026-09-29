@@ -2,7 +2,7 @@
 
 import type { JSX } from "react";
 import { useTranslations } from "next-intl";
-import { Controller, useFormContext } from "react-hook-form";
+import { Controller, useFormContext, useWatch } from "react-hook-form";
 
 import type { ListingFormValues, ListingInclude } from "@acme/validators";
 import { Checkbox } from "@acme/ui/checkbox";
@@ -26,6 +26,26 @@ import { ListingSectionCard } from "./section-card";
 export function MoneyFields({ step }: { step: number }): JSX.Element {
   const t = useTranslations("list");
   const { control } = useFormContext<ListingFormValues>();
+  const operationType = useWatch({ control, name: "operationType" });
+
+  if (operationType === "sale") {
+    return (
+      <ListingSectionCard
+        step={step}
+        title={t("saleMoney")}
+        description={t("saleMoneyHint")}
+      >
+        <FieldGroup>
+          <FormNumberField
+            control={control}
+            name="priceMxn"
+            label={t("salePrice")}
+            min={1}
+          />
+        </FieldGroup>
+      </ListingSectionCard>
+    );
+  }
 
   return (
     <ListingSectionCard
@@ -36,7 +56,7 @@ export function MoneyFields({ step }: { step: number }): JSX.Element {
       <FieldGroup>
         <FormNumberField
           control={control}
-          name="rentPriceMxn"
+          name="priceMxn"
           label={t("rent")}
           min={1}
         />

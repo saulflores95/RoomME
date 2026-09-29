@@ -3,6 +3,26 @@ import { z } from "zod/v4";
 export const CitySchema = z.enum(["queretaro"]);
 export type City = z.infer<typeof CitySchema>;
 
+const E164_PATTERN = /^\+[1-9]\d{7,14}$/;
+
+/** Strips spaces, dashes, dots, and parentheses from a phone number. */
+export const normalizePhone = (value: string): string =>
+  value.replace(/[\s\-.()]/g, "");
+
+export const isValidPhone = (value: string): boolean =>
+  E164_PATTERN.test(normalizePhone(value));
+
+/** International phone number, normalized to E.164 (e.g. `+524421234567`). */
+export const PhoneSchema = z
+  .string()
+  .trim()
+  .transform(normalizePhone)
+  .pipe(
+    z.string().regex(E164_PATTERN, {
+      message: "Enter a phone number with country code, e.g. +52 442 123 4567",
+    }),
+  );
+
 export const CurrencySchema = z.enum(["MXN", "USD"]);
 export type Currency = z.infer<typeof CurrencySchema>;
 
@@ -159,8 +179,16 @@ export const PROPERTY_TYPES = [
 export const PropertyTypeSchema = z.enum(PROPERTY_TYPES);
 export type PropertyType = z.infer<typeof PropertyTypeSchema>;
 
+export const OPERATION_TYPES = ["rent", "sale"] as const;
+export const OperationTypeSchema = z.enum(OPERATION_TYPES);
+export type OperationType = z.infer<typeof OperationTypeSchema>;
+
 export const isRoomListing = (value: { listingType: ListingType }): boolean =>
   value.listingType === "room";
+
+export const isSaleListing = (value: {
+  operationType: OperationType;
+}): boolean => value.operationType === "sale";
 
 /** Form sentinel for "no existing property selected; use a new address". */
 export const NONE_PROPERTY_ID = "none";
@@ -241,9 +269,24 @@ const refineListingType = (
   }
 };
 
+/** Only entire properties can be sold; rooms are always rented. */
+const refineOperationType = (
+  data: { listingType: ListingType; operationType: OperationType },
+  ctx: z.RefinementCtx,
+): void => {
+  if (data.operationType === "sale" && data.listingType !== "entire_property") {
+    ctx.addIssue({
+      code: "custom",
+      path: ["operationType"],
+      message: "Only entire properties can be listed for sale",
+    });
+  }
+};
+
 export const CreateListingSchema = z
   .object({
     listingType: ListingTypeSchema.default("room"),
+    operationType: OperationTypeSchema.default("rent"),
     propertyType: PropertyTypeSchema.default("house"),
     /** Existing property to attach to. Omit to create a new owned property. */
     propertyId: z.uuid().optional(),
@@ -256,7 +299,8 @@ export const CreateListingSchema = z
     longitude: z.number().min(-180).max(180).optional(),
     title: z.string().min(1).max(256),
     description: z.string().min(1).max(4000),
-    rentPriceMxn: z.number().positive(),
+    priceMxn: z.number().positive(),
+    /** Rent only; ignored for sale listings. */
     includes: z.array(ListingIncludeSchema).default([]),
     capacity: z.number().int().min(1).max(12).default(1),
     householdGender: HouseholdGenderSchema.default("mixed"),
@@ -267,7 +311,9 @@ export const CreateListingSchema = z
     bathroomType: BathroomTypeSchema.default("shared"),
     furnished: FurnishedSchema.default("furnished"),
     availableFrom: z.coerce.date(),
+    /** Rent only; ignored for sale listings. */
     depositMonths: z.number().int().min(0).max(3).default(1),
+    /** Rent only; ignored for sale listings. */
     leaseMonths: LeaseMonthsSchema.default(12),
     couplesAllowed: z.boolean().default(false),
     smokingPolicy: SmokingPolicySchema.default("no"),
@@ -279,6 +325,7 @@ export const CreateListingSchema = z
   })
   .superRefine((data, ctx) => {
     refineListingType(data, ctx);
+    refineOperationType(data, ctx);
     if (data.propertyId) {
       return;
     }
@@ -295,6 +342,7 @@ export type UpdateListingInput = z.infer<typeof UpdateListingSchema>;
 export const ListingFormSchema = z
   .object({
     listingType: ListingTypeSchema,
+    operationType: OperationTypeSchema,
     propertyType: PropertyTypeSchema,
     propertyId: z.string(),
     bedroomCount: BedroomCountSchema,
@@ -306,7 +354,7 @@ export const ListingFormSchema = z
     longitude: z.number().min(-180).max(180).optional(),
     title: z.string().min(1).max(256),
     description: z.string().min(1).max(4000),
-    rentPriceMxn: z.number().positive(),
+    priceMxn: z.number().positive(),
     includes: z.array(ListingIncludeSchema),
     capacity: z.number().int().min(1).max(12),
     householdGender: HouseholdGenderSchema,
@@ -338,6 +386,7 @@ export const ListingFormSchema = z
   })
   .superRefine((data, ctx) => {
     refineListingType(data, ctx);
+    refineOperationType(data, ctx);
 
     const attached =
       data.propertyId !== NONE_PROPERTY_ID && data.propertyId.length > 0;
@@ -406,16 +455,20 @@ const CalendarDateKeySchema = z
 export const ApplyToListingSchema = z.object({
   roomId: z.uuid(),
   message: z.string().max(2000).optional(),
-  moveInDate: CalendarDateKeySchema,
-  leaseMonths: LeaseMonthsSchema,
+  /** Required for rent listings; omitted for sale inquiries. */
+  moveInDate: CalendarDateKeySchema.optional(),
+  /** Required for rent listings; omitted for sale inquiries. */
+  leaseMonths: LeaseMonthsSchema.optional(),
 });
 export type ApplyToListingInput = z.infer<typeof ApplyToListingSchema>;
 
 export const ListListingsSchema = z.object({
   city: CitySchema.optional(),
   limit: z.number().int().min(1).max(50).optional(),
-  minRentMxn: z.coerce.number().nonnegative().optional(),
-  maxRentMxn: z.coerce.number().positive().optional(),
+  /** Defaults to `rent` on the server. */
+  operationType: OperationTypeSchema.optional(),
+  minPriceMxn: z.coerce.number().nonnegative().optional(),
+  maxPriceMxn: z.coerce.number().positive().optional(),
   householdGender: HouseholdGenderSchema.optional(),
   seekerAge: AgeSchema.optional(),
   hasPets: z.boolean().optional(),

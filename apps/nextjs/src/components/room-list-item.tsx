@@ -88,6 +88,7 @@ export function RoomListItem({
         <p className="text-muted-foreground truncate text-sm">{address}</p>
         <p className="text-muted-foreground text-xs">
           {typeLabel(listing.listingType, listing.property.propertyType)}
+          {listing.operationType === "sale" ? ` · ${t("forSale")}` : null}
           {sizeLabel ? ` · ${sizeLabel}` : null}
           {listing.host ? (
             <>
@@ -114,7 +115,7 @@ export function RoomListItem({
 
       <div className="flex shrink-0 flex-col items-end justify-between gap-2 self-stretch">
         <p className="text-brand text-base font-bold tabular-nums sm:text-lg">
-          {formatMxn(listing.rentPriceCents)}
+          {formatMxn(listing.priceCents)}
         </p>
         {listing.host?.image ? (
           // eslint-disable-next-line @next/next/no-img-element

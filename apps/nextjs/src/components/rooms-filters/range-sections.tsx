@@ -11,72 +11,81 @@ import {
   AGE_MAX,
   AGE_MIN,
   FilterSection,
-  RENT_MAX,
-  RENT_MIN,
-  RENT_STEP,
+  PRICE_BOUNDS,
 } from "~/components/rooms-filter-controls";
 
 const clamp = (value: number, min: number, max: number): number =>
   Math.min(max, Math.max(min, value));
 
-export const RentSection = ({
+export const PriceSection = ({
   filters,
 }: {
   filters: FilterDraft;
 }): JSX.Element => {
   const t = useTranslations("rooms");
   const { draft, setField, setDraft } = filters;
-  const rentMin = draft.minRentMxn ?? RENT_MIN;
-  const rentMax = draft.maxRentMxn ?? RENT_MAX;
+  const isSale = draft.operationType === "sale";
+  const bounds = PRICE_BOUNDS[isSale ? "sale" : "rent"];
+  const priceMin = draft.minPriceMxn ?? bounds.min;
+  const priceMax = draft.maxPriceMxn ?? bounds.max;
+  const range = {
+    min: priceMin.toLocaleString(),
+    max: priceMax.toLocaleString(),
+  };
 
   return (
     <FilterSection
-      title={t("rent")}
+      title={isSale ? t("salePrice") : t("rent")}
       trailing={
         <span className="text-muted-foreground text-sm tabular-nums">
-          {t("rentRange", {
-            min: rentMin.toLocaleString(),
-            max: rentMax.toLocaleString(),
-          })}
+          {isSale ? t("salePriceRange", range) : t("rentRange", range)}
         </span>
       }
     >
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
         <Input
           type="number"
-          min={RENT_MIN}
-          max={RENT_MAX}
-          step={RENT_STEP}
-          value={rentMin}
+          min={bounds.min}
+          max={bounds.max}
+          step={bounds.step}
+          value={priceMin}
           onChange={(event) => {
-            const next = clamp(Number(event.target.value), RENT_MIN, rentMax);
-            setField("minRentMxn", next === RENT_MIN ? undefined : next);
+            const next = clamp(
+              Number(event.target.value),
+              bounds.min,
+              priceMax,
+            );
+            setField("minPriceMxn", next === bounds.min ? undefined : next);
           }}
         />
         <span className="text-muted-foreground">–</span>
         <Input
           type="number"
-          min={RENT_MIN}
-          max={RENT_MAX}
-          step={RENT_STEP}
-          value={rentMax}
+          min={bounds.min}
+          max={bounds.max}
+          step={bounds.step}
+          value={priceMax}
           onChange={(event) => {
-            const next = clamp(Number(event.target.value), rentMin, RENT_MAX);
-            setField("maxRentMxn", next === RENT_MAX ? undefined : next);
+            const next = clamp(
+              Number(event.target.value),
+              priceMin,
+              bounds.max,
+            );
+            setField("maxPriceMxn", next === bounds.max ? undefined : next);
           }}
         />
       </div>
       <Slider
-        min={RENT_MIN}
-        max={RENT_MAX}
-        step={RENT_STEP}
-        value={[rentMin, rentMax]}
+        min={bounds.min}
+        max={bounds.max}
+        step={bounds.step}
+        value={[priceMin, priceMax]}
         onValueChange={(next) => {
-          const [min = RENT_MIN, max = RENT_MAX] = next;
+          const [min = bounds.min, max = bounds.max] = next;
           setDraft((current) => ({
             ...current,
-            minRentMxn: min === RENT_MIN ? undefined : min,
-            maxRentMxn: max === RENT_MAX ? undefined : max,
+            minPriceMxn: min === bounds.min ? undefined : min,
+            maxPriceMxn: max === bounds.max ? undefined : max,
           }));
         }}
       />

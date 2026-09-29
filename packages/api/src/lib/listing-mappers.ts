@@ -6,6 +6,7 @@ import type {
   HouseholdGender,
   ListingInclude,
   ListingType,
+  OperationType,
   OvernightGuests,
   PropertyType,
   SmokingPolicy,
@@ -16,6 +17,11 @@ export interface ListingHost {
   id: string;
   name: string;
   image: string | null;
+}
+
+/** Detail pages also expose the creator's WhatsApp number. */
+export interface ListingDetailHost extends ListingHost {
+  phone: string | null;
 }
 
 /** @deprecated Kept for older clients; prefer `property`. */
@@ -65,9 +71,10 @@ export interface ListingRoomAttributes {
 export interface ListingSummary extends ListingRoomAttributes {
   id: string;
   listingType: ListingType;
+  operationType: OperationType;
   title: string;
   description: string;
-  rentPriceCents: number;
+  priceCents: number;
   currency: string;
   coverUrl: string | null;
   addressLine1: string | null;
@@ -106,9 +113,10 @@ export interface ListingDetailProperty {
 export interface ListingDetail extends ListingRoomAttributes {
   id: string;
   listingType: ListingType;
+  operationType: OperationType;
   title: string;
   description: string;
-  rentPriceCents: number;
+  priceCents: number;
   currency: string;
   addressLine1: string | null;
   city: City | null;
@@ -120,7 +128,7 @@ export interface ListingDetail extends ListingRoomAttributes {
   property: ListingDetailProperty | null;
   /** @deprecated Kept for older clients; prefer `property`. */
   complex: ListingDetailProperty | null;
-  host: ListingHost | null;
+  host: ListingDetailHost | null;
 }
 
 interface ImageRow {
@@ -151,9 +159,10 @@ export interface ListingPropertyRow {
 export interface ListingRoomRow extends ListingRoomAttributes {
   id: string;
   listingType: ListingType;
+  operationType: OperationType;
   title: string;
   description: string;
-  rentPriceCents: number;
+  priceCents: number;
   currency: string;
   addressLine1: string | null;
   city: City | null;
@@ -161,14 +170,30 @@ export interface ListingRoomRow extends ListingRoomAttributes {
   latitude: number | null;
   longitude: number | null;
   images: ImageRow[];
-  host: ListingHost | null | undefined;
+  host: HostRow | null | undefined;
   property: ListingPropertyRow | null;
 }
 
+interface HostRow extends ListingHost {
+  phone?: string | null;
+}
+
 export const toListingHost = (
-  host: { id: string; name: string; image: string | null } | null | undefined,
+  host: HostRow | null | undefined,
 ): ListingHost | null =>
   host ? { id: host.id, name: host.name, image: host.image } : null;
+
+export const toListingDetailHost = (
+  host: HostRow | null | undefined,
+): ListingDetailHost | null =>
+  host
+    ? {
+        id: host.id,
+        name: host.name,
+        image: host.image,
+        phone: host.phone ?? null,
+      }
+    : null;
 
 export const toRoomAttributes = (
   room: ListingRoomAttributes,
@@ -245,9 +270,10 @@ export const toListingSummary = (
   return {
     id: room.id,
     listingType: room.listingType,
+    operationType: room.operationType,
     title: room.title,
     description: room.description,
-    rentPriceCents: room.rentPriceCents,
+    priceCents: room.priceCents,
     currency: room.currency,
     coverUrl: roomImages[0]?.url ?? propertyImages[0]?.url ?? null,
     addressLine1: room.addressLine1 ?? property?.addressLine1 ?? null,
@@ -308,9 +334,10 @@ export const toListingDetail = (room: ListingRoomRow): ListingDetail => {
   return {
     id: room.id,
     listingType: room.listingType,
+    operationType: room.operationType,
     title: room.title,
     description: room.description,
-    rentPriceCents: room.rentPriceCents,
+    priceCents: room.priceCents,
     currency: room.currency,
     addressLine1: room.addressLine1 ?? property?.addressLine1 ?? null,
     city: room.city ?? property?.city ?? null,
@@ -321,7 +348,7 @@ export const toListingDetail = (room: ListingRoomRow): ListingDetail => {
     images,
     property: detailProperty,
     complex: detailProperty,
-    host: toListingHost(room.host),
+    host: toListingDetailHost(room.host),
     ...toRoomAttributes(room),
   };
 };

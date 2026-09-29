@@ -4,6 +4,7 @@ import type { ListingType } from "@acme/validators";
 
 export type ListingStepKey =
   | "type"
+  | "operation"
   | "details"
   | "layout"
   | "money"
@@ -13,7 +14,15 @@ export type ListingStepKey =
 
 const STEPS_BY_TYPE: Record<ListingType, readonly ListingStepKey[]> = {
   room: ["type", "details", "money", "household", "rules", "location"],
-  entire_property: ["type", "details", "layout", "money", "rules", "location"],
+  entire_property: [
+    "type",
+    "operation",
+    "details",
+    "layout",
+    "money",
+    "rules",
+    "location",
+  ],
 };
 
 export interface ListingSteps {

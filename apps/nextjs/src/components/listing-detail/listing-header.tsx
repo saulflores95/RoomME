@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 
 import type { ListingDetailData } from "./detail-types";
 import type { ListingLabels } from "./use-listing-labels";
+import { usePriceSuffix } from "~/components/listing-type-badge";
 import { formatMxn } from "~/components/room-card";
 import { Link } from "~/i18n/navigation";
 import { formatAvailable } from "./format";
@@ -18,6 +19,7 @@ export const ListingHeader = ({
 }): JSX.Element => {
   const t = useTranslations("rooms");
   const tProfile = useTranslations("profile");
+  const priceSuffix = usePriceSuffix();
   const { property, host } = listing;
   const isEntire = listing.listingType === "entire_property";
 
@@ -38,6 +40,7 @@ export const ListingHeader = ({
                 type: labels.propertyType(property?.propertyType ?? "house"),
               })
             : t("typeRoomBadge")}
+          {listing.operationType === "sale" ? ` · ${t("forSale")}` : null}
         </p>
         <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
           {listing.title}
@@ -61,9 +64,9 @@ export const ListingHeader = ({
           </p>
         ) : null}
         <p className="text-brand text-2xl font-bold tabular-nums">
-          {formatMxn(listing.rentPriceCents)}
+          {formatMxn(listing.priceCents)}
           <span className="text-muted-foreground text-base font-medium">
-            {t("perMonth")}
+            {priceSuffix(listing.operationType)}
           </span>
         </p>
         <p className="text-muted-foreground text-sm">

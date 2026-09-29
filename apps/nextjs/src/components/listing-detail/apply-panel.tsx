@@ -56,22 +56,40 @@ export const ApplyPanel = ({
   );
   const [message, setMessage] = useState("");
   const { application } = state;
+  const isSale = listing.operationType === "sale";
   const hasActiveApplication =
     application != null &&
     (application.status === "pending" || application.status === "accepted");
 
+  const hint = isSale
+    ? t("inquiryHint")
+    : listing.listingType === "entire_property"
+      ? t("applyHintEntire")
+      : t("applyHintRoom");
+  const statusLabel =
+    application?.status === "accepted"
+      ? isSale
+        ? t("inquiryAccepted")
+        : t("applicationAccepted")
+      : isSale
+        ? t("inquirySent")
+        : t("applicationPending");
+  const submitLabel = state.isApplying
+    ? t("applying")
+    : isSale
+      ? t("inquirySubmit")
+      : t("apply");
+
   return (
     <section className="border-border space-y-4 rounded-2xl border p-4">
       <div>
-        <h2 className="text-lg font-semibold">{t("applyTitle")}</h2>
-        <p className="text-muted-foreground text-sm">
-          {listing.listingType === "entire_property"
-            ? t("applyHintEntire")
-            : t("applyHintRoom")}
-        </p>
+        <h2 className="text-lg font-semibold">
+          {isSale ? t("inquiryTitle") : t("applyTitle")}
+        </h2>
+        <p className="text-muted-foreground text-sm">{hint}</p>
       </div>
 
-      {state.unavailable.length > 0 ? (
+      {!isSale && state.unavailable.length > 0 ? (
         <div className="space-y-1">
           <p className="text-sm font-medium">{t("bookedDates")}</p>
           <ul className="text-muted-foreground space-y-0.5 text-sm">
@@ -90,11 +108,7 @@ export const ApplyPanel = ({
         </Button>
       ) : hasActiveApplication ? (
         <div className="space-y-3">
-          <p className="text-sm">
-            {application.status === "accepted"
-              ? t("applicationAccepted")
-              : t("applicationPending")}
-          </p>
+          <p className="text-sm">{statusLabel}</p>
           {application.moveInDate && application.leaseMonths ? (
             <p className="text-muted-foreground text-sm">
               {t("applicationDates", {
@@ -113,7 +127,7 @@ export const ApplyPanel = ({
             >
               {t("withdraw")}
             </Button>
-          ) : (
+          ) : isSale ? null : (
             <Button asChild variant="outline">
               <Link href="/bookings">{t("viewBookings")}</Link>
             </Button>
@@ -124,7 +138,11 @@ export const ApplyPanel = ({
           className="space-y-3"
           onSubmit={(event) => {
             event.preventDefault();
-            state.apply({ moveInDate, leaseMonths, message });
+            state.apply(
+              isSale
+                ? { kind: "sale", message }
+                : { kind: "rent", moveInDate, leaseMonths, message },
+            );
           }}
         >
           {application?.status === "declined" ? (
@@ -132,46 +150,50 @@ export const ApplyPanel = ({
               {t("applicationDeclined")}
             </p>
           ) : null}
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="move-in-date">{t("moveInDate")}</Label>
-              <Input
-                id="move-in-date"
-                type="date"
-                required
-                min={todayInputValue()}
-                value={moveInDate}
-                onChange={(event) => {
-                  setMoveInDate(event.target.value);
-                }}
-              />
+          {isSale ? null : (
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="move-in-date">{t("moveInDate")}</Label>
+                <Input
+                  id="move-in-date"
+                  type="date"
+                  required
+                  min={todayInputValue()}
+                  value={moveInDate}
+                  onChange={(event) => {
+                    setMoveInDate(event.target.value);
+                  }}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="lease-months">{t("leaseLength")}</Label>
+                <Select
+                  value={String(leaseMonths)}
+                  onValueChange={(value) => {
+                    const months = Number(value);
+                    if (isLeaseMonths(months)) {
+                      setLeaseMonths(months);
+                    }
+                  }}
+                >
+                  <SelectTrigger id="lease-months" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {LEASE_MONTHS.map((months) => (
+                      <SelectItem key={months} value={String(months)}>
+                        {t("monthsCount", { count: months })}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="lease-months">{t("leaseLength")}</Label>
-              <Select
-                value={String(leaseMonths)}
-                onValueChange={(value) => {
-                  const months = Number(value);
-                  if (isLeaseMonths(months)) {
-                    setLeaseMonths(months);
-                  }
-                }}
-              >
-                <SelectTrigger id="lease-months" className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {LEASE_MONTHS.map((months) => (
-                    <SelectItem key={months} value={String(months)}>
-                      {t("monthsCount", { count: months })}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+          )}
           <div className="space-y-1.5">
-            <Label htmlFor="apply-message">{t("applyMessage")}</Label>
+            <Label htmlFor="apply-message">
+              {isSale ? t("inquiryMessage") : t("applyMessage")}
+            </Label>
             <Textarea
               id="apply-message"
               maxLength={1000}
@@ -182,7 +204,7 @@ export const ApplyPanel = ({
             />
           </div>
           <Button type="submit" className="w-full" disabled={state.isApplying}>
-            {state.isApplying ? t("applying") : t("apply")}
+            {submitLabel}
           </Button>
         </form>
       )}

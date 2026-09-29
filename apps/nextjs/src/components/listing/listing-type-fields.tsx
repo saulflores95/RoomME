@@ -29,6 +29,9 @@ export function ListingTypeFields({
   const listingType = useWatch({ control, name: "listingType" });
 
   const onListingTypeChange = (next: ListingType): void => {
+    if (next === "room") {
+      setValue("operationType", "rent");
+    }
     if (next === "entire_property") {
       if (getValues("bedroomCount") < 1) {
         setValue("bedroomCount", 1);

@@ -22,9 +22,11 @@ function ListingCard(props: {
         {props.listing.complex.neighborhood}
       </Text>
       <Text className="text-foreground mt-2">
-        ${(props.listing.rentPriceCents / 100).toLocaleString()}{" "}
+        ${(props.listing.priceCents / 100).toLocaleString()}{" "}
         {props.listing.currency}
-        {t("rooms.perMonth")}
+        {props.listing.operationType === "sale"
+          ? ` · ${t("rooms.forSale")}`
+          : t("rooms.perMonth")}
       </Text>
       <Text className="text-muted-foreground mt-1">
         {t("rooms.roomies", { count: props.listing.capacity })}

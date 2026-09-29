@@ -15,6 +15,20 @@
       "when": 1790639400911,
       "tag": "0001_property_marketplace",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790701314992,
+      "tag": "0002_sale_listings",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1790701384145,
+      "tag": "0003_user_phone",
+      "breakpoints": true
     }
   ]
 }

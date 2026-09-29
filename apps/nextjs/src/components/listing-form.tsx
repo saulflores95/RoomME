@@ -1,6 +1,7 @@
 "use client";
 
 import type { JSX } from "react";
+import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
@@ -10,9 +11,14 @@ import type { RouterOutputs } from "@acme/api";
 import type { ListingFormValues } from "@acme/validators";
 import { Button } from "@acme/ui/button";
 import { toast } from "@acme/ui/toast";
-import { ListingFormSchema } from "@acme/validators";
+import {
+  isValidPhone,
+  ListingFormSchema,
+  normalizePhone,
+} from "@acme/validators";
 
 import type { ListingStepKey } from "~/components/listing/use-listing-steps";
+import { ContactPhoneFields } from "~/components/listing/contact-phone-fields";
 import { DetailsFields } from "~/components/listing/details-fields";
 import {
   listingFormDefaults,
@@ -23,6 +29,7 @@ import { LayoutFields } from "~/components/listing/layout-fields";
 import { ListingTypeFields } from "~/components/listing/listing-type-fields";
 import { LocationFields } from "~/components/listing/location-fields";
 import { MoneyFields } from "~/components/listing/money-fields";
+import { OperationTypeFields } from "~/components/listing/operation-type-fields";
 import { RulesFields } from "~/components/listing/rules-fields";
 import { useListingSteps } from "~/components/listing/use-listing-steps";
 import { useRouter } from "~/i18n/navigation";
@@ -55,6 +62,16 @@ export function ListingForm({
   const propertiesQuery = useQuery(trpc.listing.properties.queryOptions());
   const properties = propertiesQuery.data ?? emptyProperties;
 
+  const meQuery = useQuery({
+    ...trpc.profile.me.queryOptions(),
+    enabled: !isEdit,
+  });
+  const needsPhone = !isEdit && meQuery.data != null && !meQuery.data.phone;
+  const [phone, setPhone] = useState("");
+  const [phoneError, setPhoneError] = useState<string | null>(null);
+
+  const savePhone = useMutation(trpc.profile.update.mutationOptions());
+
   const invalidate = async (): Promise<void> => {
     await queryClient.invalidateQueries(trpc.listing.list.queryFilter());
     await queryClient.invalidateQueries(trpc.listing.mine.queryFilter());
@@ -69,7 +86,11 @@ export function ListingForm({
         router.push(`/rooms/${result.roomId}`);
       },
       onError: (error) => {
-        toast.error(error.message);
+        toast.error(
+          error.data?.code === "PRECONDITION_FAILED"
+            ? t("contactPhoneRequired")
+            : error.message,
+        );
       },
     }),
   );
@@ -87,11 +108,24 @@ export function ListingForm({
     }),
   );
 
-  const onSubmit = (values: ListingFormValues): void => {
+  const onSubmit = async (values: ListingFormValues): Promise<void> => {
     const input = toCreateListingInput(values);
     if (isEdit) {
       update.mutate({ id: roomId, ...input });
       return;
+    }
+    if (needsPhone) {
+      if (!isValidPhone(phone)) {
+        setPhoneError(t("contactPhoneInvalid"));
+        return;
+      }
+      try {
+        await savePhone.mutateAsync({ phone: normalizePhone(phone.trim()) });
+        await queryClient.invalidateQueries(trpc.profile.me.queryFilter());
+      } catch {
+        toast.error(t("contactPhoneSaveFailed"));
+        return;
+      }
     }
     create.mutate(input);
   };
@@ -101,6 +135,8 @@ export function ListingForm({
     switch (key) {
       case "type":
         return <ListingTypeFields key={key} step={step} locked={isEdit} />;
+      case "operation":
+        return <OperationTypeFields key={key} step={step} />;
       case "details":
         return <DetailsFields key={key} step={step} />;
       case "layout":
@@ -125,7 +161,22 @@ export function ListingForm({
       >
         {steps.keys.map(renderStep)}
 
-        <Button type="submit" disabled={create.isPending || update.isPending}>
+        {needsPhone ? (
+          <ContactPhoneFields
+            step={steps.keys.length + 1}
+            phone={phone}
+            error={phoneError}
+            onPhoneChange={(value) => {
+              setPhone(value);
+              setPhoneError(null);
+            }}
+          />
+        ) : null}
+
+        <Button
+          type="submit"
+          disabled={create.isPending || update.isPending || savePhone.isPending}
+        >
           {isEdit ? t("save") : t("submit")}
         </Button>
       </form>

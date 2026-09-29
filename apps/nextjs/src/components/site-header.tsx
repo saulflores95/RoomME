@@ -4,7 +4,7 @@ import type { JSX } from "react";
 import { useTranslations } from "next-intl";
 
 import type { Currency, Locale } from "@acme/i18n";
-import { hasRole, isAgentOrAdmin } from "@acme/auth/roles";
+import { hasAnyRole, hasRole } from "@acme/auth/roles";
 import { currencies, localeLabels } from "@acme/i18n";
 import { Button } from "@acme/ui/button";
 import {
@@ -28,11 +28,11 @@ const setCurrencyCookie = (currency: Currency): void => {
 };
 
 function AccountMenuItems({
-  isAgent,
+  canHostTours,
   isAdmin,
   onSignOut,
 }: {
-  isAgent: boolean;
+  canHostTours: boolean;
   isAdmin: boolean;
   onSignOut: () => void;
 }): JSX.Element {
@@ -52,7 +52,7 @@ function AccountMenuItems({
       <DropdownMenuItem asChild>
         <Link href="/tours">{t("myTours")}</Link>
       </DropdownMenuItem>
-      {isAgent ? (
+      {canHostTours ? (
         <DropdownMenuItem asChild>
           <Link href="/agent/calendar">{t("calendar")}</Link>
         </DropdownMenuItem>
@@ -75,7 +75,11 @@ export function SiteHeader(): JSX.Element {
   const pathname = usePathname();
   const router = useRouter();
   const { data: session } = authClient.useSession();
-  const isAgent = isAgentOrAdmin(session?.user.role);
+  const canHostTours = hasAnyRole(session?.user.role, [
+    "host",
+    "agent",
+    "admin",
+  ]);
   const isAdmin = hasRole(session?.user.role, "admin");
 
   const switchLocale = (locale: Locale): void => {
@@ -171,7 +175,7 @@ export function SiteHeader(): JSX.Element {
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <AccountMenuItems
-                  isAgent={isAgent}
+                  canHostTours={canHostTours}
                   isAdmin={isAdmin}
                   onSignOut={signOut}
                 />

@@ -7,6 +7,7 @@ import type {
   City,
   CreateListingInput,
   ListingType,
+  OperationType,
   PropertyType,
 } from "@acme/validators";
 import { isAgentOrAdmin, withRole } from "@acme/auth/roles";
@@ -30,6 +31,7 @@ import {
   PropertyImage,
   Room,
   RoomImage,
+  Stay,
   TourBooking,
   user,
 } from "@acme/db/schema";
@@ -111,6 +113,7 @@ export interface CreatePropertyResult {
 export interface HostRoomSummary {
   id: string;
   listingType: ListingType;
+  operationType: OperationType;
   propertyId: string | null;
   title: string;
   neighborhood: string;
@@ -133,6 +136,7 @@ export interface HostPropertySummary {
 export interface RoomForEdit extends ListingRoomAttributes {
   id: string;
   listingType: ListingType;
+  operationType: OperationType;
   propertyId: string | null;
   propertyType: PropertyType;
   propertyIsShared: boolean;
@@ -145,7 +149,7 @@ export interface RoomForEdit extends ListingRoomAttributes {
   neighborhood: string;
   latitude: number | null;
   longitude: number | null;
-  rentPriceMxn: number;
+  priceMxn: number;
   images: string[];
 }
 
@@ -317,6 +321,9 @@ export const listingRouter = {
           ),
         );
       }
+      const operationType = input?.operationType ?? "rent";
+      const isRent = operationType === "rent";
+      conditions.push(eq(Room.operationType, operationType));
       if (input?.listingType) {
         conditions.push(eq(Room.listingType, input.listingType));
       }
@@ -331,14 +338,14 @@ export const listingRouter = {
           ),
         );
       }
-      if (input?.minRentMxn !== undefined) {
+      if (input?.minPriceMxn !== undefined) {
         conditions.push(
-          gte(Room.rentPriceCents, Math.round(input.minRentMxn * 100)),
+          gte(Room.priceCents, Math.round(input.minPriceMxn * 100)),
         );
       }
-      if (input?.maxRentMxn !== undefined) {
+      if (input?.maxPriceMxn !== undefined) {
         conditions.push(
-          lte(Room.rentPriceCents, Math.round(input.maxRentMxn * 100)),
+          lte(Room.priceCents, Math.round(input.maxPriceMxn * 100)),
         );
       }
       if (input?.householdGender) {
@@ -388,10 +395,10 @@ export const listingRouter = {
       if (input?.cleanliness) {
         conditions.push(roomOnly(eq(Room.cleanliness, input.cleanliness)));
       }
-      if (input?.includes && input.includes.length > 0) {
+      if (isRent && input?.includes && input.includes.length > 0) {
         conditions.push(arrayContains(Room.includes, [...input.includes]));
       }
-      if (input?.availableBy) {
+      if (isRent && input?.availableBy) {
         conditions.push(
           or(
             isNull(Room.availableFrom),
@@ -405,7 +412,7 @@ export const listingRouter = {
         where: and(...conditions),
         with: listingRelations,
         limit,
-        orderBy: [asc(Room.rentPriceCents)],
+        orderBy: [asc(Room.priceCents)],
       });
 
       const roomIds = rooms.map((room) => room.id);
@@ -518,6 +525,7 @@ export const listingRouter = {
         rooms: rooms.map((room) => ({
           id: room.id,
           listingType: room.listingType,
+          operationType: room.operationType,
           propertyId: room.propertyId,
           title: room.title,
           neighborhood: room.neighborhood ?? room.property?.neighborhood ?? "",
@@ -590,7 +598,8 @@ export const listingRouter = {
         neighborhood,
         latitude: room.latitude ?? room.property?.latitude ?? null,
         longitude: room.longitude ?? room.property?.longitude ?? null,
-        rentPriceMxn: room.rentPriceCents / 100,
+        operationType: room.operationType,
+        priceMxn: room.priceCents / 100,
         images: [...room.images]
           .sort((a, b) => a.sortOrder - b.sortOrder)
           .map((image) => image.url),
@@ -642,6 +651,17 @@ export const listingRouter = {
     .mutation(async ({ ctx, input }): Promise<CreateListingResult> => {
       const actor = ctx.session.user;
 
+      const contact = await ctx.db.query.user.findFirst({
+        where: eq(user.id, actor.id),
+        columns: { phone: true },
+      });
+      if (!contact?.phone) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "Add a WhatsApp phone number before publishing",
+        });
+      }
+
       const room = await ctx.db.transaction(async (tx) => {
         const property = await resolveListingProperty(tx, actor, input, null);
         const [created] = await tx
@@ -685,6 +705,22 @@ export const listingRouter = {
       }
       if (!canManageListing(actor, existing)) {
         throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      if (existing.operationType !== input.operationType) {
+        const activeStay = await ctx.db.query.Stay.findFirst({
+          where: and(
+            eq(Stay.roomId, existing.id),
+            inArray(Stay.status, ["current", "upcoming"]),
+          ),
+          columns: { id: true },
+        });
+        if (activeStay) {
+          throw new TRPCError({
+            code: "PRECONDITION_FAILED",
+            message:
+              "This listing has a current or upcoming stay. End it before switching between rent and sale.",
+          });
+        }
       }
 
       const hostId = existing.hostId ?? actor.id;

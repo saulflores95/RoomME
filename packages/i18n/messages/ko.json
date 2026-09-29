@@ -116,6 +116,20 @@
     "availableDate": "입주 가능: {date}",
     "availableNow": "즉시",
     "perMonth": "/월",
+    "forSale": "매매",
+    "operationRent": "임대",
+    "operationSale": "매매",
+    "salePrice": "매매가",
+    "salePriceRange": "{min} – {max} MXN",
+    "resultsCountSale": "{count, plural, other {매매 매물 #개}}",
+    "inquiryTitle": "구매에 관심이 있으신가요?",
+    "inquiryHint": "소유자에게 메시지를 보내세요. 방문 일정이나 자세한 정보를 안내해 드립니다.",
+    "inquiryMessage": "소유자에게 보낼 메시지 (선택)",
+    "inquirySubmit": "관심 있어요",
+    "inquirySent": "문의가 소유자에게 전송되었습니다.",
+    "inquiryAccepted": "소유자가 문의를 수락했습니다. 곧 연락드릴 예정입니다.",
+    "saleInquiry": "구매 문의",
+    "saleInquiries": "구매 문의",
     "tourCount": "투어 {count}회",
     "roomies": "룸메 {count}명",
     "scheduleTour": "투어 예약",
@@ -255,7 +269,10 @@
     "applicationDeclined": "호스트가 이전 신청을 거절했습니다. 새로 신청할 수 있습니다.",
     "applicationDates": "입주 {date} · {count}개월",
     "withdraw": "신청 철회",
-    "viewBookings": "내 예약 보기"
+    "viewBookings": "내 예약 보기",
+    "contactWhatsApp": "WhatsApp으로 문의하기",
+    "contactWhatsAppTooltip": "WhatsApp으로 호스트에게 바로 메시지를 보내세요.",
+    "whatsAppMessage": "안녕하세요! RooMe의 매물 \"{title}\"에 관심이 있습니다: {url}"
   },
   "list": {
     "title": "숙소 등록",
@@ -279,6 +296,19 @@
     "rules": "하우스 룰과 라이프스타일",
     "roomHint": "방, 욕실, 가구, 입주 가능일을 적어 주세요.",
     "moneyHint": "월세, 보증금, 최소 계약 기간, 포함된 비용을 설정하세요.",
+    "operationStep": "임대하시나요, 매매하시나요?",
+    "operationHint": "매물을 임대할지 매매할지 선택하세요. 나중에 변경할 수 있습니다.",
+    "operationOption": {
+      "rent": "임대",
+      "sale": "매매"
+    },
+    "operationOptionHint": {
+      "rent": "세입자가 계약에 따라 매월 지불합니다.",
+      "sale": "구매자가 매매가를 한 번에 지불합니다."
+    },
+    "saleMoney": "매매가",
+    "saleMoneyHint": "매물의 총 매매가를 설정하세요.",
+    "salePrice": "매매가 (MXN)",
     "householdHint": "이미 함께 사는 사람과 찾고 있는 룸메를 알려 주세요.",
     "rulesHint": "하우스 룰을 공유해 잘 맞는 사람을 찾으세요.",
     "complexHint": "공유 단지에 방을 연결하거나 단독 주소에 핀을 놓으세요.",
@@ -443,7 +473,14 @@
     "propertyImage": "숙소 사진",
     "isSharedBuilding": "공유 건물 (누구나 개인실 등록을 연결 가능)",
     "propertySubmit": "숙소 저장",
-    "propertySuccess": "숙소가 저장되었습니다."
+    "propertySuccess": "숙소가 저장되었습니다.",
+    "contactTitle": "연락처",
+    "contactHint": "관심 있는 세입자가 연락할 방법입니다.",
+    "contactPhone": "WhatsApp 전화번호",
+    "contactPhoneHint": "국가 번호를 포함해 주세요. 매물 페이지에 WhatsApp 버튼으로 표시됩니다.",
+    "contactPhoneInvalid": "국가 번호를 포함해 입력해 주세요 (예: +52 442 123 4567).",
+    "contactPhoneSaveFailed": "전화번호를 저장하지 못했습니다. 다시 시도해 주세요.",
+    "contactPhoneRequired": "게시하기 전에 WhatsApp 전화번호를 추가해 주세요."
   },
   "host": {
     "title": "내 매물",
@@ -562,7 +599,10 @@
     "hoursSaved": "가능 시간이 저장되었습니다",
     "saveFailed": "저장하지 못했습니다.",
     "uploadFailed": "업로드에 실패했습니다.",
-    "hoursEmptyHint": "주간 가능 시간을 하루 이상 저장해야 시커에게 표시됩니다."
+    "hoursEmptyHint": "주간 가능 시간을 하루 이상 저장해야 시커에게 표시됩니다.",
+    "phone": "WhatsApp 전화번호",
+    "phoneHint": "국가 번호를 포함해 주세요. 매물 문의 시 연락처로 사용됩니다.",
+    "phoneInvalid": "국가 번호를 포함해 입력해 주세요 (예: +52 442 123 4567)."
   },
   "tags": {
     "hobby": {
@@ -613,10 +653,6 @@
     "schedule": "투어 예약",
     "scheduleTitle": "투어 예약",
     "scheduleHint": "에이전트를 고른 뒤 날짜와 시간을 선택하세요.",
-    "whoIsAgent": "담당 에이전트는?",
-    "noAgents": "이 도시에 가능한 에이전트가 아직 없습니다.",
-    "loadingAgents": "에이전트 불러오는 중…",
-    "agentsFailed": "에이전트를 불러오지 못했습니다.",
     "noBio": "소개가 아직 없습니다.",
     "viewProfile": "프로필 보기",
     "agentLabel": "에이전트",
@@ -671,7 +707,11 @@
     "addAllIcal": "모두 다운로드 (.ics)",
     "calendarEventTitle": "투어: {title}",
     "calendarEventDescription": "{name} 님과 함께하는 아파트 투어",
-    "back": "뒤로"
+    "back": "뒤로",
+    "hostLabel": "투어 호스트",
+    "loadingHost": "호스트 불러오는 중…",
+    "hostFailed": "호스트를 불러오지 못했습니다. 다시 시도해 주세요.",
+    "hostNoAvailability": "호스트가 아직 투어 가능 시간을 설정하지 않았습니다. WhatsApp으로 연락해 방문 일정을 잡아 보세요."
   },
   "auth": {
     "signInTitle": "로그인",

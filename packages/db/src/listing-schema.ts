@@ -30,6 +30,7 @@ export const listingTypeEnum = pgEnum("listing_type", [
   "room",
   "entire_property",
 ]);
+export const operationTypeEnum = pgEnum("operation_type", ["rent", "sale"]);
 export const roomImageKindEnum = pgEnum("room_image_kind", [
   "room",
   "apartment",
@@ -128,6 +129,8 @@ export const Room = pgTable("room", (t) => ({
   hostId: t.text().references(() => user.id, { onDelete: "cascade" }),
   propertyId: t.uuid().references(() => Property.id, { onDelete: "cascade" }),
   listingType: listingTypeEnum().notNull().default("room"),
+  /** Only `entire_property` listings may be `sale`. */
+  operationType: operationTypeEnum().notNull().default("rent"),
   title: t.varchar({ length: 256 }).notNull(),
   description: t.text().notNull(),
   addressLine1: t.varchar({ length: 256 }),
@@ -138,7 +141,8 @@ export const Room = pgTable("room", (t) => ({
   country: t.varchar({ length: 64 }).default("MX"),
   latitude: t.doublePrecision(),
   longitude: t.doublePrecision(),
-  rentPriceCents: t.integer().notNull(),
+  /** Monthly rent for `rent` listings, total asking price for `sale`. */
+  priceCents: t.bigint({ mode: "number" }).notNull(),
   currency: t.varchar({ length: 8 }).notNull().default("MXN"),
   includes: t.text().array().notNull().default([]),
   capacity: t.integer().notNull().default(1),
@@ -475,7 +479,7 @@ export const CreatePropertySchema = createInsertSchema(Property, {
 export const CreateRoomSchema = createInsertSchema(Room, {
   title: z.string().min(1).max(256),
   description: z.string().min(1).max(4000),
-  rentPriceCents: z.number().int().positive(),
+  priceCents: z.number().int().positive(),
   capacity: z.number().int().min(1).max(12),
 }).omit({
   id: true,

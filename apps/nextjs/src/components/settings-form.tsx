@@ -9,7 +9,12 @@ import { useTranslations } from "next-intl";
 import type { RouterOutputs } from "@acme/api";
 import type { PetSize, PetType } from "@acme/validators";
 import { toast } from "@acme/ui/toast";
-import { PET_SIZES, PET_TYPES } from "@acme/validators";
+import {
+  isValidPhone,
+  normalizePhone,
+  PET_SIZES,
+  PET_TYPES,
+} from "@acme/validators";
 
 import type { DayHours } from "~/components/settings/agent-section";
 import {
@@ -64,20 +69,21 @@ const queretaroCities = (cities: string[]): "queretaro"[] =>
 export function SettingsForm(): JSX.Element {
   const trpc = useTRPC();
   const meQuery = useQuery(trpc.profile.me.queryOptions());
+  const canHostTours = meQuery.data?.canHostTours === true;
   const hoursQuery = useQuery({
     ...trpc.tour.myWeeklyHours.queryOptions(),
-    enabled: meQuery.data?.isAgent === true,
+    enabled: canHostTours,
   });
   const blockedQuery = useQuery({
     ...trpc.tour.myBlockedDates.queryOptions(),
-    enabled: meQuery.data?.isAgent === true,
+    enabled: canHostTours,
   });
 
   if (meQuery.isLoading || !meQuery.data) {
     return <SettingsFormSkeleton />;
   }
 
-  if (meQuery.data.isAgent && hoursQuery.isLoading) {
+  if (canHostTours && hoursQuery.isLoading) {
     return <SettingsFormSkeleton />;
   }
 
@@ -113,6 +119,7 @@ function SettingsFormLoaded({
   const queryClient = useQueryClient();
 
   const [name, setName] = useState(profile.name);
+  const [phone, setPhone] = useState(profile.phone ?? "");
   const [bio, setBio] = useState(profile.bio ?? "");
   const [birthDate, setBirthDate] = useState(
     profile.birthDate ? profile.birthDate.toISOString().slice(0, 10) : "",
@@ -214,6 +221,7 @@ function SettingsFormLoaded({
     <div className="space-y-6">
       <SettingsProfileSection
         name={name}
+        phone={phone}
         bio={bio}
         birthDate={birthDate}
         image={image}
@@ -225,6 +233,7 @@ function SettingsFormLoaded({
         petSize={petSize}
         saving={updateMutation.isPending}
         onNameChange={setName}
+        onPhoneChange={setPhone}
         onBioChange={setBio}
         onBirthDateChange={setBirthDate}
         onHobbiesChange={setHobbies}
@@ -245,6 +254,11 @@ function SettingsFormLoaded({
         onPetSizeChange={setPetSize}
         onUpload={uploadFile}
         onSave={() => {
+          const trimmedPhone = phone.trim();
+          if (trimmedPhone.length > 0 && !isValidPhone(trimmedPhone)) {
+            toast.error(t("phoneInvalid"));
+            return;
+          }
           if (hasPets && petType == null) {
             toast.error(t("petTypeRequired"));
             return;
@@ -255,6 +269,8 @@ function SettingsFormLoaded({
           }
           updateMutation.mutate({
             name,
+            phone:
+              trimmedPhone.length > 0 ? normalizePhone(trimmedPhone) : null,
             bio: bio.length > 0 ? bio : null,
             birthDate: birthDate.length > 0 ? new Date(birthDate) : null,
             image,
@@ -269,9 +285,10 @@ function SettingsFormLoaded({
         }}
       />
 
-      {profile.isAgent ? (
+      {profile.canHostTours ? (
         <>
           <SettingsAgentSection
+            showCities={profile.isAgent}
             cities={cities}
             dayHours={dayHours}
             dayLabels={dayLabels}
@@ -293,9 +310,11 @@ function SettingsFormLoaded({
                 ];
               });
               hoursMutation.mutate({ hours });
-              updateMutation.mutate({
-                operatingCities: queretaroCities(cities),
-              });
+              if (profile.isAgent) {
+                updateMutation.mutate({
+                  operatingCities: queretaroCities(cities),
+                });
+              }
             }}
           />
 

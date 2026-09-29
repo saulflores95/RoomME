@@ -37,15 +37,13 @@ export function AgentCalendar(): JSX.Element {
 
   const calendarQuery = useQuery(trpc.tour.agentCalendar.queryOptions(range));
   const bookings = calendarQuery.data ?? EMPTY_TOUR_BOOKINGS;
-  const agentId = bookings[0]?.agentId ?? "";
 
   const slotsQuery = useQuery({
-    ...trpc.tour.availableSlots.queryOptions({
-      agentId,
+    ...trpc.tour.mySlots.queryOptions({
       from: slotsRange.from,
       to: slotsRange.to,
     }),
-    enabled: agentId.length > 0,
+    enabled: bookings.length > 0,
   });
 
   const cancelMutation = useMutation(
@@ -66,6 +64,7 @@ export function AgentCalendar(): JSX.Element {
         toast.success(t("rescheduled"));
         await Promise.all([
           queryClient.invalidateQueries(trpc.tour.agentCalendar.queryFilter()),
+          queryClient.invalidateQueries(trpc.tour.mySlots.queryFilter()),
           queryClient.invalidateQueries(trpc.tour.availableSlots.queryFilter()),
         ]);
       },

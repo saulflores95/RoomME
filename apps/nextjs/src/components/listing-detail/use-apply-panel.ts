@@ -12,11 +12,15 @@ import { useTRPC } from "~/trpc/react";
 type MyApplication = RouterOutputs["application"]["mineForRoom"];
 type UnavailableRanges = RouterOutputs["booking"]["unavailableRanges"];
 
-export interface ApplyInput {
-  moveInDate: string;
-  leaseMonths: LeaseMonths;
-  message: string;
-}
+/** Rent applications carry dates; sale inquiries are message-only. */
+export type ApplyInput =
+  | {
+      kind: "rent";
+      moveInDate: string;
+      leaseMonths: LeaseMonths;
+      message: string;
+    }
+  | { kind: "sale"; message: string };
 
 export interface ApplyPanelState {
   application: MyApplication | undefined;
@@ -75,12 +79,13 @@ export const useApplyPanel = (
     isApplying: applyMutation.isPending,
     isWithdrawing: withdrawMutation.isPending,
     error: toMessage(applyMutation.error ?? withdrawMutation.error),
-    apply: ({ moveInDate, leaseMonths, message }) => {
-      const trimmed = message.trim();
+    apply: (input) => {
+      const trimmed = input.message.trim();
       applyMutation.mutate({
         roomId: listingId,
-        moveInDate,
-        leaseMonths,
+        ...(input.kind === "rent"
+          ? { moveInDate: input.moveInDate, leaseMonths: input.leaseMonths }
+          : {}),
         ...(trimmed.length > 0 ? { message: trimmed } : {}),
       });
     },

@@ -39,7 +39,7 @@ export default async function Image({
   );
 
   const title = listing?.title ?? t("detailTitle");
-  const price = listing ? formatMxn(listing.rentPriceCents) : "";
+  const price = listing ? formatMxn(listing.priceCents) : "";
   const location = listing
     ? [listing.neighborhood, cityLabel(listing.city, t)]
         .filter((part): part is string => Boolean(part && part.length > 0))
@@ -141,7 +141,9 @@ export default async function Image({
                   {price}
                   <span style={{ fontWeight: 400, opacity: 0.85 }}>
                     {" "}
-                    {t("perMonth")}
+                    {listing?.operationType === "sale"
+                      ? t("forSale")
+                      : t("perMonth")}
                   </span>
                 </span>
               ) : null}

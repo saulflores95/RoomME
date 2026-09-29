@@ -17,12 +17,13 @@ const baseCreate = {
   longitude: -100.4,
   title: "Listing",
   description: "Nice place",
-  rentPriceMxn: 8000,
+  priceMxn: 8000,
   availableFrom: "2026-10-01",
 } as const;
 
 const baseForm: ListingFormValues = {
   listingType: "room",
+  operationType: "rent",
   propertyType: "house",
   propertyId: NONE_PROPERTY_ID,
   bedroomCount: 0,
@@ -34,7 +35,7 @@ const baseForm: ListingFormValues = {
   longitude: -100.4,
   title: "Listing",
   description: "Nice place",
-  rentPriceMxn: 8000,
+  priceMxn: 8000,
   includes: [],
   capacity: 1,
   householdGender: "mixed",
@@ -133,9 +134,42 @@ describe("CreateListingSchema", () => {
       true,
     );
   });
+
+  it("defaults to a rent listing", () => {
+    const parsed = CreateListingSchema.parse(baseCreate);
+    assert.equal(parsed.operationType, "rent");
+  });
+
+  it("accepts an entire property for sale without lease fields", () => {
+    const result = CreateListingSchema.safeParse({
+      ...baseCreate,
+      listingType: "entire_property",
+      operationType: "sale",
+      priceMxn: 4_850_000,
+      bedroomCount: 3,
+      bathroomCount: 2.5,
+    });
+    assert.equal(result.success, true);
+  });
+
+  it("rejects a room listed for sale", () => {
+    const result = CreateListingSchema.safeParse({
+      ...baseCreate,
+      operationType: "sale",
+    });
+    assert.deepEqual(issuePaths(result), ["operationType"]);
+  });
 });
 
 describe("ListingFormSchema", () => {
+  it("rejects a room listed for sale", () => {
+    const result = ListingFormSchema.safeParse({
+      ...baseForm,
+      operationType: "sale",
+    });
+    assert.deepEqual(issuePaths(result), ["operationType"]);
+  });
+
   it("accepts a room with zero bedroom count", () => {
     assert.equal(ListingFormSchema.safeParse(baseForm).success, true);
   });
@@ -161,7 +195,7 @@ describe("ListingFormSchema", () => {
 });
 
 describe("ApplyToListingSchema", () => {
-  it("requires a move-in date and a supported lease length", () => {
+  it("validates the move-in date and lease length", () => {
     const valid = {
       roomId: "5f1c7a2e-4b1d-4c3a-9a8e-2b6f0d1e3c4a",
       moveInDate: "2026-11-01",
@@ -176,6 +210,16 @@ describe("ApplyToListingSchema", () => {
       ApplyToListingSchema.safeParse({ ...valid, moveInDate: "11/01/2026" })
         .success,
       false,
+    );
+  });
+
+  it("allows a message-only inquiry for sale listings", () => {
+    assert.equal(
+      ApplyToListingSchema.safeParse({
+        roomId: "5f1c7a2e-4b1d-4c3a-9a8e-2b6f0d1e3c4a",
+        message: "Me interesa la casa",
+      }).success,
+      true,
     );
   });
 });

@@ -42,14 +42,18 @@ export const PropertyFacts = ({
         value={t("peopleCount", { count: listing.capacity })}
       />
       <Fact label={t("furnished")} value={labels.furnished} />
-      <Fact
-        label={t("deposit")}
-        value={t("monthsCount", { count: listing.depositMonths })}
-      />
-      <Fact
-        label={t("lease")}
-        value={t("monthsCount", { count: listing.leaseMonths })}
-      />
+      {listing.operationType === "rent" ? (
+        <>
+          <Fact
+            label={t("deposit")}
+            value={t("monthsCount", { count: listing.depositMonths })}
+          />
+          <Fact
+            label={t("lease")}
+            value={t("monthsCount", { count: listing.leaseMonths })}
+          />
+        </>
+      ) : null}
       <Fact label={t("couples")} value={labels.yesNo(listing.couplesAllowed)} />
       <Fact label={t("smoking")} value={labels.smoking} />
       <Fact

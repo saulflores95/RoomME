@@ -12,8 +12,8 @@ import {
   TourBooking,
   user,
 } from "@acme/db/schema";
-import { CitySchema } from "@acme/validators";
 
+import type { Database } from "../lib/listing-write";
 import { ageFromBirthDate } from "../lib/profile";
 import {
   addCalendarDays,
@@ -22,7 +22,7 @@ import {
   dateKeyInTimeZone,
   startOfZonedDayUtc,
 } from "../lib/tour-slots";
-import { agentProcedure, protectedProcedure, publicProcedure } from "../trpc";
+import { hostProcedure, protectedProcedure, publicProcedure } from "../trpc";
 
 const SLOT_MINUTES = 60;
 
@@ -45,6 +45,11 @@ export interface TourAgentSummary {
   hobbies: string[];
   personalities: string[];
   hasPets: boolean;
+}
+
+export interface TourHostSummary extends TourAgentSummary {
+  /** False when the host has no weekly tour hours configured. */
+  hasAvailability: boolean;
 }
 
 export interface TourBookingItem {
@@ -98,30 +103,27 @@ const toTourBookingItem = (row: {
 const isAdmin = (role: string | null | undefined): boolean =>
   hasRole(role, "admin");
 
-const isAgentBookable = (row: {
-  role: string | null;
-  documentUrl: string | null;
-}): boolean => {
-  if (isAdmin(row.role)) {
-    return true;
-  }
-  if (!hasRole(row.role, "agent")) {
-    return false;
-  }
-  return Boolean(row.documentUrl);
-};
+type HostRow = typeof user.$inferSelect;
 
-const operatesInCity = (
-  row: {
-    role: string | null;
-    operatingCities: string[];
-  },
-  city: string,
-): boolean => {
-  if (isAdmin(row.role)) {
-    return true;
+interface ListingHost {
+  room: typeof Room.$inferSelect;
+  host: HostRow;
+}
+
+/** Tours are always hosted by the person who created the listing. */
+const resolveListingHost = async (
+  db: Database,
+  roomId: string,
+): Promise<ListingHost> => {
+  const room = await db.query.Room.findFirst({
+    where: and(eq(Room.id, roomId), eq(Room.status, "listed")),
+    with: { host: true },
+  });
+  if (!room?.host) {
+    throw new TRPCError({ code: "NOT_FOUND", message: "Room not found" });
   }
-  return row.operatingCities.includes(city);
+  const { host, ...rest } = room;
+  return { room: rest, host };
 };
 
 const resolveWeeklyHours = <
@@ -154,55 +156,70 @@ const zonedDayBounds = (
 const calendarDateToDbDate = (dateKey: string): Date =>
   new Date(`${dateKey}T00:00:00.000Z`);
 
+export interface TourSlot {
+  startsAt: Date;
+}
+
+const hostSlots = async (
+  db: Database,
+  host: Pick<HostRow, "id" | "role">,
+  from: Date,
+  to: Date,
+): Promise<TourSlot[]> => {
+  const hours = await db.query.AgentWeeklyHours.findMany({
+    where: eq(AgentWeeklyHours.agentId, host.id),
+  });
+  const blocked = await db.query.AgentBlockedDate.findMany({
+    where: eq(AgentBlockedDate.agentId, host.id),
+  });
+  const bookings = await db.query.TourBooking.findMany({
+    where: and(
+      eq(TourBooking.agentId, host.id),
+      eq(TourBooking.status, "scheduled"),
+      gte(TourBooking.startsAt, from),
+      lte(TourBooking.startsAt, to),
+    ),
+  });
+
+  return computeAvailableSlots({
+    from,
+    to,
+    weeklyHours: resolveWeeklyHours(host.role, hours),
+    blockedDateKeys: blockedKeysFromRows(blocked),
+    existingStarts: bookings.map((row) => row.startsAt),
+    slotMinutes: SLOT_MINUTES,
+  }).map((startsAt) => ({ startsAt }));
+};
+
 export const tourRouter = {
-  listAgentsForCity: publicProcedure
-    .input(z.object({ city: CitySchema }))
-    .query(async ({ ctx, input }): Promise<TourAgentSummary[]> => {
-      const agents = await ctx.db
-        .select({
-          id: user.id,
-          name: user.name,
-          image: user.image,
-          bio: user.bio,
-          birthDate: user.birthDate,
-          hobbies: user.hobbies,
-          personalities: user.personalities,
-          hasPets: user.hasPets,
-          role: user.role,
-          documentUrl: user.documentUrl,
-          operatingCities: user.operatingCities,
-        })
-        .from(user);
+  hostForRoom: publicProcedure
+    .input(z.object({ roomId: z.uuid() }))
+    .query(async ({ ctx, input }): Promise<TourHostSummary> => {
+      const { host } = await resolveListingHost(ctx.db, input.roomId);
+      const hours = await ctx.db.query.AgentWeeklyHours.findMany({
+        where: eq(AgentWeeklyHours.agentId, host.id),
+        columns: {
+          id: true,
+          dayOfWeek: true,
+          startMinute: true,
+          endMinute: true,
+        },
+      });
 
-      const withHours = await ctx.db
-        .selectDistinct({ agentId: AgentWeeklyHours.agentId })
-        .from(AgentWeeklyHours);
-
-      const hourSet = new Set(withHours.map((row) => row.agentId));
-
-      return agents
-        .filter((agent) => {
-          if (!isAgentBookable(agent)) {
-            return false;
-          }
-          if (isAdmin(agent.role)) {
-            return true;
-          }
-          return operatesInCity(agent, input.city) && hourSet.has(agent.id);
-        })
-        .map((agent) => ({
-          id: agent.id,
-          name: agent.name,
-          image: agent.image ?? null,
-          bio: agent.bio ?? null,
-          age: ageFromBirthDate(agent.birthDate),
-          hobbies: agent.hobbies,
-          personalities: agent.personalities,
-          hasPets: agent.hasPets,
-        }));
+      return {
+        id: host.id,
+        name: host.name,
+        image: host.image ?? null,
+        bio: host.bio ?? null,
+        age: ageFromBirthDate(host.birthDate),
+        hobbies: host.hobbies,
+        personalities: host.personalities,
+        hasPets: host.hasPets,
+        hasAvailability: resolveWeeklyHours(host.role, hours).length > 0,
+      };
     }),
 
-  myWeeklyHours: agentProcedure.query(async ({ ctx }) => {
+  myWeeklyHours: hostProcedure.query(async ({ ctx }) => {
     return ctx.db.query.AgentWeeklyHours.findMany({
       where: eq(AgentWeeklyHours.agentId, ctx.session.user.id),
       orderBy: (table, { asc }) => [
@@ -212,7 +229,7 @@ export const tourRouter = {
     });
   }),
 
-  setWeeklyHours: agentProcedure
+  setWeeklyHours: hostProcedure
     .input(
       z.object({
         hours: z.array(
@@ -252,14 +269,14 @@ export const tourRouter = {
       return { ok: true };
     }),
 
-  myBlockedDates: agentProcedure.query(async ({ ctx }) => {
+  myBlockedDates: hostProcedure.query(async ({ ctx }) => {
     return ctx.db.query.AgentBlockedDate.findMany({
       where: eq(AgentBlockedDate.agentId, ctx.session.user.id),
       orderBy: (table, { asc }) => [asc(table.date)],
     });
   }),
 
-  addBlockedDate: agentProcedure
+  addBlockedDate: hostProcedure
     .input(
       z.object({
         date: CalendarDateSchema,
@@ -297,7 +314,7 @@ export const tourRouter = {
       return { id: row.id };
     }),
 
-  removeBlockedDate: agentProcedure
+  removeBlockedDate: hostProcedure
     .input(z.object({ id: z.string().uuid() }))
     .mutation(async ({ ctx, input }): Promise<{ ok: true }> => {
       await ctx.db
@@ -314,97 +331,65 @@ export const tourRouter = {
   availableSlots: publicProcedure
     .input(
       z.object({
-        agentId: z.string().min(1),
+        roomId: z.uuid(),
         from: z.coerce.date(),
         to: z.coerce.date(),
       }),
     )
-    .query(async ({ ctx, input }): Promise<{ startsAt: Date }[]> => {
-      const agentRow = await ctx.db.query.user.findFirst({
-        where: eq(user.id, input.agentId),
-        columns: { role: true, documentUrl: true },
+    .query(async ({ ctx, input }): Promise<TourSlot[]> => {
+      const { host } = await resolveListingHost(ctx.db, input.roomId);
+      return hostSlots(ctx.db, host, input.from, input.to);
+    }),
+
+  /** Open slots of the signed-in host, used when rescheduling. */
+  mySlots: hostProcedure
+    .input(
+      z.object({
+        from: z.coerce.date(),
+        to: z.coerce.date(),
+      }),
+    )
+    .query(async ({ ctx, input }): Promise<TourSlot[]> => {
+      const host = await ctx.db.query.user.findFirst({
+        where: eq(user.id, ctx.session.user.id),
+        columns: { id: true, role: true },
       });
-      if (!agentRow || !isAgentBookable(agentRow)) {
-        return [];
+      if (!host) {
+        throw new TRPCError({ code: "NOT_FOUND" });
       }
-
-      const hours = await ctx.db.query.AgentWeeklyHours.findMany({
-        where: eq(AgentWeeklyHours.agentId, input.agentId),
-      });
-      const blocked = await ctx.db.query.AgentBlockedDate.findMany({
-        where: eq(AgentBlockedDate.agentId, input.agentId),
-      });
-      const bookings = await ctx.db.query.TourBooking.findMany({
-        where: and(
-          eq(TourBooking.agentId, input.agentId),
-          eq(TourBooking.status, "scheduled"),
-          gte(TourBooking.startsAt, input.from),
-          lte(TourBooking.startsAt, input.to),
-        ),
-      });
-
-      return computeAvailableSlots({
-        from: input.from,
-        to: input.to,
-        weeklyHours: resolveWeeklyHours(agentRow.role, hours),
-        blockedDateKeys: blockedKeysFromRows(blocked),
-        existingStarts: bookings.map((row) => row.startsAt),
-        slotMinutes: SLOT_MINUTES,
-      }).map((startsAt) => ({ startsAt }));
+      return hostSlots(ctx.db, host, input.from, input.to);
     }),
 
   book: protectedProcedure
     .input(
       z.object({
-        roomId: z.string().uuid(),
-        agentId: z.string().min(1),
+        roomId: z.uuid(),
         startsAt: z.coerce.date(),
       }),
     )
     .mutation(async ({ ctx, input }): Promise<{ id: string }> => {
-      const room = await ctx.db.query.Room.findFirst({
-        where: and(eq(Room.id, input.roomId), eq(Room.status, "listed")),
-        with: { property: true },
-      });
-      if (!room) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Room not found" });
-      }
-
-      const city = room.city ?? room.property?.city ?? null;
-      if (!city) {
+      const { room, host: agent } = await resolveListingHost(
+        ctx.db,
+        input.roomId,
+      );
+      if (agent.id === ctx.session.user.id) {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: "Room has no city",
-        });
-      }
-
-      const agent = await ctx.db.query.user.findFirst({
-        where: eq(user.id, input.agentId),
-      });
-      if (!agent || !isAgentBookable(agent)) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Agent not available",
-        });
-      }
-      if (!operatesInCity(agent, city)) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Agent does not operate in this city",
+          message: "You can't book a tour of your own listing",
         });
       }
 
       const { dayStart, dayEnd } = zonedDayBounds(input.startsAt);
 
       const slots = await ctx.db.query.AgentWeeklyHours.findMany({
-        where: eq(AgentWeeklyHours.agentId, input.agentId),
+        where: eq(AgentWeeklyHours.agentId, agent.id),
       });
       const blocked = await ctx.db.query.AgentBlockedDate.findMany({
-        where: eq(AgentBlockedDate.agentId, input.agentId),
+        where: eq(AgentBlockedDate.agentId, agent.id),
       });
       const existing = await ctx.db.query.TourBooking.findMany({
         where: and(
-          eq(TourBooking.agentId, input.agentId),
+          eq(TourBooking.agentId, agent.id),
           eq(TourBooking.status, "scheduled"),
           gte(TourBooking.startsAt, dayStart),
           lte(TourBooking.startsAt, dayEnd),
@@ -437,7 +422,7 @@ export const tourRouter = {
           .insert(TourBooking)
           .values({
             roomId: input.roomId,
-            agentId: input.agentId,
+            agentId: agent.id,
             seekerId: ctx.session.user.id,
             startsAt: input.startsAt,
             endsAt,
@@ -518,7 +503,7 @@ export const tourRouter = {
       return { ok: true };
     }),
 
-  reschedule: agentProcedure
+  reschedule: hostProcedure
     .input(
       z.object({
         id: z.string().uuid(),
@@ -631,7 +616,7 @@ export const tourRouter = {
     },
   ),
 
-  agentCalendar: agentProcedure
+  agentCalendar: hostProcedure
     .input(
       z.object({
         from: z.coerce.date(),

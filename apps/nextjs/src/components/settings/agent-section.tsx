@@ -21,6 +21,7 @@ export interface DayHours {
 }
 
 export function SettingsAgentSection({
+  showCities,
   cities,
   dayHours,
   dayLabels,
@@ -29,6 +30,8 @@ export function SettingsAgentSection({
   onDayHoursChange,
   onSave,
 }: {
+  /** Operating cities only apply to agents; listing hosts tour their own homes. */
+  showCities: boolean;
   cities: string[];
   dayHours: Record<number, DayHours>;
   dayLabels: readonly string[];
@@ -49,25 +52,30 @@ export function SettingsAgentSection({
         </Button>
       }
     >
-      <div className="space-y-2">
-        <p className="text-sm font-medium">{t("citiesLabel")}</p>
-        <Field orientation="horizontal" className={checkboxRowClassName}>
-          <Checkbox
-            id="settings-city-queretaro"
-            checked={cities.includes("queretaro")}
-            onCheckedChange={(checked) => {
-              onCitiesChange(
-                checked === true
-                  ? [...cities, "queretaro"]
-                  : cities.filter((city) => city !== "queretaro"),
-              );
-            }}
-          />
-          <FieldLabel htmlFor="settings-city-queretaro" className="font-normal">
-            {t("cityQueretaro")}
-          </FieldLabel>
-        </Field>
-      </div>
+      {showCities ? (
+        <div className="space-y-2">
+          <p className="text-sm font-medium">{t("citiesLabel")}</p>
+          <Field orientation="horizontal" className={checkboxRowClassName}>
+            <Checkbox
+              id="settings-city-queretaro"
+              checked={cities.includes("queretaro")}
+              onCheckedChange={(checked) => {
+                onCitiesChange(
+                  checked === true
+                    ? [...cities, "queretaro"]
+                    : cities.filter((city) => city !== "queretaro"),
+                );
+              }}
+            />
+            <FieldLabel
+              htmlFor="settings-city-queretaro"
+              className="font-normal"
+            >
+              {t("cityQueretaro")}
+            </FieldLabel>
+          </Field>
+        </div>
+      ) : null}
 
       <div className="space-y-2">
         <p className="text-sm font-medium">{t("hoursLabel")}</p>

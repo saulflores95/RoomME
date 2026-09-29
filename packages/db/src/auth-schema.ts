@@ -6,6 +6,8 @@ export const user = pgTable("user", (t) => ({
   email: t.text().notNull().unique(),
   emailVerified: t.boolean().default(false).notNull(),
   image: t.text(),
+  /** E.164, e.g. `+524421234567`. Used for WhatsApp contact. */
+  phone: t.text(),
   bio: t.text(),
   birthDate: t.timestamp({ mode: "date" }),
   hobbies: t.text().array().notNull().default([]),

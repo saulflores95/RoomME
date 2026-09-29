@@ -17,30 +17,26 @@ import {
 } from "@acme/ui/dialog";
 import { toast } from "@acme/ui/toast";
 
-import { AgentAvatar, TourAgentCard } from "~/components/tour-agent-card";
+import { TourAgentCard } from "~/components/tour-agent-card";
 import { TourSlotPicker } from "~/components/tour-slot-picker";
-import { Link } from "~/i18n/navigation";
 import { dateKeyInTourZone, formatTourDateTime } from "~/lib/tour-time";
 import { useTRPC } from "~/trpc/react";
 
-type Step = "agent" | "slot" | "done";
+type Step = "slot" | "done";
 
 const BOOKING_HORIZON_DAYS = 30;
 
 export function ScheduleTourButton({
   roomId,
-  city,
 }: {
   roomId: string;
-  city: "queretaro";
 }): JSX.Element {
   const t = useTranslations("tours");
   const locale = useLocale();
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
-  const [step, setStep] = useState<Step>("agent");
-  const [agentId, setAgentId] = useState<string | null>(null);
+  const [step, setStep] = useState<Step>("slot");
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedSlot, setSelectedSlot] = useState<Date | null>(null);
 
@@ -57,18 +53,19 @@ export function ScheduleTourButton({
     new Date(range.to.getTime() - 24 * 60 * 60 * 1000),
   );
 
-  const agentsQuery = useQuery({
-    ...trpc.tour.listAgentsForCity.queryOptions({ city }),
+  const hostQuery = useQuery({
+    ...trpc.tour.hostForRoom.queryOptions({ roomId }),
     enabled: open,
   });
+  const host = hostQuery.data;
 
   const slotsQuery = useQuery({
     ...trpc.tour.availableSlots.queryOptions({
-      agentId: agentId ?? "",
+      roomId,
       from: range.from,
       to: range.to,
     }),
-    enabled: open && step === "slot" && agentId != null,
+    enabled: open && step === "slot" && host?.hasAvailability === true,
   });
 
   const bookMutation = useMutation(
@@ -88,15 +85,53 @@ export function ScheduleTourButton({
 
   const canConfirm = selectedSlot != null && !bookMutation.isPending;
 
-  const selectedAgent = (agentsQuery.data ?? []).find(
-    (agent) => agent.id === agentId,
-  );
-
   const reset = (): void => {
-    setStep("agent");
-    setAgentId(null);
+    setStep("slot");
     setSelectedDate("");
     setSelectedSlot(null);
+  };
+
+  const renderSlotStep = (): JSX.Element => {
+    if (hostQuery.isLoading) {
+      return (
+        <p className="text-muted-foreground text-sm">{t("loadingHost")}</p>
+      );
+    }
+    if (hostQuery.isError || !host) {
+      return <p className="text-destructive text-sm">{t("hostFailed")}</p>;
+    }
+
+    return (
+      <div className="space-y-4">
+        <TourAgentCard
+          id={host.id}
+          name={host.name}
+          image={host.image}
+          bio={host.bio}
+          age={host.age}
+          label={t("hostLabel")}
+        />
+
+        {!host.hasAvailability ? (
+          <p className="text-muted-foreground text-sm">
+            {t("hostNoAvailability")}
+          </p>
+        ) : slotsQuery.isError ? (
+          <p className="text-destructive text-sm">{t("slotsFailed")}</p>
+        ) : (
+          <TourSlotPicker
+            slots={slotsQuery.data ?? []}
+            loading={slotsQuery.isLoading}
+            selectedDate={selectedDate}
+            selectedSlot={selectedSlot}
+            onSelectDate={setSelectedDate}
+            onSelectSlot={setSelectedSlot}
+            minDate={minDate}
+            maxDate={maxDate}
+          />
+        )}
+      </div>
+    );
   };
 
   return (
@@ -117,83 +152,7 @@ export function ScheduleTourButton({
         </DialogHeader>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
-          {step === "agent" ? (
-            <div className="space-y-3">
-              <h3 className="text-sm font-semibold">{t("whoIsAgent")}</h3>
-              {agentsQuery.isLoading ? (
-                <p className="text-muted-foreground text-sm">
-                  {t("loadingAgents")}
-                </p>
-              ) : agentsQuery.isError ? (
-                <p className="text-destructive text-sm">{t("agentsFailed")}</p>
-              ) : (agentsQuery.data ?? []).length === 0 ? (
-                <p className="text-muted-foreground text-sm">{t("noAgents")}</p>
-              ) : (
-                <ul className="space-y-2">
-                  {(agentsQuery.data ?? []).map((agent) => (
-                    <li key={agent.id}>
-                      <button
-                        type="button"
-                        className="border-border hover:bg-muted/50 flex w-full items-center gap-3 rounded-xl border p-3 text-left transition-colors"
-                        onClick={() => {
-                          setAgentId(agent.id);
-                          setSelectedDate("");
-                          setSelectedSlot(null);
-                          setStep("slot");
-                        }}
-                      >
-                        <AgentAvatar name={agent.name} image={agent.image} />
-                        <div className="min-w-0 flex-1">
-                          <p className="font-medium">
-                            {agent.name}
-                            {agent.age != null ? `, ${agent.age}` : ""}
-                          </p>
-                          <p className="text-muted-foreground line-clamp-2 text-xs">
-                            {agent.bio ?? t("noBio")}
-                          </p>
-                          <Link
-                            href={`/profiles/${agent.id}`}
-                            className="text-brand text-xs underline"
-                            onClick={(event) => event.stopPropagation()}
-                          >
-                            {t("viewProfile")}
-                          </Link>
-                        </div>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          ) : null}
-
-          {step === "slot" && selectedAgent ? (
-            <div className="space-y-4">
-              <TourAgentCard
-                id={selectedAgent.id}
-                name={selectedAgent.name}
-                image={selectedAgent.image}
-                bio={selectedAgent.bio}
-                age={selectedAgent.age}
-                onChange={reset}
-              />
-
-              {slotsQuery.isError ? (
-                <p className="text-destructive text-sm">{t("slotsFailed")}</p>
-              ) : (
-                <TourSlotPicker
-                  slots={slotsQuery.data ?? []}
-                  loading={slotsQuery.isLoading}
-                  selectedDate={selectedDate}
-                  selectedSlot={selectedSlot}
-                  onSelectDate={setSelectedDate}
-                  onSelectSlot={setSelectedSlot}
-                  minDate={minDate}
-                  maxDate={maxDate}
-                />
-              )}
-            </div>
-          ) : null}
+          {step === "slot" ? renderSlotStep() : null}
 
           {step === "done" ? (
             <div className="space-y-2 py-4">
@@ -207,7 +166,7 @@ export function ScheduleTourButton({
           ) : null}
         </div>
 
-        {step === "slot" ? (
+        {step === "slot" && host?.hasAvailability ? (
           <DialogFooter className="sm:justify-between">
             <p className="text-muted-foreground text-sm">
               {selectedSlot
@@ -219,12 +178,8 @@ export function ScheduleTourButton({
               variant={canConfirm ? "default" : "outline"}
               disabled={!canConfirm}
               onClick={() => {
-                if (!selectedSlot || !agentId) return;
-                bookMutation.mutate({
-                  roomId,
-                  agentId,
-                  startsAt: selectedSlot,
-                });
+                if (!selectedSlot) return;
+                bookMutation.mutate({ roomId, startsAt: selectedSlot });
               }}
             >
               {bookMutation.isPending ? t("booking") : t("confirm")}

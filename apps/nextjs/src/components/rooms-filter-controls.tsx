@@ -2,14 +2,22 @@
 
 import type { JSX, ReactNode } from "react";
 
+import type { OperationType } from "@acme/validators";
 import { cn } from "@acme/ui";
 import { Label } from "@acme/ui/label";
 import { RadioGroup, RadioGroupItem } from "@acme/ui/radio-group";
 import { Separator } from "@acme/ui/separator";
 
-export const RENT_MIN = 0;
-export const RENT_MAX = 50_000;
-export const RENT_STEP = 500;
+export interface PriceBounds {
+  min: number;
+  max: number;
+  step: number;
+}
+
+export const PRICE_BOUNDS: Record<OperationType, PriceBounds> = {
+  rent: { min: 0, max: 50_000, step: 500 },
+  sale: { min: 0, max: 20_000_000, step: 100_000 },
+};
 export const AGE_MIN = 18;
 export const AGE_MAX = 99;
 
