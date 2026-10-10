@@ -28,6 +28,10 @@ import {
   FormTextareaField,
   FormTextField,
 } from "~/components/listing/form-controls";
+import {
+  mutationErrorMessage,
+  notifyInvalidSubmit,
+} from "~/components/listing/form-errors";
 import { propertyFormDefaults } from "~/components/listing/form-values";
 import { ImageUploader } from "~/components/listing/image-uploader";
 import { ListingSectionCard } from "~/components/listing/section-card";
@@ -82,15 +86,11 @@ export function PropertyForm({
     trpc.listing.updateProperty.mutationOptions({
       onSuccess: async () => {
         toast.success(t("saved"));
-        await queryClient.invalidateQueries(
-          trpc.listing.properties.queryFilter(),
-        );
-        await queryClient.invalidateQueries(trpc.listing.list.queryFilter());
-        await queryClient.invalidateQueries(trpc.listing.mine.queryFilter());
+        await queryClient.invalidateQueries(trpc.listing.pathFilter());
         router.push("/host");
       },
       onError: (error) => {
-        toast.error(error.message);
+        toast.error(mutationErrorMessage(error));
       },
     }),
   );
@@ -108,7 +108,9 @@ export function PropertyForm({
       <form
         className="mx-auto max-w-2xl space-y-6"
         noValidate
-        onSubmit={form.handleSubmit(onSubmit)}
+        onSubmit={form.handleSubmit(onSubmit, (errors) => {
+          notifyInvalidSubmit(errors, t("fixErrors"));
+        })}
       >
         <ListingSectionCard
           step={1}

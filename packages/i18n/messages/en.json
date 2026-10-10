@@ -397,6 +397,7 @@
     "editComplexTitle": "Edit complex",
     "save": "Save changes",
     "saved": "Changes saved.",
+    "fixErrors": "Some fields need your attention before saving.",
     "complexSubmit": "Add complex",
     "complexSuccess": "The complex is now available for anyone listing a room.",
     "loading": "Loading…",

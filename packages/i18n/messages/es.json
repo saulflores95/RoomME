@@ -397,6 +397,7 @@
     "editComplexTitle": "Editar complejo",
     "save": "Guardar cambios",
     "saved": "Cambios guardados.",
+    "fixErrors": "Algunos campos necesitan tu atención antes de guardar.",
     "complexSubmit": "Agregar complejo",
     "complexSuccess": "El complejo ya está disponible para cualquiera que publique un cuarto.",
     "loading": "Cargando…",

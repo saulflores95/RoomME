@@ -20,12 +20,16 @@ type PropertyOption = RouterOutputs["listing"]["properties"][number];
 export function LocationFields({
   step,
   properties,
+  propertiesLoaded,
 }: {
   step: number;
   properties: PropertyOption[];
+  /** Until the options load, a preselected property cannot be resolved yet. */
+  propertiesLoaded: boolean;
 }): JSX.Element {
   const t = useTranslations("list");
-  const { control, setValue, formState } = useFormContext<ListingFormValues>();
+  const { control, setValue, getValues, formState } =
+    useFormContext<ListingFormValues>();
   const listingType = useWatch({ control, name: "listingType" });
   const propertyId = useWatch({ control, name: "propertyId" });
   const city = useWatch({ control, name: "city" });
@@ -50,6 +54,9 @@ export function LocationFields({
       : null;
 
   useEffect(() => {
+    if (!propertiesLoaded) {
+      return;
+    }
     if (propertyId !== NONE_PROPERTY_ID && !selected) {
       setValue("propertyId", NONE_PROPERTY_ID);
       return;
@@ -74,7 +81,7 @@ export function LocationFields({
         setValue("bathroomCount", selected.bathroomCount);
       }
     }
-  }, [listingType, propertyId, selected, setValue]);
+  }, [listingType, propertiesLoaded, propertyId, selected, setValue]);
 
   const optionLabel = (property: PropertyOption): string =>
     property.isSharedBuilding
@@ -144,7 +151,7 @@ export function LocationFields({
               "addressLine1",
               hit.addressLine1.length > 0
                 ? hit.addressLine1
-                : (selected?.addressLine1 ?? ""),
+                : getValues("addressLine1"),
               options,
             );
             setValue("city", hit.city, options);
@@ -152,7 +159,7 @@ export function LocationFields({
               "neighborhood",
               hit.neighborhood.length > 0
                 ? hit.neighborhood
-                : (selected?.neighborhood ?? ""),
+                : getValues("neighborhood"),
               options,
             );
             setValue("latitude", hit.latitude, options);
