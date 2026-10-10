@@ -189,6 +189,33 @@ export const propertyValuesFromListing = (
   petFriendly: input.acceptsPets,
 });
 
+export type PropertyLocationValues = Pick<
+  PropertyWriteValues,
+  | "propertyType"
+  | "addressLine1"
+  | "city"
+  | "neighborhood"
+  | "country"
+  | "latitude"
+  | "longitude"
+>;
+
+/**
+ * Fields a room listing may change on the host's own property. Title,
+ * description and layout describe the whole property, not a single room.
+ */
+export const propertyLocationFromListing = (
+  input: CreateListingInput,
+): PropertyLocationValues => ({
+  propertyType: input.propertyType,
+  addressLine1: input.addressLine1,
+  city: input.city,
+  neighborhood: input.neighborhood,
+  country: "MX",
+  latitude: input.latitude ?? null,
+  longitude: input.longitude ?? null,
+});
+
 /** Layout fields the listing form may update on an existing property. */
 export const propertyLayoutFromListing = (
   input: CreateListingInput,

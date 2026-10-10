@@ -63,6 +63,7 @@ import {
   insertPropertyImages,
   insertRoomImages,
   propertyLayoutFromListing,
+  propertyLocationFromListing,
   propertyValuesFromForm,
   propertyValuesFromListing,
   roomWriteValues,
@@ -279,10 +280,24 @@ const resolveListingProperty = async (
     if (current && current.ownerId === actor.id) {
       const [updated] = await tx
         .update(Property)
-        .set(propertyValuesFromListing(input))
+        .set(
+          input.listingType === "entire_property"
+            ? propertyValuesFromListing(input)
+            : propertyLocationFromListing(input),
+        )
         .where(eq(Property.id, current.id))
         .returning();
       if (updated) {
+        await tx
+          .update(Room)
+          .set({
+            addressLine1: updated.addressLine1,
+            city: updated.city,
+            neighborhood: updated.neighborhood,
+            latitude: updated.latitude,
+            longitude: updated.longitude,
+          })
+          .where(eq(Room.propertyId, updated.id));
         return toPropertyLocation(updated);
       }
     }
@@ -603,7 +618,9 @@ export const listingRouter = {
       const addressLine1 =
         room.addressLine1 ?? room.property?.addressLine1 ?? "";
 
-      if (!city || neighborhood.length === 0 || addressLine1.length === 0) {
+      // A missing address/neighborhood is fixed in the form; only the city
+      // has no editable fallback.
+      if (!city) {
         throw new TRPCError({
           code: "PRECONDITION_FAILED",
           message: "Listing is missing location details",

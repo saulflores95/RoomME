@@ -21,6 +21,10 @@ import type { ListingStepKey } from "~/components/listing/use-listing-steps";
 import { ContactPhoneFields } from "~/components/listing/contact-phone-fields";
 import { DetailsFields } from "~/components/listing/details-fields";
 import {
+  mutationErrorMessage,
+  notifyInvalidSubmit,
+} from "~/components/listing/form-errors";
+import {
   listingFormDefaults,
   toCreateListingInput,
 } from "~/components/listing/form-values";
@@ -73,9 +77,7 @@ export function ListingForm({
   const savePhone = useMutation(trpc.profile.update.mutationOptions());
 
   const invalidate = async (): Promise<void> => {
-    await queryClient.invalidateQueries(trpc.listing.list.queryFilter());
-    await queryClient.invalidateQueries(trpc.listing.mine.queryFilter());
-    await queryClient.invalidateQueries(trpc.listing.properties.queryFilter());
+    await queryClient.invalidateQueries(trpc.listing.pathFilter());
   };
 
   const create = useMutation(
@@ -103,7 +105,7 @@ export function ListingForm({
         router.push("/host");
       },
       onError: (error) => {
-        toast.error(error.message);
+        toast.error(mutationErrorMessage(error));
       },
     }),
   );
@@ -148,7 +150,14 @@ export function ListingForm({
       case "rules":
         return <RulesFields key={key} step={step} />;
       case "location":
-        return <LocationFields key={key} step={step} properties={properties} />;
+        return (
+          <LocationFields
+            key={key}
+            step={step}
+            properties={properties}
+            propertiesLoaded={propertiesQuery.isSuccess}
+          />
+        );
     }
   };
 
@@ -157,7 +166,9 @@ export function ListingForm({
       <form
         className="mx-auto max-w-2xl space-y-6"
         noValidate
-        onSubmit={form.handleSubmit(onSubmit)}
+        onSubmit={form.handleSubmit(onSubmit, (errors) => {
+          notifyInvalidSubmit(errors, t("fixErrors"));
+        })}
       >
         {steps.keys.map(renderStep)}
 
