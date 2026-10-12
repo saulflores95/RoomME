@@ -641,7 +641,28 @@ async function seedSaleProperty(): Promise<void> {
   });
 }
 
+/** Mock rows use seed ids and @roomme.local emails. Leave a live database alone. */
+async function databaseHasRealUsers(): Promise<boolean> {
+  const rows = await db.execute<{ exists: boolean }>(sql`
+    SELECT EXISTS (
+      SELECT 1
+      FROM "user"
+      WHERE id NOT LIKE 'seed-%'
+        AND email NOT LIKE '%@roomme.local'
+    ) AS "exists"
+  `);
+
+  return rows[0]?.exists === true;
+}
+
 async function seed(): Promise<void> {
+  if (await databaseHasRealUsers()) {
+    console.log(
+      "Real users are present. Skipping mock agents, hosts, roomies, and listings.",
+    );
+    return;
+  }
+
   await removeCdmxListings();
   await upsertUsers();
   await seedHostTourHours();
