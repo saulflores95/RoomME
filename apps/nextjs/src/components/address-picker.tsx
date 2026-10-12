@@ -81,9 +81,15 @@ export function AddressPicker({
       return;
     }
 
-    const hit = await queryClient.fetchQuery(
-      trpc.listing.reverseGeocode.queryOptions({ latitude, longitude }),
-    );
+    let hit: AddressHit | null = null;
+    try {
+      hit = await queryClient.fetchQuery({
+        ...trpc.listing.reverseGeocode.queryOptions({ latitude, longitude }),
+        retry: false,
+      });
+    } catch (error) {
+      console.warn("Reverse geocoding failed; keeping raw coordinates", error);
+    }
 
     onLocationChange(
       hit ?? {
