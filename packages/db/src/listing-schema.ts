@@ -5,6 +5,9 @@ import { z } from "zod/v4";
 
 import { user } from "./auth-schema";
 
+/** Must return a Date. SQL fragments are bound as params and crash toISOString. */
+const touchUpdatedAt = (): Date => new Date();
+
 export const cityEnum = pgEnum("city", ["queretaro"]);
 export const roomStatusEnum = pgEnum("room_status", [
   "draft",
@@ -104,7 +107,7 @@ export const Property = pgTable("property", (t) => ({
     .notNull(),
   updatedAt: t
     .timestamp({ mode: "date", withTimezone: true })
-    .$onUpdateFn(() => sql`now()`),
+    .$onUpdate(touchUpdatedAt),
 }));
 
 export const PropertyImage = pgTable("property_image", (t) => ({
@@ -169,7 +172,7 @@ export const Room = pgTable("room", (t) => ({
     .notNull(),
   updatedAt: t
     .timestamp({ mode: "date", withTimezone: true })
-    .$onUpdateFn(() => sql`now()`),
+    .$onUpdate(touchUpdatedAt),
 }));
 
 export const RoomImage = pgTable("room_image", (t) => ({
@@ -253,7 +256,7 @@ export const Application = pgTable(
       .notNull(),
     updatedAt: t
       .timestamp({ mode: "date", withTimezone: true })
-      .$onUpdateFn(() => sql`now()`),
+      .$onUpdate(touchUpdatedAt),
   }),
   (t) => [unique("application_room_applicant").on(t.roomId, t.applicantId)],
 );
@@ -319,7 +322,7 @@ export const TourBooking = pgTable(
       .notNull(),
     updatedAt: t
       .timestamp({ mode: "date", withTimezone: true })
-      .$onUpdateFn(() => sql`now()`),
+      .$onUpdate(touchUpdatedAt),
   }),
   (t) => [
     uniqueIndex("tour_booking_agent_starts_scheduled_uidx")
